@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WILLOW SPORTS × SAYAN </title>
+  <title>Cric Tv Sony Liv</title>
   <meta name="referrer" content="no-referrer">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
@@ -11,13 +11,13 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { background: #000; height: 100vh; width: 100vw; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
     .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
-    video { width: 100%; height: 100%; transition: all 0.2s ease-in-out; }
-    .mode-fit video { object-fit: contain; }
-    .mode-fill video { object-fit: fill; }
-    .mode-zoom video { object-fit: cover; }
+    video { width: 100%; height: 100%; transition: all 0.2s ease; }
+    .mode-fit video { object-fit: contain !important; }
+    .mode-fill video { object-fit: fill !important; }
     .zoom-btn-icon { font-size: 20px; cursor: pointer; color: white; }
     #watermark { position: absolute; top: 60%; left: 15px; color: rgba(255, 255, 255, 0.12); font-size: 0.6em; pointer-events: none; z-index: 2147483647; letter-spacing: 0.5px; }
     .shaka-spinner-container, .shaka-spinner, .shaka-spinner-svg { display: none !important; }
+    .shaka-controls-container { z-index: 2147483647 !important; }
   </style>
 </head>
 <body class="mode-fit">
@@ -26,43 +26,36 @@
     <div id="watermark">Sayan xyz</div>
   </div>
 <script>
-class MultiZoomButton extends shaka.ui.Element {
+class AspectButton extends shaka.ui.Element {
   constructor(parent, controls) {
     super(parent, controls);
-    this.modes = ['mode-fit', 'mode-fill', 'mode-zoom'];
-    this.currentModeIndex = 0;
     this.button_ = document.createElement('button');
     this.button_.classList.add('shaka-zoom-button');
     this.button_.innerHTML = `<span class="material-icons-round zoom-btn-icon">aspect_ratio</span>`;
     this.parent.appendChild(this.button_);
     this.eventManager.listen(this.button_, 'click', () => {
-      this.updateMode((this.currentModeIndex + 1) % this.modes.length);
-    });
-    this.eventManager.listen(window, 'resize', () => {
-      if (document.fullscreenElement) {
-        this.updateMode(1);
+      if (document.body.classList.contains('mode-fit')) {
+        this.updateMode('mode-fill');
+      } else {
+        this.updateMode('mode-fit');
       }
     });
   }
-  updateMode(index) {
-    document.body.classList.remove(this.modes[this.currentModeIndex]);
-    this.currentModeIndex = index;
-    document.body.classList.add(this.modes[this.currentModeIndex]);
-    if(this.currentModeIndex === 0) this.button_.style.color = "white";
-    if(this.currentModeIndex === 1) this.button_.style.color = "#FFEB3B";
-    if(this.currentModeIndex === 2) this.button_.style.color = "#4CAF50";
+  updateMode(mode) {
+    document.body.classList.remove('mode-fit', 'mode-fill');
+    document.body.classList.add(mode);
+    this.button_.style.color = (mode === 'mode-fill') ? "#FFEB3B" : "white";
   }
 }
-MultiZoomButton.Factory = class { create(parent, controls) { return new MultiZoomButton(parent, controls); } };
-shaka.ui.Controls.registerElement('multi_zoom', new MultiZoomButton.Factory());
+AspectButton.Factory = class { create(parent, controls) { return new AspectButton(parent, controls); } };
+shaka.ui.Controls.registerElement('aspect_toggle', new AspectButton.Factory());
 document.addEventListener('DOMContentLoaded', async () => {
   const CONFIG = {
     STREAM_URL: "https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd",
     DRM_KEY_ID: "1779C27B9D077A3BA0C9CC1BB9A94B9F",
     DRM_KEY: "CC5CF3B7928FB9E0A1EE6A8B566F0A8E",
     POSTER_URL: "https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg",
-    DELAY_SECONDS: 10,
-    DEFAULT_HEIGHT: 396
+    DELAY_SECONDS: 10
   };
   const videoElement = document.getElementById('main-video');
   videoElement.poster = CONFIG.POSTER_URL;
@@ -73,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('video-container');
   const ui = new shaka.ui.Overlay(player, container, videoElement);
   ui.configure({
-    controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'quality', 'multi_zoom', 'fullscreen'],
+    controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'quality', 'aspect_toggle', 'fullscreen'],
     seekBarColors: { base: 'rgba(255,255,0,0.3)', buffered: 'rgba(255,255,0,0.6)', played: 'rgb(255,255,0)' }
   });
   player.configure({
@@ -81,10 +74,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     abr: { enabled: false },
     streaming: { lowLatencyMode: true, bufferingGoal: 15, rebufferingGoal: 2, bufferBehind: 15 }
   });
-  videoElement.addEventListener('fullscreenchange', () => {
+  document.addEventListener('fullscreenchange', () => {
+    const controls = container.querySelector('.shaka-controls-container');
+    if (controls) controls.style.display = 'flex';
     if (document.fullscreenElement) {
-        document.body.classList.remove('mode-fit', 'mode-zoom');
-        document.body.classList.add('mode-fill');
+      document.body.classList.remove('mode-fit');
+      document.body.classList.add('mode-fill');
     }
   });
   try {
