@@ -11,13 +11,12 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { background: #000; height: 100vh; width: 100vw; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
     .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
-    video { width: 100%; height: 100%; transition: all 0.2s ease; }
-    .mode-fit video { object-fit: contain !important; }
-    .mode-fill video { object-fit: fill !important; }
+    #main-video { width: 100%; height: 100%; transition: none; }
+    .mode-fit #main-video { object-fit: contain !important; }
+    .mode-fill #main-video { object-fit: fill !important; }
     .zoom-btn-icon { font-size: 20px; cursor: pointer; color: white; }
     #watermark { position: absolute; top: 60%; left: 15px; color: rgba(255, 255, 255, 0.12); font-size: 0.6em; pointer-events: none; z-index: 2147483647; letter-spacing: 0.5px; }
     .shaka-spinner-container, .shaka-spinner, .shaka-spinner-svg { display: none !important; }
-    .shaka-controls-container { z-index: 2147483647 !important; }
   </style>
 </head>
 <body class="mode-fit">
@@ -35,16 +34,13 @@ class AspectButton extends shaka.ui.Element {
     this.parent.appendChild(this.button_);
     this.eventManager.listen(this.button_, 'click', () => {
       if (document.body.classList.contains('mode-fit')) {
-        this.updateMode('mode-fill');
+        document.body.classList.replace('mode-fit', 'mode-fill');
+        this.button_.style.color = "#FFEB3B";
       } else {
-        this.updateMode('mode-fit');
+        document.body.classList.replace('mode-fill', 'mode-fit');
+        this.button_.style.color = "white";
       }
     });
-  }
-  updateMode(mode) {
-    document.body.classList.remove('mode-fit', 'mode-fill');
-    document.body.classList.add(mode);
-    this.button_.style.color = (mode === 'mode-fill') ? "#FFEB3B" : "white";
   }
 }
 AspectButton.Factory = class { create(parent, controls) { return new AspectButton(parent, controls); } };
@@ -60,11 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const videoElement = document.getElementById('main-video');
   videoElement.poster = CONFIG.POSTER_URL;
   shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) return;
   const player = new shaka.Player();
   await player.attach(videoElement);
   const container = document.getElementById('video-container');
   const ui = new shaka.ui.Overlay(player, container, videoElement);
+  const controls = ui.getControls();
   ui.configure({
     controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'quality', 'aspect_toggle', 'fullscreen'],
     seekBarColors: { base: 'rgba(255,255,0,0.3)', buffered: 'rgba(255,255,0,0.6)', played: 'rgb(255,255,0)' }
@@ -74,14 +70,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     abr: { enabled: false },
     streaming: { lowLatencyMode: true, bufferingGoal: 15, rebufferingGoal: 2, bufferBehind: 15 }
   });
-  document.addEventListener('fullscreenchange', () => {
-    const controls = container.querySelector('.shaka-controls-container');
-    if (controls) controls.style.display = 'flex';
-    if (document.fullscreenElement) {
-      document.body.classList.remove('mode-fit');
-      document.body.classList.add('mode-fill');
-    }
-  });
+  const fixUI = () => {
+    setTimeout(() => {
+      controls.setEnabled(false);
+      controls.setEnabled(true);
+    }, 200);
+  };
+  document.addEventListener('fullscreenchange', fixUI);
+  document.addEventListener('webkitfullscreenchange', fixUI);
   try {
     await player.load(CONFIG.STREAM_URL);
     const range = player.seekRange();
