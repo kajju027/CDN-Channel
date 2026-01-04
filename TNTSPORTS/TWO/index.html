@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRIC STREAMING × SAYAN </title>
+  <meta name="referrer" content="no-referrer">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    #watermark {
+      position: absolute;
+      top: 60%;
+      left: 15px;
+      color: rgba(255, 255, 255, 0.12); 
+      font-size: 0.6em; 
+      pointer-events: none;
+      z-index: 2147483647;
+      letter-spacing: 0.5px;
+    }
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="shaka-video-container" data-shaka-player>
+    <video autoplay playsinline id="main-video"></video>
+    <div id="watermark">Sayan xyz</div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+
+  const CONFIG = {
+    STREAM_URL: "https://ottb.live.cf.ww.aiv-cdn.net/lhr-nitro/live/dash/enc/f0qvkrra8j/out/v1/f8fa17f087564f51aa4d5c700be43ec4/cenc.mpd",
+    DRM_KEY_ID: "9f51f3dc6313ac8bc668e2d9d1c04dfa",
+    DRM_KEY: "74bc63e5a193454a91ca494975db33f9",
+    POSTER_URL: "https://i.ibb.co/VGFFbny/file-000000000fb87207808d6be7ed20c8b6.png",
+    DELAY_SECONDS: 10,
+    DEFAULT_HEIGHT: 396
+  };
+
+  const videoElement = document.getElementById('main-video');
+  videoElement.poster = CONFIG.POSTER_URL;
+
+  try {
+    const localThumb = localStorage.getItem('cnp_logo');
+    if (localThumb) {
+      videoElement.poster = localThumb;
+    } else {
+      fetch(CONFIG.POSTER_URL).then(res => res.blob()).then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          try { localStorage.setItem('my_saved_poster', reader.result); } catch (e) {}
+        };
+        reader.readAsDataURL(blob);
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) return;
+
+  const player = new shaka.Player();
+  await player.attach(videoElement);
+
+  const container = document.querySelector('.shaka-video-container');
+  const ui = new shaka.ui.Overlay(player, container, videoElement);
+
+  ui.configure({
+    controlPanelElements: ['play_pause','time_and_duration','mute','spacer','picture_in_picture','quality','fullscreen'],
+    seekBarColors: {
+      base: 'rgba(255,255,0,0.3)',
+      buffered: 'rgba(255,255,0,0.6)',
+      played: 'rgb(255,255,0)'
+    }
+  });
+
+  player.configure({
+    drm: { clearKeys: { [CONFIG.DRM_KEY_ID]: CONFIG.DRM_KEY } },
+    abr: { enabled: false },
+    streaming: {
+      lowLatencyMode: true,
+      bufferingGoal: 15,
+      rebufferingGoal: 2,
+      bufferBehind: 15
+    }
+  });
+
+  try {
+    await player.load(CONFIG.STREAM_URL);
+
+    const range = player.seekRange();
+    if (range && isFinite(range.end)) {
+      videoElement.currentTime = Math.max(range.start, range.end - CONFIG.DELAY_SECONDS);
+    }
+
+    const tracks = player.getVariantTracks();
+    const targetTrack = tracks.find(t => t.height === CONFIG.DEFAULT_HEIGHT) || 
+                        tracks.sort((a, b) => b.height - a.height)[0];
+    
+    if (targetTrack) {
+      player.selectVariantTrack(targetTrack, true);
+    }
+
+  } catch (err) {
+    console.error('Load error:', err);
+  }
+
+});
+</script>
+
+</body>
+</html>
