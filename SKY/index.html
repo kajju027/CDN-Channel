@@ -10,8 +10,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { background: #000; height: 100vh; width: 100vw; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
     .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
-    video { width: 100%; height: 100%; transition: all 0.2s ease-in-out; }
-    .mode-fit video { object-fit: contain; }
+    video { width: 100%; height: 100%; object-fit: contain; transition: all 0.2s ease-in-out; }
     .mode-fill video { object-fit: fill; }
     .mode-zoom video { object-fit: cover; }
     .zoom-btn-icon { font-size: 20px; cursor: pointer; color: white; }
@@ -19,41 +18,12 @@
     .shaka-spinner-container, .shaka-spinner, .shaka-spinner-svg { display: none !important; }
   </style>
 </head>
-<body class="mode-fit">
+<body>
   <div class="shaka-video-container" id="video-container" data-shaka-player>
     <video autoplay playsinline id="main-video"></video>
     <div id="watermark">Sayan xyz</div>
   </div>
 <script>
-class MultiZoomButton extends shaka.ui.Element {
-  constructor(parent, controls) {
-    super(parent, controls);
-    this.modes = ['mode-fit', 'mode-fill', 'mode-zoom'];
-    this.currentModeIndex = 0;
-    this.button_ = document.createElement('button');
-    this.button_.classList.add('shaka-zoom-button');
-    this.button_.innerHTML = `<span class="material-icons-round zoom-btn-icon">aspect_ratio</span>`;
-    this.parent.appendChild(this.button_);
-    this.eventManager.listen(this.button_, 'click', () => {
-      this.updateMode((this.currentModeIndex + 1) % this.modes.length);
-    });
-    this.eventManager.listen(window, 'resize', () => {
-      if (document.fullscreenElement) {
-        this.updateMode(1);
-      }
-    });
-  }
-  updateMode(index) {
-    document.body.classList.remove(this.modes[this.currentModeIndex]);
-    this.currentModeIndex = index;
-    document.body.classList.add(this.modes[this.currentModeIndex]);
-    if(this.currentModeIndex === 0) this.button_.style.color = "white";
-    if(this.currentModeIndex === 1) this.button_.style.color = "#FFEB3B";
-    if(this.currentModeIndex === 2) this.button_.style.color = "#4CAF50";
-  }
-}
-MultiZoomButton.Factory = class { create(parent, controls) { return new MultiZoomButton(parent, controls); } };
-shaka.ui.Controls.registerElement('multi_zoom', new MultiZoomButton.Factory());
 document.addEventListener('DOMContentLoaded', async () => {
   const CONFIG = {
     STREAM_URL: "https://dice-live-oc.akamaized.net/hdntl=exp=1767754272~acl=%2f*~id=66919e4a-4291-4ca4-b61d-f3831d2d4f12~data=hdntl,dWlkPVZndzRwYnw4MmQ3NzUyNy04YWQ4LTRlMjgtYWVkYy1kZjM3MGRkNjYyMGEmaXA9MTE0LjIzLjExOC4yOCZleHA9MTc2Nzc1NDI5NiZlaWQ9Mjk0OTIxJmNpZD1kY2Uuc2t5bnomb2lkPTMxOCZ0eXBlPUxJVkU~hmac=7e67e0dc627ad8a7b18d437790971596cec3a96bedb965cb005c94cbadfb70da/dash/live/2093722/294921-313667/manifest-d.mpd",
@@ -72,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('video-container');
   const ui = new shaka.ui.Overlay(player, container, videoElement);
   ui.configure({
-    controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'quality', 'multi_zoom', 'fullscreen'],
+    controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'quality', 'fullscreen'],
     seekBarColors: { base: 'rgba(255,255,0,0.3)', buffered: 'rgba(255,255,0,0.6)', played: 'rgb(255,255,0)' }
   });
   player.configure({
@@ -82,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   videoElement.addEventListener('fullscreenchange', () => {
     if (document.fullscreenElement) {
-        document.body.classList.remove('mode-fit', 'mode-zoom');
+        document.body.classList.remove('mode-fill', 'mode-zoom');
         document.body.classList.add('mode-fill');
     }
   });
