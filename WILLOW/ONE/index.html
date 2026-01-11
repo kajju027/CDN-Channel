@@ -1,91 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cric Tv Sony Liv</title>
-  <meta name="referrer" content="no-referrer">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+  <meta charset="utf-8">
+  <title>WILLOW - SAYAN UPDATED</title>
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { background: #000; height: 100vh; width: 100vw; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
-    .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
-    #main-video { width: 100%; height: 100%; transition: none; }
-    .mode-fit #main-video { object-fit: contain !important; }
-    .mode-fill #main-video { object-fit: fill !important; }
-    .zoom-btn-icon { font-size: 20px; cursor: pointer; color: white; }
-    #watermark { position: absolute; top: 60%; left: 15px; color: rgba(255, 255, 255, 0.12); font-size: 0.6em; pointer-events: none; z-index: 2147483647; letter-spacing: 0.5px; }
-    .shaka-spinner-container, .shaka-spinner, .shaka-spinner-svg { display: none !important; }
+    html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
+    #video-container { width: 100%; height: 100%; position: relative; }
+    video { width: 100%; height: 100%; background: #000; }
+    
+    /* Overlay image styling */
+    #overlay-image {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 5;
+    }
+    
+    .shaka-controls-container { z-index: 10 !important; }
   </style>
 </head>
-<body class="mode-fit">
-  <div class="shaka-video-container" id="video-container" data-shaka-player>
-    <video autoplay playsinline id="main-video"></video>
-    <div id="watermark">Sayan xyz</div>
-  </div>
-<script>
-class AspectButton extends shaka.ui.Element {
-  constructor(parent, controls) {
-    super(parent, controls);
-    this.button_ = document.createElement('button');
-    this.button_.classList.add('shaka-zoom-button');
-    this.button_.innerHTML = `<span class="material-icons-round zoom-btn-icon">aspect_ratio</span>`;
-    this.parent.appendChild(this.button_);
-    this.eventManager.listen(this.button_, 'click', () => {
-      if (document.body.classList.contains('mode-fit')) {
-        document.body.classList.replace('mode-fit', 'mode-fill');
-        this.button_.style.color = "#FFEB3B";
-      } else {
-        document.body.classList.replace('mode-fill', 'mode-fit');
-        this.button_.style.color = "white";
+<body>
+
+  <div id="video-container" data-shaka-player-container>
+    <video id="video" class="shaka-video" poster="https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg" autoplay muted playsinline></video>
+    <img id="overlay-image" src="https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg" alt="Thumbnail">
+  </div>  
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const manifestUri = 'https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd';
+      const video = document.getElementById('video');
+      const container = document.getElementById('video-container');
+      const overlayImage = document.getElementById('overlay-image');
+
+      const player = new shaka.Player(video);
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      // প্লেয়ার কনফিগারেশন
+      player.configure({
+        drm: {
+          clearKeys: {
+            '1779C27B9D077A3BA0C9CC1BB9A94B9F': 'CC5CF3B7928FB9E0A1EE6A8B566F0A8E'
+          }
+        },
+        streaming: {
+          // ১০ মিনিট (৬০০ সেকেন্ড) ডিলে রাখার চেষ্টা করবে
+          safeSeekOffset: 10, 
+          lowLatencyMode: false,
+        }
+      });
+
+      ui.configure({
+        controlPanelElements: [
+          'play_pause', 'spacer', 'time_and_duration', 'mute', 'volume', 'quality', 'fullscreen'
+        ]
+      });
+
+      // আনমিউট পলিসি: ইউজার প্রথমবার ক্লিক করলেই সাউন্ড চালু হবে
+      const enableSound = () => {
+        video.muted = false;
+        console.log("Audio Unmuted");
+        window.removeEventListener('click', enableSound);
+      };
+      window.addEventListener('click', enableSound);
+
+      try {
+        await player.load(manifestUri);
+        
+        // ১০ মিনিট ডিলে সেট করা (লাইভ এজ থেকে ৬০০ সেকেন্ড পেছনে)
+        const seekRange = player.seekRange();
+        video.currentTime = seekRange.end - 600;
+
+        console.log('Video Loaded with 10 min delay');
+      } catch (e) {
+        console.error('Error loading video', e);
       }
+
+      // ভিডিও প্লে হওয়া শুরু করলে পোস্টার ইমেজ সরিয়ে ফেলা
+      video.addEventListener('playing', () => {
+        if(overlayImage) overlayImage.style.display = 'none';
+      });
     });
-  }
-}
-AspectButton.Factory = class { create(parent, controls) { return new AspectButton(parent, controls); } };
-shaka.ui.Controls.registerElement('aspect_toggle', new AspectButton.Factory());
-document.addEventListener('DOMContentLoaded', async () => {
-  const CONFIG = {
-    STREAM_URL: "https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd",
-    DRM_KEY_ID: "1779C27B9D077A3BA0C9CC1BB9A94B9F",
-    DRM_KEY: "CC5CF3B7928FB9E0A1EE6A8B566F0A8E",
-    POSTER_URL: "https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg",
-    DELAY_SECONDS: 10
-  };
-  const videoElement = document.getElementById('main-video');
-  videoElement.poster = CONFIG.POSTER_URL;
-  shaka.polyfill.installAll();
-  const player = new shaka.Player();
-  await player.attach(videoElement);
-  const container = document.getElementById('video-container');
-  const ui = new shaka.ui.Overlay(player, container, videoElement);
-  const controls = ui.getControls();
-  ui.configure({
-    controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'quality', 'aspect_toggle', 'fullscreen'],
-    seekBarColors: { base: 'rgba(255,255,0,0.3)', buffered: 'rgba(255,255,0,0.6)', played: 'rgb(255,255,0)' }
-  });
-  player.configure({
-    drm: { clearKeys: { [CONFIG.DRM_KEY_ID]: CONFIG.DRM_KEY } },
-    abr: { enabled: false },
-    streaming: { lowLatencyMode: true, bufferingGoal: 15, rebufferingGoal: 2, bufferBehind: 15 }
-  });
-  const fixUI = () => {
-    setTimeout(() => {
-      controls.setEnabled(false);
-      controls.setEnabled(true);
-    }, 200);
-  };
-  document.addEventListener('fullscreenchange', fixUI);
-  document.addEventListener('webkitfullscreenchange', fixUI);
-  try {
-    await player.load(CONFIG.STREAM_URL);
-    const range = player.seekRange();
-    if (range && isFinite(range.end)) {
-      videoElement.currentTime = Math.max(range.start, range.end - CONFIG.DELAY_SECONDS);
-    }
-  } catch (err) {}
-});
-</script>
+  </script>
 </body>
 </html>
