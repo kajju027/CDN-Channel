@@ -1,141 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRIC STREAMING × SAYAN </title>
-  <meta name="referrer" content="no-referrer">
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
-
+  <title>ZEE 5 - SAYAN STREAM</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       background: #000;
-      height: 100vh;
-      width: 100vw;
+      height: 100vh; width: 100vw;
       overflow: hidden;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: sans-serif;
     }
-    .shaka-video-container {
+
+    #video-container {
       position: absolute;
       inset: 0;
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       background: #000;
+      cursor: pointer;
     }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
+
+    video { width: 100%; height: 100%; object-fit: contain; }
+
     #watermark {
       position: absolute;
       top: 60%;
       left: 15px;
       color: rgba(255, 255, 255, 0.12); 
-      font-size: 0.6em; 
+      font-size: 0.7em; 
       pointer-events: none;
       z-index: 2147483647;
       letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
-    .shaka-spinner-container,
-    .shaka-spinner,
-    .shaka-spinner-svg {
-      display: none !important;
+
+    #custom-poster {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg') no-repeat center center;
+      background-size: cover;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
+    .play-hint {
+      color: white;
+      background: rgba(0,0,0,0.4);
+      padding: 15px;
+      border-radius: 50%;
+    }
+
+    .shaka-spinner-container { display: none !important; }
   </style>
 </head>
-
 <body>
 
-  <div class="shaka-video-container" data-shaka-player>
-    <video autoplay playsinline id="main-video"></video>
+  <div id="video-container" data-shaka-player-container>
+    <video id="video" class="shaka-video" autoplay muted playsinline></video>
     <div id="watermark">Sayan xyz</div>
-  </div>
+    <div id="custom-poster">
+       <div class="play-hint"><span class="material-icons" style="font-size: 60px;">play_arrow</span></div>
+    </div>
+  </div>  
 
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
+  <script>
+    const CONFIG = {
+      MANIFEST: 'https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd',
+      KEY_ID: '1779C27B9D077A3BA0C9CC1BB9A94B9F',
+      KEY: 'CC5CF3B7928FB9E0A1EE6A8B566F0A8E',
+      DELAY: 10,
+      QUALITY: 396
+    };
 
-  const CONFIG = {
-    STREAM_URL: "https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd",
-    DRM_KEY_ID: "1779C27B9D077A3BA0C9CC1BB9A94B9F",
-    DRM_KEY: "CC5CF3B7928FB9E0A1EE6A8B566F0A8E",
-    POSTER_URL: "https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg",
-    DELAY_SECONDS: 10,
-    DEFAULT_HEIGHT: 396
-  };
+    async function initApp() {
+      const video = document.getElementById('video');
+      const container = document.getElementById('video-container');
+      const poster = document.getElementById('custom-poster');
 
-  const videoElement = document.getElementById('main-video');
-  videoElement.poster = CONFIG.POSTER_URL;
+      const player = new shaka.Player(); 
+      await player.attach(video);
 
-  try {
-    const localThumb = localStorage.getItem('cnp_logo');
-    if (localThumb) {
-      videoElement.poster = localThumb;
-    } else {
-      fetch(CONFIG.POSTER_URL).then(res => res.blob()).then(blob => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          try { localStorage.setItem('my_saved_poster', reader.result); } catch (e) {}
-        };
-        reader.readAsDataURL(blob);
-      }).catch(() => {});
-    }
-  } catch (e) {}
+      const ui = new shaka.ui.Overlay(player, container, video);
 
-  shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) return;
+      player.configure({
+        drm: {
+          clearKeys: { [CONFIG.KEY_ID.toLowerCase()]: CONFIG.KEY.toLowerCase() }
+        },
+        abr: { enabled: false }, 
+        streaming: { safeSeekOffset: CONFIG.DELAY }
+      });
 
-  const player = new shaka.Player();
-  await player.attach(videoElement);
+      ui.configure({
+        controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'quality', 'fullscreen']
+      });
 
-  const container = document.querySelector('.shaka-video-container');
-  const ui = new shaka.ui.Overlay(player, container, videoElement);
+      container.addEventListener('click', () => {
+        if (video.muted) {
+          video.muted = false;
+          video.play();
+          poster.style.display = 'none';
+        }
+      });
 
-  ui.configure({
-    controlPanelElements: ['play_pause','time_and_duration','mute','spacer','picture_in_picture','quality','fullscreen'],
-    seekBarColors: {
-      base: 'rgba(255,255,0,0.3)',
-      buffered: 'rgba(255,255,0,0.6)',
-      played: 'rgb(255,255,0)'
-    }
-  });
-
-  player.configure({
-    drm: { clearKeys: { [CONFIG.DRM_KEY_ID]: CONFIG.DRM_KEY } },
-    abr: { enabled: false },
-    streaming: {
-      lowLatencyMode: true,
-      bufferingGoal: 15,
-      rebufferingGoal: 2,
-      bufferBehind: 15
-    }
-  });
-
-  try {
-    await player.load(CONFIG.STREAM_URL);
-
-    const range = player.seekRange();
-    if (range && isFinite(range.end)) {
-      videoElement.currentTime = Math.max(range.start, range.end - CONFIG.DELAY_SECONDS);
+      try {
+        await player.load(CONFIG.MANIFEST);
+        const range = player.seekRange();
+        video.currentTime = range.end - CONFIG.DELAY;
+        const tracks = player.getVariantTracks();
+        const targetTrack = tracks.find(t => t.height === CONFIG.QUALITY) || tracks[0];
+        player.selectVariantTrack(targetTrack, true);
+      } catch (e) {
+        console.error(e);
+      }
     }
 
-    const tracks = player.getVariantTracks();
-    const targetTrack = tracks.find(t => t.height === CONFIG.DEFAULT_HEIGHT) || 
-                        tracks.sort((a, b) => b.height - a.height)[0];
-    
-    if (targetTrack) {
-      player.selectVariantTrack(targetTrack, true);
-    }
-
-  } catch (err) {
-    console.error('Load error:', err);
-  }
-
-});
-</script>
-
+    document.addEventListener('shaka-ui-loaded', initApp);
+  </script>
 </body>
 </html>
