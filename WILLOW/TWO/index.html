@@ -25,7 +25,19 @@
       background: #000;
     }
 
-    video { width: 100%; height: 100%; object-fit: contain; }
+    /* ডিফল্ট মোড contain এবং ফুলস্ক্রিনে অটো ফিল লজিক */
+    video { 
+      width: 100%; height: 100%; 
+      object-fit: contain; 
+      transition: object-fit 0.3s ease; 
+    }
+
+    /* ফুলস্ক্রিন করলেই অটোমেটিক Stretch/Fill হবে */
+    .shaka-video-container:fullscreen video,
+    video:fullscreen, 
+    video:-webkit-full-screen { 
+      object-fit: fill !important; 
+    }
 
     #watermark {
       position: absolute;
@@ -42,7 +54,7 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: url('https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg') no-repeat center center;
+      background: url(' ') no-repeat center center;
       background-size: cover;
       z-index: 5;
       display: flex;
@@ -58,12 +70,16 @@
       border-radius: 50%;
     }
 
+    /* প্রিমিয়াম হোয়াইট ইউআই */
     .shaka-spinner-container { display: none !important; }
+    .shaka-played-range { background: #ffffff !important; }
+    .shaka-range-container input[type=range]::-webkit-slider-thumb { background: #ffffff !important; }
+    .shaka-bottom-controls { padding: 0 15px 10px 15px; }
   </style>
 </head>
 <body>
 
-  <div id="video-container">
+  <div id="video-container" class="shaka-video-container">
     <video id="video" class="shaka-video" autoplay muted playsinline></video>
     <div id="watermark">Sayan xyz</div>
     <div id="custom-poster">
@@ -85,6 +101,7 @@
       const container = document.getElementById('video-container');
       const poster = document.getElementById('custom-poster');
 
+      shaka.polyfill.installAll();
       const player = new shaka.Player(); 
       await player.attach(video);
 
@@ -97,25 +114,32 @@
         abr: { enabled: false },
         streaming: {
           safeSeekOffset: CONFIG.DELAY,
-          forceTransmuxTS: true
+          forceTransmuxTS: true,
+          bufferingGoal: 30
         }
       });
 
       ui.configure({
         controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'quality', 'fullscreen'],
-        addLanguageControls: false,
-        addSettingsMenus: ['quality']
+        seekBarColors: { 
+          base: 'rgba(255,255,255,0.3)', 
+          buffered: 'rgba(255,255,255,0.5)', 
+          played: '#ffffff' 
+        }
       });
+
+      const applyDelay = () => {
+        const range = player.seekRange();
+        if (range.end > 0) {
+            video.currentTime = Math.max(range.start, range.end - CONFIG.DELAY);
+        }
+      };
 
       poster.addEventListener('click', () => {
         video.muted = false;
         video.play();
         poster.style.display = 'none';
-        
-        const range = player.seekRange();
-        if (range.end > 0) {
-            video.currentTime = range.end - CONFIG.DELAY;
-        }
+        applyDelay();
       });
 
       try {
@@ -125,9 +149,7 @@
         const targetTrack = tracks.find(t => t.height === CONFIG.QUALITY) || tracks[0];
         player.selectVariantTrack(targetTrack, true);
 
-        const range = player.seekRange();
-        video.currentTime = range.end - CONFIG.DELAY;
-
+        applyDelay();
       } catch (e) {
         console.error(e);
       }
