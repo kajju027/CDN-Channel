@@ -1,100 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SKY SPORTS 4K</title>
-<meta name="referrer" content="no-referrer">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>- SAYAN STREAM</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh; width: 100vw;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+    #video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      background: #000;
+    }
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{background:#000;height:100vh;width:100vw;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
-.shaka-video-container{position:absolute;inset:0;width:100%;height:100%;background:#000}
-video{width:100%;height:100%;transition:.2s ease-in-out}
-.mode-fit video{object-fit:contain}
-.mode-fill video{object-fit:fill}
-.mode-zoom video{object-fit:cover}
-.zoom-btn-icon{font-size:20px;cursor:pointer;color:#fff}
-#watermark{position:absolute;top:60%;left:15px;color:rgba(255,255,255,.12);font-size:.6em;pointer-events:none;z-index:2147483647}
-.shaka-spinner-container,.shaka-spinner,.shaka-spinner-svg{display:none!important}
-.shaka-current-time,.shaka-duration{font-weight:600;transition:color .5s linear}
-</style>
+    video { width: 100%; height: 100%; object-fit: contain; }
+
+    #watermark {
+      position: absolute;
+      top: 60%;
+      left: 15px;
+      color: rgba(255, 255, 255, 0.12); 
+      font-size: 0.7em; 
+      pointer-events: none;
+      z-index: 2147483647;
+      letter-spacing: 0.5px;
+    }
+
+    #custom-poster {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('') no-repeat center center;
+      background-size: cover;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .play-hint {
+      color: white;
+      background: rgba(0,0,0,0.4);
+      padding: 15px;
+      border-radius: 50%;
+    }
+
+    .shaka-spinner-container { display: none !important; }
+  </style>
 </head>
+<body>
 
-<body class="mode-fit">
-<div class="shaka-video-container" id="video-container" data-shaka-player>
-<video autoplay playsinline id="main-video"></video>
-<div id="watermark">Sayan xyz</div>
-</div>
+  <div id="video-container">
+    <video id="video" class="shaka-video" autoplay muted playsinline></video>
+    <div id="watermark">Sayan xyz</div>
+    <div id="custom-poster">
+       <div class="play-hint"><span class="material-icons" style="font-size: 60px;">play_arrow</span></div>
+    </div>
+  </div>  
 
-<script>
-class MultiZoomButton extends shaka.ui.Element{
-constructor(parent,controls){
-super(parent,controls)
-this.modes=['mode-fit','mode-fill','mode-zoom']
-this.currentModeIndex=0
-this.button_=document.createElement('button')
-this.button_.innerHTML='<span class="material-icons-round zoom-btn-icon">aspect_ratio</span>'
-this.parent.appendChild(this.button_)
-this.eventManager.listen(this.button_,'click',()=>{this.updateMode((this.currentModeIndex+1)%this.modes.length)})
-}
-updateMode(index){
-document.body.classList.remove(this.modes[this.currentModeIndex])
-this.currentModeIndex=index
-document.body.classList.add(this.modes[this.currentModeIndex])
-this.button_.style.color=index===1?'#FFEB3B':index===2?'#4CAF50':'#fff'
-}}
-MultiZoomButton.Factory=class{create(p,c){return new MultiZoomButton(p,c)}}
-shaka.ui.Controls.registerElement('multi_zoom',new MultiZoomButton.Factory())
+  <script>
+    const CONFIG = {
+      JSON_URL: 'https://raw.githubusercontent.com/Cricketstan/Sky-Nz-Json/refs/heads/main/data.json',
+      KEY_ID: 'aefc2c8d1c8840f1b6981f856c9269ba',
+      KEY: 'cf8ea114c45b4d6596b2748258ab74d6',
+      DELAY: 5,
+      QUALITY: 540
+    };
 
-document.addEventListener('DOMContentLoaded',async()=>{
-const CONFIG={
-STREAM_URL:"https://dice-live-oc.akamaized.net/hdntl=exp=1767754272~acl=%2f*~id=66919e4a-4291-4ca4-b61d-f3831d2d4f12~data=hdntl,dWlkPVZndzRwYnw4MmQ3NzUyNy04YWQ4LTRlMjgtYWVkYy1kZjM3MGRkNjYyMGEmaXA9MTE0LjIzLjExOC4yOCZleHA9MTc2Nzc1NDI5NiZlaWQ9Mjk0OTIxJmNpZD1kY2Uuc2t5bnomb2lkPTMxOCZ0eXBlPUxJVkU~hmac=7e67e0dc627ad8a7b18d437790971596cec3a96bedb965cb005c94cbadfb70da/dash/live/2093722/294921-313667/manifest-d.mpd",
-DRM_KEY_ID:"4d346b1d1ae64d4a800409cffa14983e",
-DRM_KEY:"208c972bd2da4359ac94e6944fe378b6",
-POSTER_URL:"https://i.ibb.co/N2nN9f40/file-000000003d047206936637a2c8318a88.png",
-DELAY_SECONDS:10,
-DEFAULT_HEIGHT:360
-}
+    async function initApp() {
+      const video = document.getElementById('video');
+      const container = document.getElementById('video-container');
+      const poster = document.getElementById('custom-poster');
 
-const video=document.getElementById('main-video')
-video.poster=CONFIG.POSTER_URL
+      const player = new shaka.Player(); 
+      await player.attach(video);
 
-shaka.polyfill.installAll()
-if(!shaka.Player.isBrowserSupported())return
+      const ui = new shaka.ui.Overlay(player, container, video);
 
-const player=new shaka.Player(video)
-const ui=new shaka.ui.Overlay(player,document.getElementById('video-container'),video)
+      player.configure({
+        drm: {
+          clearKeys: { [CONFIG.KEY_ID]: CONFIG.KEY }
+        },
+        abr: { enabled: true },
+        mediaSource: { forceTransmux: true },
+        streaming: {
+          safeSeekOffset: CONFIG.DELAY,
+          bufferingGoal: 30,
+          rebufferingGoal: 2,
+          bufferBehind: 30,
+          lowLatencyMode: true
+        }
+      });
 
-ui.configure({
-controlPanelElements:['play_pause','time_and_duration','spacer','mute','quality','fullscreen']
-})
+      ui.configure({
+        controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'quality', 'fullscreen'],
+        overflowMenuButtons: ['quality'],
+        seekBarColors: {
+          base: 'rgba(255, 255, 0, 0.3)',
+          buffered: 'rgba(255, 255, 0, 0.6)',
+          played: 'rgb(255, 255, 0)'
+        },
+        volumeBarColors: {
+          base: 'rgba(255, 192, 203, 0.3)',
+          level: 'rgb(255, 105, 180)'
+        }
+      });
 
-player.configure({
-drm:{clearKeys:{[CONFIG.DRM_KEY_ID]:CONFIG.DRM_KEY}},
-abr:{enabled:false},
-streaming:{lowLatencyMode:true,bufferingGoal:15,rebufferingGoal:2,bufferBehind:15}
-})
+      poster.addEventListener('click', () => {
+        video.muted = false;
+        video.play();
+        poster.style.display = 'none';
+        
+        const range = player.seekRange();
+        if (range.end > 0) {
+            video.currentTime = range.end - CONFIG.DELAY;
+        }
+      });
 
-await player.load(CONFIG.STREAM_URL)
+      try {
+        const res = await fetch(CONFIG.JSON_URL);
+        const data = await res.json();
+        const streamUrl = data.url;
 
-const tracks=player.getVariantTracks()
-let track=tracks.find(t=>t.height===CONFIG.DEFAULT_HEIGHT)
-if(!track)track=tracks.filter(t=>t.height<CONFIG.DEFAULT_HEIGHT).sort((a,b)=>b.height-a.height)[0]
-if(track)player.selectVariantTrack(track,true)
+        await player.load(streamUrl);
+        
+        const tracks = player.getVariantTracks();
+        const targetTrack = tracks.find(t => t.height === CONFIG.QUALITY) || tracks[0];
+        player.selectVariantTrack(targetTrack, false);
 
-const range=player.seekRange()
-if(range&&isFinite(range.end))video.currentTime=Math.max(range.start,range.end-CONFIG.DELAY_SECONDS)
+        const range = player.seekRange();
+        video.currentTime = range.end - CONFIG.DELAY;
 
-const colors=['#FF5252','#FFEB3B','#4CAF50','#03A9F4','#E91E63','#00BCD4','#FFC107']
-setInterval(()=>{
-const color=colors[Math.floor(Math.random()*colors.length)]
-document.querySelectorAll('.shaka-current-time,.shaka-duration').forEach(e=>e.style.color=color)
-},1200)
-})
-</script>
+      } catch (e) {
+        console.error("Initialization error:", e);
+      }
+    }
+
+    document.addEventListener('shaka-ui-loaded', initApp);
+  </script>
 </body>
 </html>
