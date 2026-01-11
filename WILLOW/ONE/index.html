@@ -1,90 +1,139 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>WILLOW - SAYAN UPDATED</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>- SAYAN STREAM</title>
+  
   <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
   <style>
-    html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
-    #video-container { width: 100%; height: 100%; position: relative; }
-    video { width: 100%; height: 100%; background: #000; }
-    
-    /* Overlay image styling */
-    #overlay-image {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh; width: 100vw;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    #video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      background: #000;
+    }
+
+    video { width: 100%; height: 100%; object-fit: contain; }
+
+    #watermark {
+      position: absolute;
+      top: 60%;
+      left: 15px;
+      color: rgba(255, 255, 255, 0.12); 
+      font-size: 0.7em; 
+      pointer-events: none;
+      z-index: 2147483647;
+      letter-spacing: 0.5px;
+    }
+
+    #custom-poster {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      object-fit: cover;
+      background: url('https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg') no-repeat center center;
+      background-size: cover;
       z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
     }
-    
-    .shaka-controls-container { z-index: 10 !important; }
+
+    .play-hint {
+      color: white;
+      background: rgba(0,0,0,0.4);
+      padding: 15px;
+      border-radius: 50%;
+    }
+
+    .shaka-spinner-container { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div id="video-container" data-shaka-player-container>
-    <video id="video" class="shaka-video" poster="https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg" autoplay muted playsinline></video>
-    <img id="overlay-image" src="https://i.ibb.co/hJHFC5QQ/poster-20241003-234951.jpg" alt="Thumbnail">
+  <div id="video-container">
+    <video id="video" class="shaka-video" autoplay muted playsinline></video>
+    <div id="watermark">Sayan xyz</div>
+    <div id="custom-poster">
+       <div class="play-hint"><span class="material-icons" style="font-size: 60px;">play_arrow</span></div>
+    </div>
   </div>  
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const manifestUri = 'https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd';
+    const CONFIG = {
+      MANIFEST: 'https://a170aivottlinear-a.akamaihd.net:443/OTTB/bom-nitro/live/dash/enc/f60kqesunw/out/v1/a435ed7a00f947deb4369b46d8f2fb70/cenc.mpd',
+      KEY_ID: '1779C27B9D077A3BA0C9CC1BB9A94B9F',
+      KEY: 'CC5CF3B7928FB9E0A1EE6A8B566F0A8E',
+      DELAY: 10,
+      QUALITY: 396
+    };
+
+    async function initApp() {
       const video = document.getElementById('video');
       const container = document.getElementById('video-container');
-      const overlayImage = document.getElementById('overlay-image');
+      const poster = document.getElementById('custom-poster');
 
-      const player = new shaka.Player(video);
+      const player = new shaka.Player(); 
+      await player.attach(video);
+
       const ui = new shaka.ui.Overlay(player, container, video);
 
-      // প্লেয়ার কনফিগারেশন
       player.configure({
         drm: {
-          clearKeys: {
-            '1779C27B9D077A3BA0C9CC1BB9A94B9F': 'CC5CF3B7928FB9E0A1EE6A8B566F0A8E'
-          }
+          clearKeys: { [CONFIG.KEY_ID.toLowerCase()]: CONFIG.KEY.toLowerCase() }
         },
+        abr: { enabled: false },
         streaming: {
-          // ১০ মিনিট (৬০০ সেকেন্ড) ডিলে রাখার চেষ্টা করবে
-          safeSeekOffset: 10, 
-          lowLatencyMode: false,
+          safeSeekOffset: CONFIG.DELAY,
+          forceTransmuxTS: true
         }
       });
 
       ui.configure({
-        controlPanelElements: [
-          'play_pause', 'spacer', 'time_and_duration', 'mute', 'volume', 'quality', 'fullscreen'
-        ]
+        controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'quality', 'fullscreen'],
+        addLanguageControls: false,
+        addSettingsMenus: ['quality']
       });
 
-      // আনমিউট পলিসি: ইউজার প্রথমবার ক্লিক করলেই সাউন্ড চালু হবে
-      const enableSound = () => {
+      poster.addEventListener('click', () => {
         video.muted = false;
-        console.log("Audio Unmuted");
-        window.removeEventListener('click', enableSound);
-      };
-      window.addEventListener('click', enableSound);
+        video.play();
+        poster.style.display = 'none';
+        
+        const range = player.seekRange();
+        if (range.end > 0) {
+            video.currentTime = range.end - CONFIG.DELAY;
+        }
+      });
 
       try {
-        await player.load(manifestUri);
+        await player.load(CONFIG.MANIFEST);
         
-        // ১০ মিনিট ডিলে সেট করা (লাইভ এজ থেকে ৬০০ সেকেন্ড পেছনে)
-        const seekRange = player.seekRange();
-        video.currentTime = seekRange.end - 600;
+        const tracks = player.getVariantTracks();
+        const targetTrack = tracks.find(t => t.height === CONFIG.QUALITY) || tracks[0];
+        player.selectVariantTrack(targetTrack, true);
 
-        console.log('Video Loaded with 10 min delay');
+        const range = player.seekRange();
+        video.currentTime = range.end - CONFIG.DELAY;
+
       } catch (e) {
-        console.error('Error loading video', e);
+        console.error(e);
       }
+    }
 
-      // ভিডিও প্লে হওয়া শুরু করলে পোস্টার ইমেজ সরিয়ে ফেলা
-      video.addEventListener('playing', () => {
-        if(overlayImage) overlayImage.style.display = 'none';
-      });
-    });
+    document.addEventListener('shaka-ui-loaded', initApp);
   </script>
 </body>
 </html>
