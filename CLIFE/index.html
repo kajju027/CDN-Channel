@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Criclife 1 </title>
+<meta name="referrer" content="no-referrer">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;height:100vh;width:100vw;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+.shaka-video-container{position:absolute;inset:0;width:100%;height:100%;background:#000}
+video{width:100%;height:100%;transition:.2s ease-in-out}
+.mode-fit video{object-fit:contain}
+.mode-fill video{object-fit:fill}
+.mode-zoom video{object-fit:cover}
+.zoom-btn-icon{font-size:20px;cursor:pointer;color:#fff}
+#watermark{position:absolute;top:60%;left:15px;color:rgba(255,255,255,.12);font-size:.6em;pointer-events:none;z-index:2147483647}
+.shaka-spinner-container,.shaka-spinner,.shaka-spinner-svg{display:none!important}
+.shaka-current-time,.shaka-duration{font-weight:600;transition:color .5s linear}
+</style>
+</head>
+
+<body class="mode-fit">
+<div class="shaka-video-container" id="video-container" data-shaka-player>
+<video autoplay playsinline id="main-video"></video>
+<div id="watermark">Sayan xyz</div>
+</div>
+
+<script>
+class MultiZoomButton extends shaka.ui.Element{
+constructor(parent,controls){
+super(parent,controls)
+this.modes=['mode-fit','mode-fill','mode-zoom']
+this.currentModeIndex=0
+this.button_=document.createElement('button')
+this.button_.innerHTML='<span class="material-icons-round zoom-btn-icon">aspect_ratio</span>'
+this.parent.appendChild(this.button_)
+this.eventManager.listen(this.button_,'click',()=>this.updateMode((this.currentModeIndex+1)%this.modes.length))
+}
+updateMode(index){
+document.body.classList.remove(this.modes[this.currentModeIndex])
+this.currentModeIndex=index
+document.body.classList.add(this.modes[this.currentModeIndex])
+this.button_.style.color=index===1?'#FFEB3B':index===2?'#4CAF50':'#fff'
+}}
+MultiZoomButton.Factory=class{create(p,c){return new MultiZoomButton(p,c)}}
+shaka.ui.Controls.registerElement('multi_zoom',new MultiZoomButton.Factory())
+
+document.addEventListener('DOMContentLoaded',async()=>{
+const CONFIG={
+STREAM_URL:"https://ev-fast-mpd.starzplayarabia.com/live/eds/CricLife1/DASH/CricLife1.mpd",
+DRM_KEY_ID:"1e23e51b09a67b83813c17049870bcd4",
+DRM_KEY:"c3d6288e378b0dc55320fd0e6fd2e55f",
+POSTER_URL:"",
+DELAY_SECONDS:0,
+DEFAULT_HEIGHT:360
+}
+
+const video=document.getElementById('main-video')
+video.poster=CONFIG.POSTER_URL
+
+shaka.polyfill.installAll()
+if(!shaka.Player.isBrowserSupported()) return
+
+const player=new shaka.Player()
+await player.attach(video)
+
+const ui=new shaka.ui.Overlay(player,document.getElementById('video-container'),video)
+ui.configure({
+controlPanelElements:['play_pause','time_and_duration','spacer','mute','quality','fullscreen','multi_zoom']
+})
+
+player.configure({
+drm:{clearKeys:{[CONFIG.DRM_KEY_ID]:CONFIG.DRM_KEY}},
+abr:{enabled:false},
+streaming:{
+lowLatencyMode:true,
+bufferingGoal:15,
+rebufferingGoal:2,
+bufferBehind:15
+}
+})
+
+await player.load(CONFIG.STREAM_URL)
+
+const tracks=player.getVariantTracks()
+let track=tracks.find(t=>t.height===CONFIG.DEFAULT_HEIGHT)
+if(!track) track=tracks.filter(t=>t.height<CONFIG.DEFAULT_HEIGHT).sort((a,b)=>b.height-a.height)[0]
+if(track) player.selectVariantTrack(track,true)
+
+const range=player.seekRange()
+if(range && isFinite(range.end))
+video.currentTime=Math.max(range.start,range.end-CONFIG.DELAY_SECONDS)
+
+const colors=['#FF5252','#FFEB3B','#4CAF50','#03A9F4','#E91E63','#00BCD4','#FFC107']
+setInterval(()=>{
+const c=colors[Math.floor(Math.random()*colors.length)]
+document.querySelectorAll('.shaka-current-time,.shaka-duration').forEach(e=>e.style.color=c)
+},1200)
+})
+</script>
+</body>
+</html>
