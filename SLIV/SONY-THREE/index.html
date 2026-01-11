@@ -3,123 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SONY LIV PACK</title>
+  <title>SONY LIV 3 - SAYAN STREAM</title>
   <meta name="referrer" content="no-referrer">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       background: #000;
-      height: 100vh;
-      width: 100vw;
+      height: 100vh; width: 100vw;
       overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
     }
     .shaka-video-container {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
       background: #000;
     }
     video {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
+      background: #000;
       object-fit: contain;
+      transition: object-fit 0.2s ease;
     }
     #watermark {
-      position: absolute;
-      top: 60%;
-      left: 15px;
+      position: absolute; top: 60%; left: 15px;
       color: rgba(255, 255, 255, 0.12); 
       font-size: 0.6em; 
-      pointer-events: none;
-      z-index: 10;
+      pointer-events: none; z-index: 10;
       letter-spacing: 0.5px;
     }
-    .shaka-spinner-container,
-    .shaka-spinner,
-    .shaka-spinner-svg {
-      display: none !important;
-    }
+    .shaka-spinner-container { display: none !important; }
   </style>
 </head>
 
 <body>
 
-  <div class="shaka-video-container" data-shaka-player>
-    <video autoplay playsinline preload="metadata" id="main-video"></video>
-    <div id="watermark">Sayan_xyz</div>
+  <div class="shaka-video-container" data-shaka-player id="video-container">
+    <video autoplay playsinline id="main-video"></video>
+    <div id="watermark">sayan_xyz</div>
   </div>
 
 <script>
+// --- Custom Fit/Fill Button Logic ---
+class ZoomButton extends shaka.ui.Element {
+  constructor(parent, controls) {
+    super(parent, controls);
+    this.button_ = document.createElement('button');
+    this.button_.classList.add('material-icons');
+    this.button_.textContent = 'aspect_ratio'; 
+    this.parent.appendChild(this.button_);
+
+    this.eventManager.listen(this.button_, 'click', () => {
+      const video = this.controls.getVideo();
+      if (video.style.objectFit === 'contain') {
+        video.style.objectFit = 'cover'; // Fill Screen
+      } else if (video.style.objectFit === 'cover') {
+        video.style.objectFit = 'fill'; // Stretch
+      } else {
+        video.style.objectFit = 'contain'; // Fit
+      }
+    });
+  }
+}
+ZoomButton.Factory = class { create(parent, controls) { return new ZoomButton(parent, controls); } };
+shaka.ui.Controls.registerElement('zoom', new ZoomButton.Factory());
+
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // ==========================================
-  // CONFIGURATION - SONU 🔥
-  // ==========================================
   const CONFIG = {
     STREAM_URL: "https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_3_MOB/WDVLive/index.mpd",
     DRM_KEY_ID: "3afa887864e6545aa006db21aeb39054",
     DRM_KEY: "6b8cce271f3cd923d0df32d45b44f6df",
     COOKIE_API: "https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json",
     POSTER_URL: "https://i.ibb.co/5WZ2CNSf/1000029431.jpg",
-    DEFAULT_QUALITY: 540,
-    USER_AGENT: "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6"
+    USER_AGENT: "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6",
+    DELAY: 10
   };
 
   const videoElement = document.getElementById('main-video');
   videoElement.poster = CONFIG.POSTER_URL;
 
-  try {
-    const localThumb = localStorage.getItem('my_saved_poster');
-    if (localThumb) {
-      videoElement.poster = localThumb;
-    } else {
-      fetch(CONFIG.POSTER_URL)
-        .then(res => res.blob())
-        .then(blob => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            try { localStorage.setItem('my_saved_poster', reader.result); } catch (e) {}
-          };
-          reader.readAsDataURL(blob);
-        }).catch(() => {});
-    }
-  } catch (e) {}
-
   shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) return;
-
   const player = new shaka.Player();
   await player.attach(videoElement);
 
-  const container = document.querySelector('.shaka-video-container');
+  const container = document.getElementById('video-container');
   const ui = new shaka.ui.Overlay(player, container, videoElement);
 
   ui.configure({
-    controlPanelElements: ['play_pause','time_and_duration','mute','volume','spacer','language','captions','picture_in_picture','quality','fullscreen'],
-    seekBarColors: { base: 'rgba(255,255,255,0.3)', buffered: '#ff0000', played: '#00ff00' }
+    controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'zoom', 'picture_in_picture', 'quality', 'fullscreen'],
+    seekBarColors: { 
+      base: 'rgba(255, 255, 255, 0.3)', 
+      buffered: 'rgba(255, 255, 255, 0.5)', 
+      played: 'rgb(255, 255, 255)' 
+    }
   });
 
   let cookieVal = "";
+
+  const applyDelay = () => {
+    const range = player.seekRange();
+    if (range.end > 0) {
+      videoElement.currentTime = Math.max(range.start, range.end - CONFIG.DELAY);
+    }
+  };
 
   async function initPlayer() {
     try {
       const response = await fetch(CONFIG.COOKIE_API);
       const data = await response.json();
       if (data.cookieHeader) cookieVal = data.cookieHeader;
-    } catch (e) {
-      console.error("Cookie fetch error");
-    }
+    } catch (e) { console.error("Cookie fetch error"); }
 
     player.getNetworkingEngine().registerRequestFilter((type, request) => {
       request.headers['Referer'] = 'https://www.jiotv.com/';
       request.headers['User-Agent'] = CONFIG.USER_AGENT;
-      
       if (cookieVal) {
         request.headers['Cookie'] = cookieVal;
         if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) && request.uris[0] && !request.uris[0].includes('__hdnea=')) {
@@ -131,19 +133,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     player.configure({
       drm: { clearKeys: { [CONFIG.DRM_KEY_ID]: CONFIG.DRM_KEY } },
-      abr: { enabled: false }
+      abr: { enabled: true }, // Default Quality System Enabled
+      streaming: {
+        bufferingGoal: 30,
+        safeSeekOffset: CONFIG.DELAY,
+        inaccurateManifestTolerance: 0
+      }
     });
 
     try {
       await player.load(CONFIG.STREAM_URL);
-      const tracks = player.getVariantTracks();
-      const targetTrack = tracks.find(t => t.height === CONFIG.DEFAULT_QUALITY) || tracks.sort((a, b) => a.height - b.height)[0];
-      if (targetTrack) {
-        player.selectVariantTrack(targetTrack, true);
-      }
-    } catch (e) {
-      console.error('Player Load Error');
-    }
+      applyDelay();
+    } catch (e) { console.error('Load Error'); }
   }
 
   initPlayer();
