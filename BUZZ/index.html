@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TNT 4 Sports - SAYAN STREAM</title>
+  <title> </title>
   
   <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
@@ -23,7 +23,21 @@
       width: 100%; height: 100%;
       background: #000;
     }
-    video { width: 100%; height: 100%; object-fit: contain; }
+
+    /* ডিফল্ট মোড contain এবং ফুলস্ক্রিনে অটো ফিল লজিক */
+    video { 
+      width: 100%; height: 100%; 
+      object-fit: contain; 
+      transition: object-fit 0.3s ease; 
+    }
+
+    /* ফুলস্ক্রিন করলেই অটোমেটিক Stretch/Fill হবে */
+    .shaka-video-container:fullscreen video,
+    video:fullscreen, 
+    video:-webkit-full-screen { 
+      object-fit: fill !important; 
+    }
+
     #watermark {
       position: absolute;
       top: 60%;
@@ -34,11 +48,12 @@
       z-index: 2147483647;
       letter-spacing: 0.5px;
     }
+
     #custom-poster {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: url('') no-repeat center center;
+      background: url('https://i.ibb.co/5WZ2CNSf/1000029431.jpg') no-repeat center center;
       background-size: cover;
       z-index: 5;
       display: flex;
@@ -52,14 +67,19 @@
       padding: 15px;
       border-radius: 50%;
     }
+
+    /* প্রিমিয়াম হোয়াইট ইউআই ও ক্লিনার লুক */
     .shaka-spinner-container { display: none !important; }
+    .shaka-played-range { background: #ffffff !important; }
+    .shaka-range-container input[type=range]::-webkit-slider-thumb { background: #ffffff !important; }
+    .shaka-bottom-controls { padding: 0 15px 10px 15px; }
   </style>
 </head>
 <body>
 
-  <div id="video-container">
+  <div id="video-container" class="shaka-video-container">
     <video id="video" class="shaka-video" autoplay muted playsinline></video>
-    <div id="watermark">sayan xyz</div>
+    <div id="watermark">Sayan xyz</div>
     <div id="custom-poster">
        <div class="play-hint"><span class="material-icons" style="font-size: 60px;">play_arrow</span></div>
     </div>
@@ -73,11 +93,13 @@
       DELAY: 0,
       QUALITY: 396
     };
+
     async function initApp() {
       const video = document.getElementById('video');
       const container = document.getElementById('video-container');
       const poster = document.getElementById('custom-poster');
 
+      shaka.polyfill.installAll();
       const player = new shaka.Player(); 
       await player.attach(video);
 
@@ -88,47 +110,47 @@
           clearKeys: { [CONFIG.KEY_ID.toLowerCase()]: CONFIG.KEY.toLowerCase() }
         },
         abr: { 
-          enabled: true, // হাই কোয়ালিটি সাপোর্ট করার জন্য অটো বিটরেট অন করা জরুরি
-          switchInterval: 1 // দ্রুত কোয়ালিটি সুইচ হবে
-        },
-        mediaSource: {
-          forceTransmux: true
+          enabled: true, 
+          switchInterval: 1 
         },
         streaming: {
           safeSeekOffset: CONFIG.DELAY,
-          bufferingGoal: 30, // ৩০ সেকেন্ডের ডাটা আগে থেকে লোড করবে
-          rebufferingGoal: 2,
-          bufferBehind: 30
+          bufferingGoal: 30,
+          rebufferingGoal: 2
         }
       });
 
       ui.configure({
         controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'quality', 'fullscreen'],
-        overflowMenuButtons: ['quality']
+        seekBarColors: { 
+          base: 'rgba(255,255,255,0.3)', 
+          buffered: 'rgba(255,255,255,0.5)', 
+          played: '#ffffff' 
+        }
       });
+
+      const applyDelay = () => {
+        const range = player.seekRange();
+        if (range.end > 0) {
+            video.currentTime = Math.max(range.start, range.end - CONFIG.DELAY);
+        }
+      };
 
       poster.addEventListener('click', () => {
         video.muted = false;
         video.play();
         poster.style.display = 'none';
-        
-        const range = player.seekRange();
-        if (range.end > 0) {
-            video.currentTime = range.end - CONFIG.DELAY;
-        }
+        applyDelay();
       });
 
       try {
         await player.load(CONFIG.MANIFEST);
         
-        // শুরুতে ৩৯৬পি থেকে প্লে শুরু করার জন্য
         const tracks = player.getVariantTracks();
         const targetTrack = tracks.find(t => t.height === CONFIG.QUALITY) || tracks[0];
-        player.selectVariantTrack(targetTrack, false); // Clear buffer false রাখা হয়েছে হাই কোয়ালিটির জন্য
+        player.selectVariantTrack(targetTrack, false);
 
-        const range = player.seekRange();
-        video.currentTime = range.end - CONFIG.DELAY;
-
+        applyDelay();
       } catch (e) {
         console.error(e);
       }
