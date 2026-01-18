@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prime By Allrounder</title>     
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+    }
+    .shaka-video-container:fullscreen video {
+      object-fit: fill !important;
+    }
+    .shaka-spinner-container, .shaka-spinner, .shaka-spinner-svg {
+      display: none !important;
+    }
+    #watermark {
+      position: absolute;
+      top: 60%;
+      left: 15px;
+      color: rgba(255, 255, 255, 0.15); 
+      font-size: 0.8em; 
+      pointer-events: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="shaka-video-container" data-shaka-player>
+    <video autoplay playsinline muted id="video" poster=" "></video>
+    <div id="watermark">Sayan xyz</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      shaka.polyfill.installAll();
+
+      if (!shaka.Player.isBrowserSupported()) return;
+
+      const video = document.getElementById('video');
+      const player = new shaka.Player();
+      await player.attach(video);
+
+      const container = document.querySelector('.shaka-video-container');
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      ui.configure({
+        controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'quality', 'fullscreen', 'overflow_menu'],
+        overflowMenuButtons: ['captions', 'language', 'picture_in_picture'],
+        volumeBarColors: { base: 'rgba(0, 136, 255, 0.3)', level: 'rgb(0, 136, 255)' },
+        seekBarColors: { base: 'rgba(0, 136, 255, 0.3)', buffered: 'rgba(0, 136, 255, 0.6)', played: 'rgb(0, 136, 255)' }
+      });
+
+      player.configure({
+        drm: {
+          clearKeys: {
+            "4e8b5ddac5332a4e66c002b4c0f22322": "6b7fe24f7a16343bd447b0b30f68b7b2"
+          }
+        },
+        streaming: {
+          lowLatencyMode: true,
+          bufferingGoal: 15,
+          rebufferingGoal: 3
+        }
+      });
+
+      try {
+        await player.load('https://neacdnpop3-edge02.aws.playco.com/live/eds/Criclife_3/DASH/Criclife_3.mpd');
+        video.play();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  </script>
+</body>
+</html>
+
