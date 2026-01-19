@@ -1,88 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sony LIV 1 - SAYAN STREAM</title>
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { background: #000; height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif; }
-    #video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
-    video { width: 100%; height: 100%; object-fit: contain; transition: object-fit 0.2s ease; }
-    #watermark { position: absolute; top: 60%; left: 15px; color: rgba(255, 255, 255, 0.12); font-size: 0.7em; pointer-events: none; z-index: 2147483647; letter-spacing: 0.5px; }
-    #custom-poster { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://i.ibb.co/5WZ2CNSf/1000029431.jpg') no-repeat center center; background-size: cover; z-index: 5; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .play-hint { color: white; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 50%; }
-    .shaka-spinner-container { display: none !important; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> $Sony LIV Events 1</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden}
+.shaka-video-container{position:absolute;inset:0}
+
+video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+}
+
+
+.shaka-volume-bar-container,
+.shaka-spinner-container{display:none!important}
+
+.custom-watermark{
+  position:absolute;
+  top:60%;
+  left:5%;
+  font-size:13px;
+  letter-spacing:1.5px;
+  color:rgba(255,255,255,.35);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 1.2s ease;
+  z-index:3;
+}
+</style>
 </head>
+
 <body>
-  <div id="video-container">
-    <video id="video" class="shaka-video" autoplay muted playsinline></video>
-    <div id="watermark">Sayan xyz</div>
-    <div id="custom-poster">
-       <div class="play-hint"><span class="material-icons" style="font-size: 60px;">play_arrow</span></div>
-    </div>
-  </div>  
-  <script>
-    const CONFIG = {
-      MANIFEST: 'https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_1_MOB/WDVLive/index.mpd',
-      KEY_ID: '4e4c5dba5bfe5a7c9338bc086eb80379',
-      KEY: 'b8e8932f440084e1d2b705fa52eef94b',
-      COOKIE_API: "https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json",
-      USER_AGENT: "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6",
-      DELAY: 5
-    };
-    class ZoomButton extends shaka.ui.Element {
-      constructor(parent, controls) {
-        super(parent, controls);
-        this.button_ = document.createElement('button');
-        this.button_.classList.add('material-icons');
-        this.button_.textContent = 'aspect_ratio'; 
-        this.parent.appendChild(this.button_);
-        this.eventManager.listen(this.button_, 'click', () => {
-          const video = this.controls.getVideo();
-          if (video.style.objectFit === 'contain') video.style.objectFit = 'cover';
-          else if (video.style.objectFit === 'cover') video.style.objectFit = 'fill';
-          else video.style.objectFit = 'contain';
-        });
+<div class="shaka-video-container">
+  <video id="video" autoplay playsinline></video>
+
+  <!-- Poster overlay -->
+  <div id="poster-overlay"></div>
+
+  <div class="custom-watermark" id="watermark">Sayan xyz</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', initApp);
+
+const LOG={
+  info:m=>console.log('%c[PLAYER]','color:#4caf50',m),
+  warn:m=>console.warn('%c[PLAYER]','color:#ff9800',m),
+  error:m=>console.error('%c[PLAYER]','color:#f44336',m)
+};
+
+const STREAM_URL = "https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_1_MOB/WDVLive/index.mpd";
+
+const CLEAR_KEY_CONFIG = {
+  drm:{
+    clearKeys:{
+      "4e4c5dba5bfe5a7c9338bc086eb80379":
+      "b8e8932f440084e1d2b705fa52eef94b"
+    }
+  }
+};
+
+async function initApp(){
+  shaka.polyfill.installAll();
+
+  if(!shaka.Player.isBrowserSupported()){
+    LOG.error('Browser not supported'); return;
+  }
+
+  const video = document.getElementById('video');
+  const container = document.querySelector('.shaka-video-container');
+  const watermark = document.getElementById('watermark');
+  const posterOverlay = document.getElementById('poster-overlay');
+
+  const player = new shaka.Player();
+  await player.attach(video);
+
+  const ui = new shaka.ui.Overlay(player, container, video);
+
+  ui.configure({
+    controlPanelElements: [
+      'play_pause','mute','time_and_duration',
+      'spacer','quality','overflow_menu','fullscreen'
+    ],
+    overflowMenuButtons: [
+      'picture_in_picture','language','captions'
+    ]
+  });
+
+
+  const colors=['#1a73e8','#00b020','#00e0f5','#9b00a6'];
+  let idx = 0;
+  function applySeek(){
+    ui.configure({
+      seekBarColors:{
+        base:'rgba(255,255,255,.15)',
+        played:colors[idx],
+        buffered:colors[(idx+1)%colors.length]
+      }
+    });
+  }
+  applySeek();
+  setInterval(()=>{idx=(idx+1)%colors.length; applySeek()}, 14400000);
+
+  async function smartLoad(){
+    try{
+      player.configure({ drm:{} });
+      await player.load(STREAM_URL);
+      LOG.info('Cookie / default playback OK');
+    }catch{
+      try{
+        player.configure(CLEAR_KEY_CONFIG);
+        await player.load(STREAM_URL);
+        LOG.info('ClearKey fallback OK');
+      }catch{
+        LOG.error('Playback failed');
       }
     }
-    ZoomButton.Factory = class { create(parent, controls) { return new ZoomButton(parent, controls); } };
-    shaka.ui.Controls.registerElement('zoom', new ZoomButton.Factory());
+  }
 
-    async function initApp() {
-      const video = document.getElementById('video');
-      const container = document.getElementById('video-container');
-      const poster = document.getElementById('custom-poster');
-      const player = new shaka.Player(); 
-      await player.attach(video);
-      const ui = new shaka.ui.Overlay(player, container, video);
+  await smartLoad();
 
-      let cookieVal = "";
-      try { const r = await fetch(CONFIG.COOKIE_API); const d = await r.json(); cookieVal = d.cookieHeader; } catch (e) {}
-
-      player.getNetworkingEngine().registerRequestFilter((type, request) => {
-        request.headers['Referer'] = 'https://www.jiotv.com/';
-        request.headers['User-Agent'] = CONFIG.USER_AGENT;
-        if (cookieVal) {
-          request.headers['Cookie'] = cookieVal;
-          if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) && request.uris[0] && !request.uris[0].includes('__hdnea=')) {
-            request.uris[0] += (request.uris[0].includes('?') ? '&' : '?') + cookieVal;
-          }
-        }
-      });
-
-      player.configure({ drm: { clearKeys: { [CONFIG.KEY_ID]: CONFIG.KEY } }, abr: { enabled: true }, streaming: { bufferingGoal: 30, safeSeekOffset: CONFIG.DELAY, inaccurateManifestTolerance: 0 } });
-      ui.configure({ controlPanelElements: ['play_pause', 'time_and_duration', 'spacer', 'mute', 'volume', 'zoom', 'picture_in_picture', 'quality', 'fullscreen'], seekBarColors: { base: 'rgba(255,255,255,0.3)', buffered: 'rgba(255,255,255,0.5)', played: 'rgb(255,255,255)' } });
-
-      const applyDelay = () => { if (player.seekRange().end > 0) video.currentTime = Math.max(player.seekRange().start, player.seekRange().end - CONFIG.DELAY); };
-      poster.addEventListener('click', () => { video.muted = false; video.play(); poster.style.display = 'none'; applyDelay(); });
-      try { await player.load(CONFIG.MANIFEST); applyDelay(); } catch (e) {}
+  player.addEventListener('error', ()=>{});
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState==='visible' && video.paused){
+      video.play().catch(()=>{});
     }
-    document.addEventListener('shaka-ui-loaded', initApp);
-  </script>
+  });
+
+  setTimeout(()=>watermark.style.opacity='0.4', 5000);
+
+  video.addEventListener('loadeddata', ()=>{
+    if(posterOverlay) posterOverlay.style.display='none';
+  });
+}
+
+</script>
 </body>
 </html>
