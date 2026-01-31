@@ -265,7 +265,7 @@ function applyCustomPreferences(player, videoElement) {
 
   if (player.isLive()) {
     const seekRange = player.seekRange();
-    const targetTime = seekRange.end - 5;
+    const targetTime = seekRange.end - 1;
     if (targetTime > seekRange.start) {
       videoElement.currentTime = targetTime;
       LOG.info("Live Delay Applied: 5 seconds");
