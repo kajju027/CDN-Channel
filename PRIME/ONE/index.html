@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title> </title>
+<title>Shaka Player Custom Delay</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
 
 <style>
+/* --- CSS RESET & BASE STYLES --- */
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
   width:100%;
@@ -18,6 +19,7 @@ html,body{
   font-family:Arial,Helvetica,sans-serif
 }
 
+/* --- VIDEO CONTAINER --- */
 .shaka-video-container{
   position:absolute;
   inset:0;
@@ -27,17 +29,19 @@ html,body{
 video{
   width:100%;
   height:100%;
-  object-fit:contain;
+  object-fit:contain; /* Keeps aspect ratio */
   background:#000;
   position: relative;
   z-index: 0;
 }
 
+/* --- HIDE DEFAULT SHAKA ELEMENTS --- */
 .shaka-volume-bar-container,
 .shaka-spinner-container{
   display:none!important
 }
 
+/* --- CUSTOM LOADING POSTER --- */
 #poster-overlay{
   position:absolute;
   inset:0;
@@ -45,8 +49,9 @@ video{
   display:flex;
   align-items:center;
   justify-content:center;
-  z-index: 1; 
+  z-index: 20; /* High z-index to cover everything initially */
   pointer-events: none;
+  transition: opacity 0.5s ease; /* Smooth fade out */
 }
 
 #loading-gif {
@@ -56,15 +61,17 @@ video{
   display: block;
 }
 
+/* --- CONTROL VISIBILITY --- */
 .shaka-controls-container {
   z-index: 10 !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
 
+/* --- WATERMARK --- */
 .custom-watermark{
   position:absolute;
-  z-index:20;
+  z-index:15;
   pointer-events:none;
   top:65%;
   left:16%;
@@ -89,19 +96,18 @@ video{
 <body>
 
 <div class="shaka-video-container" id="player-container">
-  <video id="video" playsinline autoplay muted preload="metadata"></video>
+  <video id="video" playsinline muted preload="metadata"></video>
 
   <div id="poster-overlay">
     <img id="loading-gif" alt="Loading..." />
   </div>
 
-  <div class="custom-watermark" id="watermark">             Sayan Official ™</div>
+  <div class="custom-watermark" id="watermark">           Sayan Official ™</div>
 </div>
 
 <script>
 
-  //  🔗 DIRECT STREAM CONFIG
-  
+//  🔗 STREAM CONFIGURATION
 const STREAM_MPD = "https://otte.live.fly.ww.aiv-cdn.net/bom-nitro/live/dash/enc/feh5lmnfkl/out/v1/2f30a0bcdbc64a09b2e101d0b71ed290/cenc.mpd";
 
 // 🔐 ClearKey DRM
@@ -110,14 +116,15 @@ const CLEARKEY = {
   key: "de34baecf3f167ad1c847836397d38ca"
 };
 
-// 🔐 Widevine DRM
+// 🔐 Widevine DRM (Optional)
 const WIDEVINE = {
   license: "PUT_WIDEVINE_LICENSE_URL_HERE"
 };
+
 const GIF_URL = "https://elamplificador.com/wp-content/uploads/2023/08/trucos-amazon-primevideo-ksrD-620x349@abc.png";
 const GIF_STORAGE_KEY = "saved_poster_pic_v3";
-let isFirstLoad = true; 
 
+// 🛠 LOGGING UTILITY
 const LOG = {
   main: (m) => console.log(`%c[SYSTEM] %c${m}`, "color:#fff;background:#333;padding:2px 4px;border-radius:2px;", "color:#fff"),
   success: (m) => console.log(`%c[SUCCESS] %c${m}`, "color:#fff;background:#4caf50;padding:2px 4px;border-radius:2px;", "color:#4caf50"),
@@ -132,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();         
 });
 
+// --- CACHE LOADING GIF ---
 async function setupLoadingGif() {
   const imgElement = document.getElementById('loading-gif');
   const cachedGif = localStorage.getItem(GIF_STORAGE_KEY);
@@ -157,6 +165,7 @@ async function setupLoadingGif() {
   }
 }
 
+// --- INITIALIZE SHAKA PLAYER ---
 async function initApp(){
   try{
     shaka.polyfill.installAll();
@@ -165,9 +174,9 @@ async function initApp(){
       return;
     }
 
-    const video=document.getElementById('video');
-    const container=document.getElementById('player-container');
-    const posterOverlay=document.getElementById('poster-overlay');
+    const video = document.getElementById('video');
+    const container = document.getElementById('player-container');
+    const posterOverlay = document.getElementById('poster-overlay');
 
     const player = new shaka.Player(); 
     await player.attach(video);
@@ -175,22 +184,27 @@ async function initApp(){
 
     const ui = new shaka.ui.Overlay(player, container, video);
 
+    // --- CONFIGURATION ---
     player.configure({
-      streaming:{
-        bufferingGoal:90,
-        rebufferingGoal:25,
-        bufferBehind:60,
-        lowLatencyMode:false
+      streaming: {
+        bufferingGoal: 20,    
+        rebufferingGoal: 5,   
+        bufferBehind: 30,
+        lowLatencyMode: true, 
+        jumpLargeGaps: true,
+        inaccurateManifestTolerance: 0
       }
     });
 
+    // --- UI CONFIGURATION ---
     ui.configure({
       controlPanelElements:['play_pause','mute','time_and_duration','spacer','quality','overflow_menu','fullscreen'],
       overflowMenuButtons:['picture_in_picture','language','captions']
     });
 
+    // Random colors for Seek Bar
     const colors=['#1a73e8','#00b020','#00e0f5','#9b00a6','#ff5722','#fdd835','#e91e63','#00c853'];
-    const i=Math.floor(Math.random()*colors.length);
+    const i = Math.floor(Math.random()*colors.length);
     ui.configure({
       seekBarColors:{
         base:'rgba(255,255,255,.12)',
@@ -199,77 +213,71 @@ async function initApp(){
       }
     });
 
-    function hideOverlayPermanent() {
-      if(isFirstLoad && video.readyState >= 3) {
-        posterOverlay.style.display='none';
-        isFirstLoad = false;
-        LOG.success("Loading overlay removed");
-      }
-    }
-
-    video.addEventListener('loadeddata', hideOverlayPermanent);
-    video.addEventListener('playing', hideOverlayPermanent);
-
+    // --- DRM SETUP ---
     let drmConfig = {};
-
     if(CLEARKEY.keyId && CLEARKEY.key){
-      drmConfig.clearKeys = {
-        [CLEARKEY.keyId]: CLEARKEY.key
-      };
-      LOG.success("ClearKey DRM configured");
+      drmConfig.clearKeys = { [CLEARKEY.keyId]: CLEARKEY.key };
     }
-
     if(WIDEVINE.license){
-      drmConfig.servers = {
-        'com.widevine.alpha': WIDEVINE.license
-      };
-      LOG.success("Widevine DRM configured");
+      drmConfig.servers = { 'com.widevine.alpha': WIDEVINE.license };
     }
-
     if(Object.keys(drmConfig).length > 0){
       player.configure({ drm: drmConfig });
     }
 
+    // --- LOAD THE STREAM ---
     LOG.info("Loading MPD Stream...");
+    
+    // We load the stream but DON'T autoplay via HTML attribute to control the start time precisely
     await player.load(STREAM_MPD);
-    LOG.success("Stream Loaded Successfully");
+    LOG.success("Stream Loaded (Behind Overlay)");
 
-    applyCustomPreferences(player, video);
-
-    video.addEventListener('play',()=>{
-      if(video.muted){
-        video.muted=false;
-        LOG.info("Auto Unmuted");
+    // --- APPLY SETTINGS BEFORE SHOWING VIDEO ---
+    
+    // 1. Force 540p
+    const tracks = player.getVariantTracks();
+    if (tracks.length > 0) {
+      const targetHeight = 540;
+      const bestTrack = tracks.reduce((prev, curr) => 
+        (Math.abs(curr.height - targetHeight) < Math.abs(prev.height - targetHeight) ? curr : prev));
+      if (bestTrack) {
+        player.configure({ abr: { enabled: false } });
+        player.selectVariantTrack(bestTrack, true);
+        LOG.success(`Quality Preset: ${bestTrack.height}p`);
       }
-    });
+    }
+
+    // 2. Set Start Time (-5 seconds delay)
+    if (player.isLive()) {
+        const seekRange = player.seekRange();
+        const targetTime = Math.max(seekRange.start, seekRange.end - 5);
+        
+        // Set time immediately
+        video.currentTime = targetTime;
+        LOG.info(`Start Time Set: -5s Delay (${targetTime})`);
+    }
+
+    // 3. Start Playback & Remove Overlay
+    try {
+        await video.play();
+        video.muted = false; // Unmute after play start
+        posterOverlay.style.opacity = '0'; // Fade out
+        setTimeout(() => { posterOverlay.style.display = 'none'; }, 500); // Remove from DOM
+        LOG.success("Playback Started with Delay");
+    } catch (e) {
+        LOG.warn("Autoplay blocked, waiting for user interaction");
+        // If autoplay fails, we still remove overlay on interaction
+        posterOverlay.style.cursor = 'pointer';
+        posterOverlay.addEventListener('click', async () => {
+            video.play();
+            video.muted = false;
+            posterOverlay.style.opacity = '0';
+            setTimeout(() => { posterOverlay.style.display = 'none'; }, 500);
+        });
+    }
 
   } catch(e) {
     LOG.error(`Initialization Error: ${e.message}`);
-  }
-}
-
-function applyCustomPreferences(player, videoElement) {
-
-  const tracks = player.getVariantTracks();
-  if (tracks.length > 0) {
-    const targetHeight = 540;
-    const bestTrack = tracks.reduce((prev, curr) => 
-      (Math.abs(curr.height - targetHeight) < Math.abs(prev.height - targetHeight) ? curr : prev));
-
-    if (bestTrack) {
-      player.configure({ abr: { enabled: false } });
-      player.selectVariantTrack(bestTrack, true); 
-      LOG.success(`Quality Forced: ${bestTrack.height}p`);
-    }
-  }
-
-  if (player.isLive()) {
-    const seekRange = player.seekRange();
-    const targetTime = seekRange.end - 5;
-    if (targetTime > seekRange.start) {
-      videoElement.currentTime = targetTime;
-      LOG.info("Live Delay Applied: 5 seconds");
-    }
   }
 }
 </script>
