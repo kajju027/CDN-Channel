@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title> </title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Hide Volume Slider but keep Mute button functional */
+    .shaka-volume-bar-container {
+      display: none !important;
+    }
+
+    /* Exact Watermark Style & Position */
+    .custom-watermark {
+      position: absolute;
+      z-index: 40;
+      pointer-events: none;
+      top: 65%;
+      left: 6%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .6px;
+      color: rgba(255, 255, 255, 0.22);
+      text-transform: none;
+    }
+
+    @media (max-width: 700px) {
+      .custom-watermark {
+        font-size: 9px;
+        top: 60%;
+        left: 16%;
+      }
+    }
+
+    .shaka-spinner-container { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" autoplay playsinline></video>
+    <div class="custom-watermark">            Sayan Official ™</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) return;
+
+      const video = document.getElementById('video');
+      const container = document.getElementById('player-container');
+      const player = new shaka.Player(video);
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      ui.configure({
+        controlPanelElements: [
+          'play_pause',
+          'mute', 
+          'time_and_duration',
+          'spacer',
+          'quality',
+          'picture_in_picture',
+          'fullscreen'
+        ],
+        seekBarColors: {
+          base: 'white',    /* Base color of the bar */
+          buffered: 'red',  /* Color for buffered video */
+          played: 'green'   /* Color for played video */
+        }
+      });
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('id');
+
+      if (!targetId) return;
+
+      try {
+        const [channelsRes, cookieRes] = await Promise.all([
+          fetch('https://sayan-json-official.pages.dev/ONLY-SPORTS/ID.json'),
+          fetch('https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json')
+        ]);
+
+        const channels = await channelsRes.json();
+        const cookieData = await cookieRes.json();
+        const cookieHeader = cookieData.cookieHeader;
+
+        const channel = channels.find(c => c.id === targetId);
+        if (!channel) return;
+
+        player.configure({
+          drm: { 
+            clearKeys: { 
+              [channel.keyId]: channel.key 
+            } 
+          }
+        });
+
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+          request.headers['User-Agent'] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+          request.headers['Cookie'] = cookieHeader;
+          
+          if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST || 
+              type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+            if (request.uris[0] && !request.uris[0].includes('__hdnea=')) {
+              const sep = request.uris[0].includes('?') ? '&' : '?';
+              request.uris[0] += sep + cookieHeader;
+            }
+          }
+        });
+
+        await player.load(channel.url1);
+        video.play();
+      } catch (e) {
+        console.error("Playback failed", e);
+      }
+    });
+  </script>
+</body>
+</html>
