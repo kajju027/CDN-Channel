@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CXSPORTS x SAYAN XYZ</title>
+  <meta name="referrer" content="no-referrer">
+
+  <!-- Shaka Player (UI + controls) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:Segoe UI, Roboto, Arial, Helvetica, sans-serif}
+
+    .shaka-video-container{
+      position:fixed;
+      inset:0;
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    video{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      background:#000;
+      position:relative;
+      z-index:0;
+    }
+
+    /* Poster / loading overlay */
+    #poster-overlay{
+      position:absolute;
+      inset:0;
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index: 15;
+      pointer-events:none;
+    }
+    #loading-gif { width: 40%; max-width: 420px; height: auto; display:block; }
+
+    /* Controls tweaks */
+    .shaka-volume-bar-container,
+    .shaka-spinner-container { display:none!important; }
+
+    .shaka-controls-container { z-index: 30 !important; visibility: visible !important; opacity: 1 !important; }
+
+    /* Watermark */
+    .custom-watermark{
+      position:absolute;
+      z-index:40;
+      pointer-events:none;
+      top:65%;
+      left:6%;
+      transform: translateY(-50%);
+      font-size:11px;
+      font-weight:600;
+      letter-spacing:.6px;
+      color: rgba(255,255,255,0.22);
+      text-transform:none;
+    }
+
+    @media(max-width:700px){
+      .custom-watermark{ font-size:9px; top:60%; left:16%; }
+      #loading-gif { width: 64%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" playsinline preload="metadata"></video>
+
+    <div id="poster-overlay">
+      <img id="loading-gif" alt="Loading..." />
+    </div>
+
+    <div class="custom-watermark" id="watermark">         Sayan Official ™</div>
+  </div>
+
+  <script>
+  
+    const CHANNEL_JSON = "https://sayan-json-official.pages.dev/ONLY-SPORTS/ID.json";
+    const COOKIE_JSON_FALLBACK = "https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json";
+    const LOADING_GIF_URL = "https://i.ibb.co/wNbGmPmZ/1000041898.gif";
+    const GIF_STORAGE_KEY = "saved_poster_wc_v6";
+    const STORAGE_UNMUTE_KEY = 'SAYAN_PLAYER_UNMUTED_PERMANENT';
+
+    const LOG = {
+      main: m => console.log(`[APP] ${m}`),
+      info: m => console.log(`[INFO] ${m}`),
+      success: m => console.log(`[OK] ${m}`),
+      warn: m => console.warn(`[WARN] ${m}`),
+      error: m => console.error(`[ERR] ${m}`)
+    };
+
+    function ensureDefaultPreference() {
+      if (localStorage.getItem(STORAGE_UNMUTE_KEY) === null) {
+        localStorage.setItem(STORAGE_UNMUTE_KEY, 'true');
+      }
+    }
+
+    async function setupLoadingGif() {
+      const img = document.getElementById('loading-gif');
+      const cached = localStorage.getItem(GIF_STORAGE_KEY);
+      if (cached) {
+        img.src = cached;
+        LOG.success("Loading GIF loaded from localStorage");
+      } else {
+        img.src = LOADING_GIF_URL;
+        LOG.info("Fetching GIF to cache...");
+        try {
+          const res = await fetch(LOADING_GIF_URL);
+          const blob = await res.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            try { localStorage.setItem(GIF_STORAGE_KEY, reader.result); LOG.success("GIF cached"); } 
+            catch (e) { LOG.warn("Could not cache GIF (quota?)"); }
+          };
+          reader.readAsDataURL(blob);
+        } catch (e) { LOG.warn("GIF fetch failed"); }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      ensureDefaultPreference();
+      await setupLoadingGif();
+
+      shaka.polyfill.installAll();
+      const videoEl = document.getElementById('video');
+      const posterOverlay = document.getElementById('poster-overlay');
+
+      const desiredUnmuted = localStorage.getItem(STORAGE_UNMUTE_KEY) === 'true';
+      videoEl.muted = !desiredUnmuted;
+      videoEl.addEventListener('volumechange', () => {
+        try { localStorage.setItem(STORAGE_UNMUTE_KEY, (!videoEl.muted).toString()); } catch (e) {}
+      });
+
+      const container = document.getElementById('player-container');
+      container.addEventListener('click', async (e) => {
+        const t = e.target;
+        if (t.closest('.shaka-controls-container') || t.closest('.shaka-control-button')) return;
+        try {
+          videoEl.muted = false;
+          localStorage.setItem(STORAGE_UNMUTE_KEY, 'true');
+          await videoEl.play().catch(()=>{});
+        } catch (ignore) {}
+      }, { passive: true });
+
+      if (!shaka.Player.isBrowserSupported()) {
+        LOG.error("Shaka Player not supported in this browser.");
+        alert("Use Only Chrome Browser !!");
+        return;
+      }
+
+      const player = new shaka.Player();
+      try {
+        await player.attach(videoEl);
+        LOG.success("Player Attached to video element");
+      } catch (e) {
+        LOG.error("Failed to attach player: " + e);
+        return;
+      }
+
+      const ui = new shaka.ui.Overlay(player, container, videoEl);
+
+      ui.configure({
+        controlPanelElements: ['play_pause','mute','time_and_duration','spacer','quality','overflow_menu','fullscreen'],
+        overflowMenuButtons: ['picture_in_picture','language','captions']
+      });
+      const colors = ['#1a73e8','#00b020','#00e0f5','#9b00a6','#ff5722','#fdd835','#e91e63','#00c853'];
+      const i = Math.floor(Math.random()*colors.length);
+      ui.configure({ seekBarColors: { base:'rgba(255,255,255,0.10)', played: colors[i], buffered: colors[(i+1)%colors.length] } });
+      player.configure({
+        abr: { enabled: true },
+        streaming: {
+          bufferingGoal: 30,
+          rebufferingGoal: 10,
+          lowLatencyMode: true
+        }
+      });
+
+      let channelCookieToken = "";
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        try {
+          request.headers['Referer'] = 'https://www.jiotv.com/';
+          request.headers['User-Agent'] = 'plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6';
+        } catch (e) {}
+
+        if (channelCookieToken && (type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT)) {
+          const uri = request.uris && request.uris[0];
+          if (uri && !uri.includes('__hdnea__')) {
+            request.uris[0] = uri + (uri.includes('?') ? '&' : '?') + channelCookieToken;
+          }
+        }
+      });
+
+      try {
+        const params = new URLSearchParams(window.location.search);
+
+        const requested = params.get('id') || params.get('channel') || params.get('channel_id') || params.get('cid');
+        if (!requested) {
+          alert('No Channel ID In Your URL. Example: ?id=144');
+          return;
+        }
+
+        // Fetch primary channel JSON
+        const [chRes, cookieRes] = await Promise.all([
+          fetch(CHANNEL_JSON, { cache: 'no-store' }).catch(() => null),
+          fetch(COOKIE_JSON_FALLBACK, { cache: 'no-store' }).catch(() => null)
+        ]);
+
+        const allChannels = chRes ? await chRes.json() : [];
+        const cookieData = cookieRes ? await cookieRes.json() : null;
+
+        if (cookieData && (cookieData.cookieHeader || cookieData.cookie)) {
+          channelCookieToken = cookieData.cookieHeader || cookieData.cookie;
+          LOG.info("Loaded fallback cookie header from cookie JSON");
+        }
+        
+        const channelIdStr = String(requested);
+        const channel = (allChannels || []).find(ch => {
+          return String(ch.channel_id || ch.id || ch.channelId || ch.cid || ch.id) === channelIdStr;
+        });
+
+        if (!channel) {
+          LOG.error('Channel not found: ' + channelIdStr);
+          alert('Error: Channel Not Found !!');
+          return;
+        }
+
+        LOG.success(`Found channel: ${channel.channel_name || channel.channelName || channel.name || 'Unknown'}`);
+        const streamUrl = channel.channel_url || channel.channelURL || channel.url || channel.url1 || channel.stream || channel.channelUrl;
+        const keyId = channel.keyId || channel.key_id || channel.kid;
+        const key = channel.key || channel.clearKey || channel.keyValue;
+        const cookieFromChannel = channel.cookie || channel.cookieHeader || channel.token;
+
+        if (cookieFromChannel) {
+          channelCookieToken = cookieFromChannel;
+          LOG.info("Using Cookie Token From Channel JSON");
+        }
+
+        if (!streamUrl) {
+          LOG.error('No Stream URL Found In Channel Data');
+          alert('Error : Stream URL Not Found !! ');
+          return;
+        }
+
+
+        document.title = `${channel.channel_name || channel.channelName || channel.name || 'Channel'} - Prime TV • Sayan 2026`;
+
+        let drmConfig = {};
+        if (keyId && key) {
+          drmConfig.clearKeys = { [keyId]: key };
+          LOG.success("ClearKey configured");
+        }
+        if (channel.widevineLicense || channel.widevine_license || channel.license) {
+          drmConfig.servers = drmConfig.servers || {};
+          drmConfig.servers['com.widevine.alpha'] = channel.widevineLicense || channel.widevine_license || channel.license;
+          LOG.success("Widevine license configured");
+        }
+        if (Object.keys(drmConfig).length) player.configure({ drm: drmConfig });
+
+        try {
+          LOG.info("Loading stream: " + streamUrl);
+          await player.load(streamUrl);
+          LOG.success("Stream loaded");
+
+          const hideOverlay = () => {
+            try { posterOverlay.style.display = 'none'; } catch (e) {}
+          };
+          videoEl.addEventListener('loadeddata', hideOverlay, { once: true });
+          videoEl.addEventListener('playing', hideOverlay, { once: true });
+
+          if (player.isLive && typeof player.isLive === 'function' && player.isLive()) {
+            try {
+              const seekRange = player.seekRange();
+              if (seekRange && typeof seekRange.end === 'number') {
+                const target = Math.max(seekRange.start, seekRange.end - 5);
+                if (target > seekRange.start) {
+                  videoEl.currentTime = target;
+                  LOG.info("Applied small live delay (~5s)");
+                }
+              }
+            } catch (e) { /* ignore */ }
+          }
+          try { await videoEl.play().catch(()=>{}); } catch (e) {}
+
+        } catch (err) {
+          LOG.error("Error Loading Stream: " + (err && err.message ? err.message : err));
+          const code = err && err.code;
+          if (code === 1002) {
+            alert('DRM Error: Invalid Key/KeyId Or DRM Failure !!');
+          } else if (code === 4002) {
+            alert('Stream Error : Invalid MPD Manifest !!');
+          } else if (code === 4000) {
+            alert('Network Error: Could Not Fetch Stream Manifest !!');
+          } else {
+            alert(`Error loading stream: ${err && err.message ? err.message : 'Unknown error'}`);
+          }
+        }
+
+      } catch (fetchErr) {
+        LOG.error("Error fetching channel data: " + fetchErr);
+        alert('Error Loading Channel Information !!');
+      }
+
+    }); 
+  </script>
+</body>
+</html>
