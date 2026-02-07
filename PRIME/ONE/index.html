@@ -102,12 +102,12 @@ video{
 
   //  🔗 DIRECT STREAM CONFIG
   
-const STREAM_MPD = "https://a65live-pv-ta-amazon.akamaized.net/syd-nitro/live/clients/dash/enc/fclywfntvr/out/v1/e21d21ec21e34c7192049a44ee3de428/cenc.mpd";
+const STREAM_MPD = "https://otte.live.fly.ww.aiv-cdn.net/bom-nitro/live/dash/enc/feh5lmnfkl/out/v1/2f30a0bcdbc64a09b2e101d0b71ed290/cenc.mpd";
 
 // 🔐 ClearKey DRM
 const CLEARKEY = {
-  keyId: "ed76c18710d621a87c89dedc7c13019f",
-  key: "7241c82fe48525a9dc6be6d7bb86611f"
+  keyId: "dc9ab6bff6028c1685847a104e2d5a21",
+  key: "de34baecf3f167ad1c847836397d38ca"
 };
 
 // 🔐 Widevine DRM
@@ -252,7 +252,7 @@ function applyCustomPreferences(player, videoElement) {
 
   const tracks = player.getVariantTracks();
   if (tracks.length > 0) {
-    const targetHeight = 396;
+    const targetHeight = 540;
     const bestTrack = tracks.reduce((prev, curr) => 
       (Math.abs(curr.height - targetHeight) < Math.abs(prev.height - targetHeight) ? curr : prev));
 
