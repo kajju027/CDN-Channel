@@ -4,66 +4,75 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Prime By Sayan</title>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
-    .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; }
-    video { width: 100%; height: 100%; object-fit: contain; }
-    .shaka-volume-bar-container { display: none !important; }
-    .custom-watermark { position: absolute; z-index: 40; pointer-events: none; top: 65%; left: 6%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.22); }
-    @media (max-width: 700px) { .custom-watermark { font-size: 9px; top: 60%; left: 16%; } }
-    .shaka-spinner-container { display: none !important; }
+    html, body { width:100%; height:100%; background:#000; overflow:hidden; font-family:sans-serif; }
+    .shaka-video-container { position:absolute; inset:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; }
+    video { width:100%; height:100%; object-fit:contain; }
+    .shaka-volume-bar-container { display:none !important; }
+    .custom-watermark { position:absolute; z-index:40; pointer-events:none; top:65%; left:6%; transform:translateY(-50%); font-size:11px; font-weight:600; color:rgba(255,255,255,0.22); }
+    @media (max-width:700px){ .custom-watermark{font-size:9px; top:60%; left:16%;} }
+    .shaka-spinner-container{display:none!important;}
   </style>
 </head>
+
 <body>
 
-  <div class="shaka-video-container" id="player-container">
-    <video id="video" autoplay playsinline></video>
-    <div class="custom-watermark">     ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎  ‎ ‎    Sayan Official ™‎ ‎ ‎ </div>
-  </div>
+<div class="shaka-video-container" id="player-container">
+  <video id="video" autoplay playsinline></video>
+  <div class="custom-watermark">Sayan Official ™</div>
+</div>
 
-  <script>
-    const manifestUrl = "https://live-pv-ta.amazon.fastly-edge.com/syd-nitro/live/dash/enc/chzr1hyion/out/v1/d7130f460d41486ea7e8e3eb45f0522f/cenc.mpd";
-    const keyId = "0b3da1a7909770f53373b0fbba96ceb0";
-    const key = "4561b97456e7b68904bf01057cc8e6ab";
+<script>
+const manifestUrl="https://otte.live.fly.ww.aiv-cdn.net/sin-nitro/live/clients/dash/enc/ipxaioae1o/out/v1/03b021dd3d594969bda330ce75c90910/cenc.mpd";
+const keyId="7982671b98c81192aa77fe211ffcbb77";
+const key="bf6dbb6bcf1d4046a77e3097b92a13ae";
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) return;
 
-      const video = document.getElementById('video');
-      const container = document.getElementById('player-container');
-      const player = new shaka.Player();
-      await player.attach(video);
+  const video = document.getElementById('video');
+  const container = document.getElementById('player-container');
+  const player = new shaka.Player();
+  await player.attach(video);
 
-      const ui = new shaka.ui.Overlay(player, container, video);
-      ui.configure({
-        controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'quality', 'picture_in_picture', 'fullscreen'],
-        seekBarColors: { base: 'white', buffered: 'red', played: 'green' }
-     });
+  const ui = new shaka.ui.Overlay(player, container, video);
+  ui.configure({
+    controlPanelElements: ['play_pause','mute','time_and_duration','spacer','quality','picture_in_picture','fullscreen'],
+    seekBarColors: { base:'white', buffered:'red', played:'green' }
+  });
 
-      player.configure({
-        drm: { 
-          clearKeys: { [keyId]: key } 
-        },
-        streaming: {
-          lowLatencyMode: true,
-          rebufferingGoal: 2,
-          bufferingGoal: 15,
-          ignoreDeviceMaxResolution: true
-        }
-      });
-
-      try {
-        await player.load(manifestUrl);
-        const liveEdge = player.seekRange().end;
-        video.currentTime = liveEdge - 5;
-      } catch (e) {
-        console.error(e);
+  /* 🔥 ONLY DELAY REMOVAL TUNING (UI untouched) */
+  player.configure({
+    drm:{ clearKeys:{ [keyId]:key }},
+    streaming:{
+      lowLatencyMode:true,
+      rebufferingGoal:0.5,
+      bufferingGoal:7,
+      segmentPrefetchLimit:1,
+      ignoreDeviceMaxResolution:true,
+      autoCorrectDrift:true
+    },
+    manifest:{
+      dash:{
+        autoCorrectDrift:true,
+        clockSyncUri:"https://time.akamai.com/?iso"
       }
-    });
-  </script>
+    }
+  });
+
+  try{
+    await player.load(manifestUrl);
+    const liveEdge = player.seekRange().end;
+    video.currentTime = liveEdge - 1;
+  }catch(e){console.error(e);}
+});
+</script>
+
 </body>
 </html>
