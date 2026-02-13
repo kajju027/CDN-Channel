@@ -22,6 +22,9 @@
       inset: 0;
       width: 100%;
       height: 100%;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
     }
     video {
       width: 100%;
@@ -34,12 +37,30 @@
     .shaka-spinner-svg {
       display: none !important;
     }
+
+    /* --- Custom Watermark CSS --- */
+    .custom-watermark { 
+      position: absolute; 
+      z-index: 40; 
+      pointer-events: none; 
+      top: 65%; 
+      left: 6%; 
+      transform: translateY(-50%); 
+      font-size: 11px; 
+      font-weight: 600; 
+      color: rgba(255, 255, 255, 0.22); 
+    }
+    @media (max-width: 700px) { 
+      .custom-watermark { font-size: 9px; top: 60%; left: 16%; } 
+    }
   </style>
 </head>
     
 <body>
   <div class="shaka-video-container" data-shaka-player>
     <video autoplay playsinline preload="metadata"></video>
+    
+    <div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎    Sayan Official ™</div>
   </div>
 
   <script>
@@ -70,6 +91,7 @@
           streamUrl = channelData.channel_url.split('?')[0]; 
           drmConfig.clearKeys[channelData.keyId] = channelData.key;
           cookieHeader = cookieData.cookieHeader;
+          document.title = channelData.channel_name + " - Sayan Official"; // Dynamic Title
         }
       } catch (e) { console.error("Data fetch error"); }
 
@@ -80,24 +102,33 @@
       const container = document.querySelector('.shaka-video-container');
       const ui = new shaka.ui.Overlay(player, container, video);
 
-      // আপনার রিকোয়েস্ট করা ৩টি কালার এখানে যোগ করা হয়েছে
+      // Picture-in-Picture (PiP) added here
       ui.configure({
-        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','quality','fullscreen'],
+        controlPanelElements: [
+          'play_pause',
+          'time_and_duration',
+          'spacer',
+          'language',
+          'captions',
+          'picture_in_picture', /* PiP Button Added */
+          'quality',
+          'fullscreen'
+        ],
         seekBarColors: {
-          base: 'white',      // ব্যাকগ্রাউন্ড কালার
-          buffered: 'red',    // যতটুকু লোড/বাফার হয়েছে তার কালার
-          played: 'green'     // যতটুকু প্লে হয়েছে তার কালার
+          base: 'white',      
+          buffered: 'red',    
+          played: 'green'     
         }
       });
 
-      // 5 সেকেন্ড ডিলের ফাইনাল অপ্টিমাইজেশন
+      // 5 Second Delay & Fast Loading Option kept exactly same
       player.configure({
         drm: drmConfig,
         manifest: {
-          defaultPresentationDelay: 5 // লাইভ এজ থেকে ৫ সেকেন্ড পিছিয়ে রাখবে
+          defaultPresentationDelay: 5 
         },
         streaming: {
-          safeSeekOffset: 5, // বাফারিং স্টার্ট পয়েন্ট ৫ সেকেন্ড পিছনে
+          safeSeekOffset: 5, 
           bufferingGoal: 6,
           rebufferingGoal: 2,
           alwaysStreamText: true,
