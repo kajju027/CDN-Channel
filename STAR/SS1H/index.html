@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>  </title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FMP9REY96D"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-FMP9REY96D');
+  </script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+    }
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+    }
+  </style>
+</head>
+    
+<body>
+  <div class="shaka-video-container" data-shaka-player>
+    <video autoplay playsinline preload="metadata"></video>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error('Browser not supported!');
+        return;
+      }
+
+      const video = document.querySelector('video');
+      const player = new shaka.Player();
+      await player.attach(video);
+
+      const container = document.querySelector('.shaka-video-container');
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      // UI Configuration - Removed 'mute' and 'volume'
+      ui.configure({
+        controlPanelElements: [
+          'play_pause','time_and_duration',
+          'spacer','language','captions','picture_in_picture',
+          'quality','fullscreen'
+        ],
+        seekBarColors: {
+          base: 'white',
+          buffered: 'red',
+          played: 'green'
+        }
+      });
+
+      let drmConfig = {
+        clearKeys: {
+          "8ea9b607549252068e260a5f4d7dd321": "350c0aaffedf51cc1502e9543c7c885e"
+        }
+      };
+
+      let streamUrl = "https://jiotvpllive.cdn.jio.com/bpk-tv/Star_Sports_1_Hindi_BTS/output/index.mpd";
+      let cookieHeader = ""; // Initialize empty cookie
+
+      // Fetch cookie from the JSON URL
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json');
+        if (response.ok) {
+          const data = await response.json();
+          cookieHeader = data.cookieHeader; // Extracting cookieHeader from JSON
+        }
+      } catch (error) {
+        console.error("Error fetching cookie JSON:", error);
+      }
+
+      player.configure({
+        drm: drmConfig
+      });
+
+      // Intercept network requests to inject headers and parameters
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        request.headers['Referer'] = 'https://www.jiotv.com/';
+        request.headers['User-Agent'] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+        
+        if (cookieHeader) {
+          request.headers['Cookie'] = cookieHeader;
+
+          if (
+            (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+            request.uris[0] &&
+            !request.uris[0].includes('__hdnea__=')
+          ) {
+            const sep = request.uris[0].includes('?') ? '&' : '?';
+            request.uris[0] += sep + cookieHeader;
+          }
+        }
+      });
+
+      // Load the stream
+      try {
+        await player.load(streamUrl);
+        video.play();
+      } catch (e) {
+        console.error('Error loading the player:', e);
+      }
+    });
+  </script>
+
+  <script>(function(s){s.dataset.zone='10603308',s.src='https://bvtpk.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+</body>
+</html>
+
