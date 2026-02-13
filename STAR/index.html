@@ -80,16 +80,24 @@
       const container = document.querySelector('.shaka-video-container');
       const ui = new shaka.ui.Overlay(player, container, video);
 
+      // আপনার রিকোয়েস্ট করা ৩টি কালার এখানে যোগ করা হয়েছে
       ui.configure({
         controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','quality','fullscreen'],
+        seekBarColors: {
+          base: 'white',      // ব্যাকগ্রাউন্ড কালার
+          buffered: 'red',    // যতটুকু লোড/বাফার হয়েছে তার কালার
+          played: 'green'     // যতটুকু প্লে হয়েছে তার কালার
+        }
       });
 
-      // Crucial optimization for instant start with 5s delay
+      // 5 সেকেন্ড ডিলের ফাইনাল অপ্টিমাইজেশন
       player.configure({
         drm: drmConfig,
+        manifest: {
+          defaultPresentationDelay: 5 // লাইভ এজ থেকে ৫ সেকেন্ড পিছিয়ে রাখবে
+        },
         streaming: {
-          // এটি প্লেয়ারকে শুরুতেই ৫ সেকেন্ড পিছিয়ে লোড করতে বাধ্য করবে
-          safeSeekOffset: 5, 
+          safeSeekOffset: 5, // বাফারিং স্টার্ট পয়েন্ট ৫ সেকেন্ড পিছনে
           bufferingGoal: 6,
           rebufferingGoal: 2,
           alwaysStreamText: true,
@@ -111,7 +119,6 @@
       });
 
       try {
-        // load() কল করার সময় Shaka নিজে থেকেই safeSeekOffset অনুযায়ী ৫ সেকেন্ড পিছিয়ে স্টার্ট করবে
         await player.load(streamUrl);
         video.play();
       } catch (e) {}
