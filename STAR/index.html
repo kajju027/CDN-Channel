@@ -3,18 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cric Tv Sony Liv 2</title>
+  <title>Cric Tv Live</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
-  
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FMP9REY96D"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-FMP9REY96D');
-  </script>
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,7 +34,6 @@
     .shaka-spinner-svg {
       display: none !important;
     }
-    /* Error Message Style */
     #error-message {
       color: white;
       position: absolute;
@@ -66,16 +57,12 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) {
-        console.error('Browser not supported!');
-        return;
-      }
+      if (!shaka.Player.isBrowserSupported()) return;
 
       const errorDiv = document.getElementById('error-message');
       const urlParams = new URLSearchParams(window.location.search);
       const channelId = urlParams.get('id');
 
-      // Check if ID parameter exists
       if (!channelId) {
         errorDiv.innerText = "Please provide a Channel ID (e.g., ?id=204)";
         errorDiv.style.display = "block";
@@ -86,44 +73,33 @@
       let drmConfig = { clearKeys: {} };
       let cookieHeader = "";
 
-      // 1. Fetch Channel Data (MPD, KeyId, Key)
+      // Fetch Channel Data
       try {
         const chanResponse = await fetch('https://allrounderid.pages.dev/api/jiotv2.json');
-        if (chanResponse.ok) {
-          const channels = await chanResponse.json();
-          const channelData = channels.find(c => c.channel_id === channelId);
+        const channels = await chanResponse.json();
+        const channelData = channels.find(c => c.channel_id === channelId);
 
-          if (channelData) {
-            // Remove existing cookie/params from the MPD url from JSON to keep it clean
-            streamUrl = channelData.channel_url.split('?')[0]; 
-            // Set DRM Keys
-            drmConfig.clearKeys[channelData.keyId] = channelData.key;
-            document.title = channelData.channel_name + " - Cric Tv"; // Dynamic Title Update
-          } else {
-            errorDiv.innerText = "Channel not found for ID: " + channelId;
-            errorDiv.style.display = "block";
-            return;
-          }
+        if (channelData) {
+          streamUrl = channelData.channel_url.split('?')[0]; 
+          drmConfig.clearKeys[channelData.keyId] = channelData.key;
+          document.title = channelData.channel_name;
+        } else {
+          errorDiv.innerText = "Channel not found!";
+          errorDiv.style.display = "block";
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching channel API:", error);
-        errorDiv.innerText = "Failed to load channel list.";
+      } catch (e) {
+        errorDiv.innerText = "API Error!";
         errorDiv.style.display = "block";
-        return;
       }
 
-      // 2. Fetch Cookie from GitHub JSON
+      // Fetch Cookie
       try {
-        const cookieResponse = await fetch('https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json');
-        if (cookieResponse.ok) {
-          const cookieData = await cookieResponse.json();
-          cookieHeader = cookieData.cookieHeader;
-        }
-      } catch (error) {
-        console.error("Error fetching cookie JSON:", error);
-      }
+        const cookieRes = await fetch('https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json');
+        const cookieData = await cookieRes.json();
+        cookieHeader = cookieData.cookieHeader;
+      } catch (e) {}
 
-      // 3. Initialize Shaka Player
       const video = document.querySelector('video');
       const player = new shaka.Player();
       await player.attach(video);
@@ -131,51 +107,45 @@
       const container = document.querySelector('.shaka-video-container');
       const ui = new shaka.ui.Overlay(player, container, video);
 
-      // UI Configuration - Kept fast, removed mute & volume
       ui.configure({
-        controlPanelElements: [
-          'play_pause','time_and_duration',
-          'spacer','language','captions','picture_in_picture',
-          'quality','fullscreen'
-        ],
-        seekBarColors: {
-          base: 'white',
-          buffered: 'red',
-          played: 'green'
+        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+        seekBarColors: { base: 'white', buffered: 'red', played: 'green' }
+      });
+
+      // Player Fast Loading & Buffering Configuration
+      player.configure({
+        drm: drmConfig,
+        streaming: {
+          bufferingGoal: 10, // ১০ সেকেন্ড বাফার লক্ষ্য (দ্রুত লোড হবে)
+          rebufferingGoal: 2,
+          bufferBehind: 10
         }
       });
 
-      player.configure({
-        drm: drmConfig
-      });
-
-      // 4. Intercept network requests and apply headers/cookies
       player.getNetworkingEngine().registerRequestFilter((type, request) => {
         request.headers['Referer'] = 'https://www.jiotv.com/';
         request.headers['User-Agent'] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
         
         if (cookieHeader) {
           request.headers['Cookie'] = cookieHeader;
-
-          if (
-            (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
-            request.uris[0] &&
-            !request.uris[0].includes('__hdnea__=')
-          ) {
+          if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) && !request.uris[0].includes('__hdnea__=')) {
             const sep = request.uris[0].includes('?') ? '&' : '?';
             request.uris[0] += sep + cookieHeader;
           }
         }
       });
 
-      // 5. Load Stream
       try {
         await player.load(streamUrl);
+        
+        // ৫ সেকেন্ড পিছিয়ে দেওয়া (Delay System)
+        const seekRange = player.seekRange();
+        const startPos = seekRange.end - 5; // ৫ সেকেন্ড মাইনাস
+        video.currentTime = startPos;
+        
         video.play();
       } catch (e) {
-        console.error('Error loading the player:', e);
-        errorDiv.innerText = "Error playing stream. It might be offline.";
+        errorDiv.innerText = "Stream Offline!";
         errorDiv.style.display = "block";
       }
     });
