@@ -41,17 +41,17 @@
 
       player.configure({
         streaming: {
-          bufferingGoal: 10,
-          rebufferingGoal: 2,
+          bufferingGoal: 2,
+          rebufferingGoal: 0.5,
           lowLatencyMode: true,
           inaccurateManifestTolerance: 0,
           jumpLargeGaps: true,
-          gapDetectionThreshold: 0.5
+          alwaysStreamText: false
         },
         abr: {
           enabled: true,
-          switchInterval: 5,
-          defaultBandwidthEstimate: 800000
+          defaultBandwidthEstimate: 1000000,
+          switchInterval: 2
         }
       });
 
@@ -71,13 +71,6 @@
         if (streamUrl) {
           player.configure({ drm: { clearKeys: clearKeys } });
           await player.load(streamUrl);
-          
-          if (player.isLive()) {
-             const seekRange = player.seekRange();
-             if (seekRange.end - seekRange.start > 5) {
-               video.currentTime = seekRange.end - 5;
-             }
-          }
           video.play();
         }
       } catch (e) {}
