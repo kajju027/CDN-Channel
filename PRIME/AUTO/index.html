@@ -6,104 +6,82 @@
   <title>Prime By Sayan</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  
   <style>
-  
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
     .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; }
     video { width: 100%; height: 100%; object-fit: contain; }
     .shaka-volume-bar-container { display: none !important; }
-    /* Watermark Style */
     .custom-watermark { position: absolute; z-index: 40; pointer-events: none; top: 65%; left: 6%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.22); }
     @media (max-width: 700px) { .custom-watermark { font-size: 9px; top: 60%; left: 16%; } }
     .shaka-spinner-container { display: none !important; }
   </style>
 </head>
 <body>
-
   <div class="shaka-video-container" id="player-container">
     <video id="video" autoplay playsinline></video>
     <div class="custom-watermark">‎‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
   </div>
-
   <script>
- 
     const DATA_URL = "https://raw.githubusercontent.com/Cricketstan/Allrounder-/refs/heads/main/prame.html";
 
     async function initPlayer() {
       shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) {
-        console.error('Browser not supported!');
-        return;
-      }
+      if (!shaka.Player.isBrowserSupported()) return;
 
       const video = document.getElementById('video');
       const container = document.getElementById('player-container');
-      const player = new shaka.Player();
-      await player.attach(video);
-
+      const player = new shaka.Player(video);
       const ui = new shaka.ui.Overlay(player, container, video);
+
       ui.configure({
         controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'quality', 'picture_in_picture', 'fullscreen'],
         seekBarColors: { base: 'white', buffered: 'red', played: 'green' }
       });
 
+      player.configure({
+        streaming: {
+          bufferingGoal: 10,
+          rebufferingGoal: 2,
+          lowLatencyMode: true,
+          inaccurateManifestTolerance: 0,
+          jumpLargeGaps: true,
+          gapDetectionThreshold: 0.5
+        },
+        abr: {
+          enabled: true,
+          switchInterval: 5,
+          defaultBandwidthEstimate: 800000
+        }
+      });
+
       try {
-        console.log("Fetching data from GitHub...");
         const response = await fetch(DATA_URL);
         const textData = await response.text();
 
         const urlMatch = textData.match(/streamUrl\s*=\s*["']([^"']+)["']/);
         const streamUrl = urlMatch ? urlMatch[1].trim() : null;
 
-        // 2. ClearKeys (তালা-চাবি) বের করা
-        // এটি খুঁজবে: "keyId": "key" ফরম্যাট
-        // (32 অক্ষরের হেক্স কোড খুঁজবে)
         const keyMatch = textData.match(/["']([a-fA-F0-9]{32})["']\s*:\s*["']([a-fA-F0-9]{32})["']/);
-        
         let clearKeys = {};
         if (keyMatch) {
-            const keyId = keyMatch[1];
-            const key = keyMatch[2];
-            clearKeys[keyId] = key;
-            console.log("Keys found:", clearKeys);
-        } else {
-            console.warn("No keys found in external file");
+          clearKeys[keyMatch[1]] = keyMatch[2];
         }
 
-        if (!streamUrl) {
-            alert("Video Link not found in the source file!");
-            return;
-        }
-
-    
-        player.configure({
-          drm: { 
-            clearKeys: clearKeys 
-          },
-          streaming: {
-            lowLatencyMode: true,
-            rebufferingGoal: 2,
-            bufferingGoal: 15,
-            ignoreDeviceMaxResolution: true
+        if (streamUrl) {
+          player.configure({ drm: { clearKeys: clearKeys } });
+          await player.load(streamUrl);
+          
+          if (player.isLive()) {
+             const seekRange = player.seekRange();
+             if (seekRange.end - seekRange.start > 5) {
+               video.currentTime = seekRange.end - 5;
+             }
           }
-        });
-
-        console.log("Loading Stream:", streamUrl);
-       
-        await player.load(streamUrl);
-       
-        if (player.isLive()) {
-            const seekRange = player.seekRange();
-            video.currentTime = seekRange.end - 5;
+          video.play();
         }
-
-      } catch (e) {
-        console.error("Error setting up player:", e);
-      }
+      } catch (e) {}
     }
-
     document.addEventListener('DOMContentLoaded', initPlayer);
   </script>
 </body>
