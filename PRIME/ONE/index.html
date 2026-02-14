@@ -3,17 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Prime Premium Player</title>
+  <title>Super Fast Player</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player/dist/shaka-player.ui.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player/dist/controls.css" />
 
   <style>
-    /* --- CORE RESET & LAYOUT --- */
+    /* --- RESET & LAYOUT --- */
     * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
     
     .shaka-video-container { 
       width: 100%; 
@@ -21,11 +19,10 @@
       background: #000; 
       display: flex; 
       align-items: center; 
-      justify-content: center; 
-      position: relative;
+      justify-content: center;
     }
 
-    /* Video Object Fit handling */
+    /* Video starts in 'contain' mode */
     video { 
       width: 100%; 
       height: 100%; 
@@ -33,232 +30,131 @@
       transition: object-fit 0.3s ease; 
     }
 
-    /* --- CUSTOM POSTER & BIG PLAY BUTTON --- */
-    #custom-poster {
-      position: absolute;
-      inset: 0;
-      background: #000 url('https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.5s ease;
-    }
-    #custom-poster::before {
-      content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4);
-    }
+    /* --- UI CUSTOMIZATION --- */
     
-    .play-btn-circle {
-      width: 80px; height: 80px;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(5px);
-      border: 2px solid rgba(255,255,255,0.8);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      position: relative;
-      z-index: 2;
-      transition: transform 0.2s, background 0.2s;
-      animation: pulse 2s infinite;
+    /* 1. Small & Stylish Play Button (Shokhini Style) */
+    .shaka-play-button-container {
+      background: rgba(255, 255, 255, 0.15) !important;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 50% !important;
+      width: 60px !important;  /* Smaller size */
+      height: 60px !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
     }
-    .play-btn-circle:hover {
-      transform: scale(1.1);
-      background: rgba(255, 0, 0, 0.7);
+    .shaka-play-button-container:hover {
+      background: rgba(255, 0, 0, 0.8) !important;
       border-color: red;
     }
-    .play-btn-circle i {
-      color: white; font-size: 30px; margin-left: 4px;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
-      70% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    .shaka-play-button {
+      font-size: 20px !important; /* Smaller icon */
+      padding: 0 !important;
     }
 
-    /* --- UI CUSTOMIZATION (YouTube Style) --- */
-    /* Remove native volume slider container if needed, or style it */
-    .shaka-volume-bar-container { display: none !important; } 
-    
-    /* Watermark */
+    /* 2. Premium Seeker Bar */
+    .shaka-seek-bar-container {
+      height: 5px !important;
+      border-radius: 2px;
+      margin-bottom: 5px;
+    }
+
+    /* 3. Watermark */
     .custom-watermark {
       position: absolute;
       top: 20px; right: 25px;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.3);
       z-index: 10;
       pointer-events: none;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      font-family: sans-serif;
     }
 
-    /* Custom Zoom Button in Controls */
-    .shaka-custom-zoom-button {
-      font-size: 18px;
-      color: white;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 0 10px;
-      transition: color 0.2s;
-    }
-    .shaka-custom-zoom-button:hover { color: #ff0000; }
-
-    /* Hide Shaka Spinner */
+    /* Hide unnecessary elements */
+    .shaka-volume-bar-container { display: none !important; } 
     .shaka-spinner-container { display: none !important; }
-
-    /* --- SEEK BAR COLORS --- */
-    /* Premium White Look customization via CSS variables where supported */
-    .shaka-seek-bar-container { height: 6px !important; border-radius: 3px; }
+    .shaka-overflow-menu-button { display: none !important; } /* Clean look */
   </style>
 </head>
 
 <body>
 
 <div class="shaka-video-container" id="player-container">
-  
-  <div id="custom-poster">
-    <div class="play-btn-circle" id="big-play-btn">
-      <i class="fa-solid fa-play"></i>
-    </div>
-  </div>
-
-  <video id="video" playsinline></video>
-  
-  <div class="custom-watermark">Sayan Official &trade;</div>
+  <video id="video" autoplay playsinline></video>
+  <div class="custom-watermark">Sayan Official ™</div>
 </div>
 
 <script>
-// --- CONFIGURATION ---
-const manifestUrl = "https://abjljyfaaaaaaaamm37ridc4meoi7.ta.bia-cf.live.pv-cdn.net/syd-nitro/live/clients/dash/enc/xiode6nqik/out/v1/83258a3c4a924171ae4f48eb86eed620/cenc.mpd";
+const manifestUrl = "https://a166aivottlinear-a.akamaihd.net/OTTB/bom-nitro/live/dash/enc/igjuwt107o/out/v1/489e489428ce4992b9bd784d6b948ab3/cenc.mpd";
 const keyId = "2904b17cb64c996dbc254981b7602863";
 const key = "66a7ef671b84498e64f94e8401fe8cb9";
-const LIVE_DELAY_SECONDS = 4; // Strict 4s delay
 
-// --- MAIN LOGIC ---
-document.addEventListener('DOMContentLoaded', async () => {
-  shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) {
-    console.error('Browser not supported!');
-    return;
+// --- FULLSCREEN LOGIC (Auto Fill) ---
+document.addEventListener('fullscreenchange', () => {
+  const video = document.getElementById('video');
+  if (document.fullscreenElement) {
+    // Fullscreen active -> Stretch/Fill the screen
+    video.style.objectFit = 'fill'; 
+  } else {
+    // Fullscreen exit -> Normal aspect ratio
+    video.style.objectFit = 'contain';
   }
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Install Polyfills
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) return;
 
   const video = document.getElementById('video');
   const container = document.getElementById('player-container');
-  const poster = document.getElementById('custom-poster');
-  const playBtn = document.getElementById('big-play-btn');
-
+  
   const player = new shaka.Player(video);
   const ui = new shaka.ui.Overlay(player, container, video);
 
-  // 1. UI Configuration (Three colors, Custom Buttons)
+  // 1. UI Config (Minimal & Premium)
   ui.configure({
     controlPanelElements: [
       'play_pause',
       'time_and_duration',
       'spacer',
-      'mute', 
       'quality',
       'fullscreen'
-      // We will inject the Zoom button manually to ensure it works perfectly
     ],
     seekBarColors: {
-      base: 'rgba(255, 255, 255, 0.3)',   // Base track
-      buffered: 'rgba(255, 255, 255, 0.7)', // Buffered part
-      played: '#FFFFFF'                   // Premium White seeker
-    },
-    fadeDelay: 3
+      base: 'rgba(255, 255, 255, 0.3)',
+      buffered: 'red',
+      played: '#FFFFFF' // Premium White
+    }
   });
 
-  // 2. High Performance Tuning (No Buffering, Fast Start)
+  // 2. Player Config (Speed & Stability)
   player.configure({
     drm: { clearKeys: { [keyId]: key } },
     streaming: {
       lowLatencyMode: true,
-      bufferingGoal: 3,         // Keep buffer tight for live
-      rebufferingGoal: 0.1,     // Start playing almost immediately after seek
-      jumpLargeGaps: true,      // Jump over holes in the stream
-      inaccurateManifestTolerance: 0, 
-      segmentPrefetchLimit: 2,  // Prefetch for speed
-      retryParameters: { maxAttempts: 5, baseDelay: 500, backoffFactor: 2 },
+      bufferingGoal: 5,        // Increased slightly for stability
+      rebufferingGoal: 1,
+      jumpLargeGaps: true,
       ignoreDeviceMaxResolution: true
-    },
-    manifest: {
-      dash: {
-        autoCorrectDrift: true,
-        clockSyncUri: "https://time.akamai.com/?iso" // Accurate time sync
-      }
     }
   });
 
-  // 3. Inject Custom Zoom Button into Shaka Controls
-  function addZoomButton() {
-    const controlsPanel = container.querySelector('.shaka-controls-button-panel');
-    if (controlsPanel) {
-      // Create button
-      const btn = document.createElement('button');
-      btn.className = 'shaka-custom-zoom-button material-icons-round';
-      btn.innerHTML = '<i class="fa-solid fa-expand"></i>';
-      btn.title = "Change Aspect Ratio";
-      
-      // Zoom Logic: Cycle Contain -> Cover -> Fill
-      const modes = ['contain', 'cover', 'fill'];
-      let currentMode = 0;
-      
-      btn.addEventListener('click', () => {
-        currentMode = (currentMode + 1) % modes.length;
-        video.style.objectFit = modes[currentMode];
-        
-        // Update Icon based on mode (Visual Feedback)
-        if(modes[currentMode] === 'contain') btn.innerHTML = '<i class="fa-solid fa-expand"></i>';
-        else if(modes[currentMode] === 'cover') btn.innerHTML = '<i class="fa-solid fa-compress"></i>';
-        else btn.innerHTML = '<i class="fa-solid fa-maximize"></i>';
-      });
-
-      // Insert before fullscreen button (usually last)
-      controlsPanel.insertBefore(btn, controlsPanel.lastChild);
-    }
-  }
-
-  // 4. Click-to-Play Logic (Unmute & Start)
-  playBtn.addEventListener('click', async () => {
-    poster.style.opacity = '0';
-    setTimeout(() => poster.style.display = 'none', 500);
-    
-    video.muted = false; // Unmute
-    try {
-      await video.play();
-      addZoomButton(); // Add zoom button once UI is active
-    } catch (e) { console.log("Play interrupted", e); }
-  });
-
-  // 5. Load & Sync Logic (The 4s Delay Magic)
+  // 3. Load & Play
   try {
     await player.load(manifestUrl);
-    
-    // Force the video to start exactly 4 seconds behind the live edge
+    // Logic: Start 4s behind live edge once, then let it run naturally.
+    // We removed the 'setInterval' loop so it won't stop every 5s.
     if (player.isLive()) {
-      const seekRange = player.seekRange();
-      // Logic: End of Seekable Range (Live Edge) minus 4 seconds
-      video.currentTime = seekRange.end - LIVE_DELAY_SECONDS; 
+      video.currentTime = player.seekRange().end - 4;
     }
-
+    console.log('Video loaded and playing smoothly');
   } catch (e) {
-    console.error('Error loading video:', e);
+    console.error('Error:', e);
   }
-
-  // Keep strict sync during playback
-  setInterval(() => {
-    if (player.isLive() && !video.paused && !video.buffering) {
-        const liveEdge = player.seekRange().end;
-        const latency = liveEdge - video.currentTime;
-        // If we fall too far behind (e.g., > 10s) or get too close (< 1s), nudge back to 4s
-        if (latency > 10 || latency < 1) {
-            console.log("Auto-correcting drift...");
-            video.currentTime = liveEdge - LIVE_DELAY_SECONDS;
-        }
-    }
-  }, 5000); // Check every 5 seconds
 });
 </script>
 
