@@ -2,161 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Super Fast Player</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player/dist/shaka-player.ui.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player/dist/controls.css" />
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prime TV • Sayan 2026</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
   <style>
-    /* --- RESET & LAYOUT --- */
-    * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
-    
-    .shaka-video-container { 
-      width: 100%; 
-      height: 100%; 
-      background: #000; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-    }
-
-    /* Video starts in 'contain' mode */
-    video { 
-      width: 100%; 
-      height: 100%; 
-      object-fit: contain; 
-      transition: object-fit 0.3s ease; 
-    }
-
-    /* --- UI CUSTOMIZATION --- */
-    
-    /* 1. Small & Stylish Play Button (Shokhini Style) */
-    .shaka-play-button-container {
-      background: rgba(255, 255, 255, 0.15) !important;
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255,255,255,0.5);
-      border-radius: 50% !important;
-      width: 60px !important;  /* Smaller size */
-      height: 60px !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-    .shaka-play-button-container:hover {
-      background: rgba(255, 0, 0, 0.8) !important;
-      border-color: red;
-    }
-    .shaka-play-button {
-      font-size: 20px !important; /* Smaller icon */
-      padding: 0 !important;
-    }
-
-    /* 2. Premium Seeker Bar */
-    .shaka-seek-bar-container {
-      height: 5px !important;
-      border-radius: 2px;
-      margin-bottom: 5px;
-    }
-
-    /* 3. Watermark */
-    .custom-watermark {
-      position: absolute;
-      top: 20px; right: 25px;
-      font-size: 12px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.3);
-      z-index: 10;
-      pointer-events: none;
-      font-family: sans-serif;
-    }
-
-    /* Hide unnecessary elements */
-    .shaka-volume-bar-container { display: none !important; } 
-    .shaka-spinner-container { display: none !important; }
-    .shaka-overflow-menu-button { display: none !important; } /* Clean look */
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+    .shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+    video{width:100%;height:100%;object-fit:contain;background:#000}
+    .shaka-volume-bar-container,.shaka-spinner-container{display:none!important}
+    .custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+    @media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
   </style>
 </head>
-
 <body>
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" autoplay playsinline preload="metadata"></video>
+    <div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) return;
 
-<div class="shaka-video-container" id="player-container">
-  <video id="video" autoplay playsinline></video>
-  <div class="custom-watermark">Sayan Official ™</div>
-</div>
+      const videoEl = document.getElementById('video');
+      const container = document.getElementById('player-container');
+      
+      const streamUrl = "https://ta.bia-cf.live.pv-cdn.net/bom-nitro/live/clients/dash/enc/1pasle3psa/out/v1/d25c047441ed467595c8085109e0d73f/cenc.mpd";
+      const keyId = "e2135bf415cfea9ea3e6b26a6fce8fc3";
+      const key = "2671da359a0a860668baca2e34f243f6";
 
-<script>
-const manifestUrl = "https://abjljyfaaaaaaaamm37ridc4meoi7.ta.bia-cf.live.pv-cdn.net/syd-nitro/live/clients/dash/enc/xiode6nqik/out/v1/83258a3c4a924171ae4f48eb86eed620/cenc.mpd";
-const keyId = "2904b17cb64c996dbc254981b7602863";
-const key = "66a7ef671b84498e64f94e8401fe8cb9";
+      const player = new shaka.Player();
+      await player.attach(videoEl);
+      const ui = new shaka.ui.Overlay(player, container, videoEl);
 
-// --- FULLSCREEN LOGIC (Auto Fill) ---
-document.addEventListener('fullscreenchange', () => {
-  const video = document.getElementById('video');
-  if (document.fullscreenElement) {
-    // Fullscreen active -> Stretch/Fill the screen
-    video.style.objectFit = 'fill'; 
-  } else {
-    // Fullscreen exit -> Normal aspect ratio
-    video.style.objectFit = 'contain';
-  }
-});
+      ui.configure({
+        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+        seekBarColors: {
+          base: 'white',
+          buffered: 'red',
+          played: 'green'
+        }
+      });
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // Install Polyfills
-  shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) return;
+      player.configure({
+        drm: {
+          clearKeys: {
+            [keyId]: key
+          }
+        },
+        abr: {
+          defaultBandwidthEstimate: 250000, 
+          enabled: true,
+          switchInterval: 10
+        },
+        manifest: {
+          defaultPresentationDelay: 4,
+          dash: {
+            ignoreMinBufferTime: true
+          }
+        },
+        streaming: {
+          bufferingGoal: 12,
+          rebufferingGoal: 1.5,
+          bufferBehind: 5,
+          lowLatencyMode: true,
+          stallThreshold: 1
+        }
+      });
 
-  const video = document.getElementById('video');
-  const container = document.getElementById('player-container');
-  
-  const player = new shaka.Player(video);
-  const ui = new shaka.ui.Overlay(player, container, video);
-
-  // 1. UI Config (Minimal & Premium)
-  ui.configure({
-    controlPanelElements: [
-      'play_pause',
-      'time_and_duration',
-      'spacer',
-      'quality',
-      'fullscreen'
-    ],
-    seekBarColors: {
-      base: 'rgba(255, 255, 255, 0.3)',
-      buffered: 'red',
-      played: '#FFFFFF' // Premium White
-    }
-  });
-
-  // 2. Player Config (Speed & Stability)
-  player.configure({
-    drm: { clearKeys: { [keyId]: key } },
-    streaming: {
-      lowLatencyMode: true,
-      bufferingGoal: 5,        // Increased slightly for stability
-      rebufferingGoal: 1,
-      jumpLargeGaps: true,
-      ignoreDeviceMaxResolution: true
-    }
-  });
-
-  // 3. Load & Play
-  try {
-    await player.load(manifestUrl);
-    // Logic: Start 4s behind live edge once, then let it run naturally.
-    // We removed the 'setInterval' loop so it won't stop every 5s.
-    if (player.isLive()) {
-      video.currentTime = player.seekRange().end - 4;
-    }
-    console.log('Video loaded and playing smoothly');
-  } catch (e) {
-    console.error('Error:', e);
-  }
-});
-</script>
-
+      try {
+        await player.load(streamUrl);
+        videoEl.play();
+      } catch (e) {
+        console.error("Playback failed");
+      }
+    });
+  </script>
 </body>
 </html>
