@@ -18,8 +18,8 @@
 </head>
 <body>
   <div class="shaka-video-container" id="player-container">
-    <video id="video" autoplay playsinline preload="auto"></video>
-    <div class="custom-watermark">‎‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
+    <video id="video" autoplay playsinline></video>
+    <div class="custom-watermark">‎  ‎ ‎ ‎ ‎ Sayan Official ™</div>
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -28,7 +28,7 @@
 
       const videoEl = document.getElementById('video');
       const container = document.getElementById('player-container');
-      
+
       const streamUrl = "https://otte.live.fly.ww.aiv-cdn.net/sin-nitro/live/dash/enc/xhryamnmfi/out/v1/bb976c39247941f3b4c9fa0a0735426d/cenc.mpd";
       const keyId = "693edaf34d4f31acbe87939c9f9795dd";
       const key = "b0895d3454c582f5ff31aee075e3b673";
@@ -53,19 +53,20 @@
           }
         },
         abr: {
-          defaultBandwidthEstimate: 50000,
+          defaultBandwidthEstimate: 10000,
           enabled: true,
-          switchInterval: 2
+          switchInterval: 1
         },
         manifest: {
           defaultPresentationDelay: 4,
           dash: {
+            ignoreSuggestedPresentationDelay: true,
             ignoreMinBufferTime: true,
             autoCorrectDrift: true
           }
         },
         streaming: {
-          bufferingGoal: 15,
+          bufferingGoal: 8,
           rebufferingGoal: 2,
           bufferBehind: 10,
           lowLatencyMode: true,
@@ -76,10 +77,9 @@
       });
 
       try {
-        await player.load(streamUrl);
+        await player.load(streamUrl, -4);
         videoEl.play();
       } catch (e) {
-        console.error("Playback failed");
       }
     });
   </script>
