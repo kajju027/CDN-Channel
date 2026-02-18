@@ -18,8 +18,8 @@
 </head>
 <body>
   <div class="shaka-video-container" id="player-container">
-    <video id="video" autoplay playsinline preload="metadata"></video>
-    <div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
+    <video id="video" autoplay playsinline preload="auto"></video>
+    <div class="custom-watermark">‎‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -53,22 +53,25 @@
           }
         },
         abr: {
-          defaultBandwidthEstimate: 250000, 
+          defaultBandwidthEstimate: 50000,
           enabled: true,
-          switchInterval: 10
+          switchInterval: 2
         },
         manifest: {
           defaultPresentationDelay: 4,
           dash: {
-            ignoreMinBufferTime: true
+            ignoreMinBufferTime: true,
+            autoCorrectDrift: true
           }
         },
         streaming: {
-          bufferingGoal: 12,
-          rebufferingGoal: 1.5,
-          bufferBehind: 5,
+          bufferingGoal: 15,
+          rebufferingGoal: 2,
+          bufferBehind: 10,
           lowLatencyMode: true,
-          stallThreshold: 1
+          safeSeekOffset: 4,
+          stallThreshold: 1,
+          jumpLargeGaps: true
         }
       });
 
