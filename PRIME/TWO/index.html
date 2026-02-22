@@ -3,78 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prime By Sayan</title>
-
+  <title>Prime TV • Sayan 2026</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; height:100%; background:#000; overflow:hidden; font-family:sans-serif; }
-    .shaka-video-container { position:absolute; inset:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; }
-    video { width:100%; height:100%; object-fit:contain; }
-    .shaka-volume-bar-container { display:none !important; }
-    .custom-watermark { position:absolute; z-index:40; pointer-events:none; top:65%; left:6%; transform:translateY(-50%); font-size:11px; font-weight:600; color:rgba(255,255,255,0.22); }
-    @media (max-width:700px){ .custom-watermark{font-size:9px; top:60%; left:16%;} }
-    .shaka-spinner-container{display:none!important;}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+    .shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+    video{width:100%;height:100%;object-fit:contain;background:#000}
+    .shaka-volume-bar-container,.shaka-spinner-container{display:none!important}
+    .custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+    @media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
   </style>
 </head>
-
 <body>
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" autoplay playsinline></video>
+    <div class="custom-watermark">‎  ‎ ‎ ‎ ‎ Sayan Official ™</div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) return;
 
-<div class="shaka-video-container" id="player-container">
-  <video id="video" autoplay playsinline></video>
-  <div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
-</div>
+      const videoEl = document.getElementById('video');
+      const container = document.getElementById('player-container');
 
-<script>
-const manifestUrl="https://ta.bia-cf.live.pv-cdn.net/syd-nitro/live/clients/dash/enc/utvv87801b/out/v1/d9a29796c1c3468785dbee1776ffd354/cenc.mpd";
-const keyId="531599a595f0a03ced73300beaec99b7";
-const key="f5a77d391847790f46059cbb092d575b";
+      const streamUrl = "https://otte.live.fly.ww.aiv-cdn.net/pdx-nitro/live/dash/enc/xanygn4vv8/out/v1/8777014e61534e7c873dc695bc485397/cenc.mpd";
+      const keyId = "2904b17cb64c996dbc254981b7602863";
+      const key = "66a7ef671b84498e64f94e8401fe8cb9";
 
-document.addEventListener('DOMContentLoaded', async () => {
-  shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) return;
+      const player = new shaka.Player();
+      await player.attach(videoEl);
+      const ui = new shaka.ui.Overlay(player, container, videoEl);
 
-  const video = document.getElementById('video');
-  const container = document.getElementById('player-container');
-  const player = new shaka.Player();
-  await player.attach(video);
+      ui.configure({
+        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+        seekBarColors: {
+          base: 'white',
+          buffered: 'red',
+          played: 'green'
+        }
+      });
 
-  const ui = new shaka.ui.Overlay(player, container, video);
-  ui.configure({
-    controlPanelElements: ['play_pause','mute','time_and_duration','spacer','quality','picture_in_picture','fullscreen'],
-    seekBarColors: { base:'white', buffered:'red', played:'green' }
-  });
+      player.configure({
+        drm: {
+          clearKeys: {
+            [keyId]: key
+          }
+        },
+        abr: {
+          defaultBandwidthEstimate: 10000,
+          enabled: true,
+          switchInterval: 1
+        },
+        manifest: {
+          defaultPresentationDelay: 4,
+          dash: {
+            ignoreSuggestedPresentationDelay: true,
+            ignoreMinBufferTime: true,
+            autoCorrectDrift: true
+          }
+        },
+        streaming: {
+          bufferingGoal: 8,
+          rebufferingGoal: 2,
+          bufferBehind: 10,
+          lowLatencyMode: true,
+          safeSeekOffset: 4,
+          stallThreshold: 1,
+          jumpLargeGaps: true
+        }
+      });
 
-  /* ðŸ”¥ ONLY DELAY REMOVAL TUNING (UI untouched) */
-  player.configure({
-    drm:{ clearKeys:{ [keyId]:key }},
-    streaming:{
-      lowLatencyMode:true,
-      rebufferingGoal:0.5,
-      bufferingGoal:7,
-      segmentPrefetchLimit:1,
-      ignoreDeviceMaxResolution:true,
-      autoCorrectDrift:true
-    },
-    manifest:{
-      dash:{
-        autoCorrectDrift:true,
-        clockSyncUri:"https://time.akamai.com/?iso"
+      try {
+        await player.load(streamUrl, -4);
+        videoEl.play();
+      } catch (e) {
       }
-    }
-  });
-
-  try{
-    await player.load(manifestUrl);
-    const liveEdge = player.seekRange().end;
-    video.currentTime = liveEdge - 1;
-  }catch(e){console.error(e);}
-});
-</script>
-
+    });
+  </script>
 </body>
 </html>
-
 
