@@ -26,7 +26,7 @@ video{
   background:#000;
 }
 
-/* কাস্টম পোস্টার এবং প্লে বাটন স্টাইল */
+/* কাস্টম থাম্বনেইল পোস্টার স্টাইল */
 #custom-poster {
   position: absolute;
   top: 0;
@@ -34,8 +34,10 @@ video{
   width: 100%;
   height: 100%;
   background-color: #000;
-  background-image: url('https://elamplificador.com/wp-content/uploads/2023/08/trucos-amazon-primevideo-ksrD-620x349@abc.png'); /* এখানে আপনার পোস্টার ইমেজের লিঙ্ক দিন */
-  background-size: cover;
+  /* আপনার দেওয়া ইমেজ লিঙ্ক */
+  background-image: url('https://elamplificador.com/wp-content/uploads/2023/08/trucos-amazon-primevideo-ksrD-620x349@abc.png');
+  background-size: contain; /* জুম হবে না, ঠিকঠাক ফিট হবে */
+  background-repeat: no-repeat;
   background-position: center;
   display: flex;
   align-items: center;
@@ -44,53 +46,56 @@ video{
   cursor: pointer;
 }
 
-#custom-poster svg {
+/* মাঝখানের বড় প্লে বাটন */
+.big-play-icon {
   width: 80px;
   height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.big-play-icon svg {
+  width: 45px;
+  height: 45px;
   fill: white;
-  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-  transition: transform 0.2s;
+  margin-left: 5px; /* ত্রিভুজটি সেন্টারে দেখানোর জন্য */
 }
 
-#custom-poster:hover svg {
+#custom-poster:hover .big-play-icon {
   transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.shaka-spinner-container{
-  display:none !important;
-}
-
-.shaka-scrim-container {
-  background: transparent !important;
-}
+.shaka-spinner-container{ display:none !important; }
+.shaka-scrim-container { background: transparent !important; }
 
 .shaka-controls-container{
   background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0));
   padding:6px 10px;
 }
 
+/* প্রিমিয়াম হোয়াইট সিকার বার */
 .shaka-seek-bar-container{
   padding:0 !important;
   margin:0 0 10px 0 !important;
   width:100% !important;
 }
-
 .shaka-seek-bar{
   margin:0 !important;
   width:100% !important;
   height:4px;
 }
+.shaka-seek-bar .shaka-progress-bar{ background: #ffffff !important; }
+.shaka-seek-bar .shaka-buffer-bar{ background: rgba(255, 255, 255, 0.4) !important; }
+.shaka-seek-bar .shaka-base-bar{ background: rgba(255, 255, 255, 0.15) !important; }
 
-.shaka-seek-bar .shaka-progress-bar{
-  background: #ffffff !important;
-}
-.shaka-seek-bar .shaka-buffer-bar{
-  background: rgba(255, 255, 255, 0.4) !important;
-}
-.shaka-seek-bar .shaka-base-bar{
-  background: rgba(255, 255, 255, 0.15) !important;
-}
-
+/* জুম বাটন স্টাইল */
 .shaka-zoom-button {
   background: transparent;
   border: none;
@@ -100,29 +105,27 @@ video{
   align-items: center;
   justify-content: center;
 }
+.shaka-zoom-button svg { width: 24px; height: 24px; fill: white; }
 
-.shaka-zoom-button svg {
-    width: 24px;
-    height: 24px;
-    fill: white;
-}
-
-/* ক্যাপশন বাটন হাইড করার জন্য */
-.shaka-caption-button { display: none !important; }
+/* ক্যাপশন বাটন এবং টেক্সট হাইড */
+.shaka-caption-button, .shaka-text-container { display: none !important; }
 </style>
 </head>
 
 <body>
 
-<div class="shaka-video-container" id="player-container">
+<div class="shaka-video-container" id="player-container" shaka-controls="true">
   <div id="custom-poster">
-    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <div class="big-play-icon">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
   </div>
   
   <video id="video" autoplay playsinline muted></video>
 </div>
 
 <script>
+// জুম ফাংশনালিটি ক্লাস
 class ZoomButton extends shaka.ui.Element {
   constructor(parent, controls) {
     super(parent, controls);
@@ -134,14 +137,9 @@ class ZoomButton extends shaka.ui.Element {
     this.eventManager.listen(this.button_, 'click', () => {
       const video = this.controls.getVideo();
       const currentFit = video.style.objectFit || 'contain';
-      
-      if (currentFit === 'contain') {
-        video.style.objectFit = 'cover';
-      } else if (currentFit === 'cover') {
-        video.style.objectFit = 'fill';
-      } else {
-        video.style.objectFit = 'contain';
-      }
+      if (currentFit === 'contain') video.style.objectFit = 'cover';
+      else if (currentFit === 'cover') video.style.objectFit = 'fill';
+      else video.style.objectFit = 'contain';
     });
   }
 }
@@ -172,17 +170,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const ui = new shaka.ui.Overlay(player, container, video);
 
   ui.configure({
-    controlPanelElements: [
-      'play_pause',
-      'mute',
-      'time_and_duration',
-      'spacer',
-      'zoom',
-      'picture_in_picture',
-      'quality',
-      'fullscreen'
-    ],
-    addBigPlayButton: false, // আমাদের কাস্টম বাটন আছে তাই এটি অফ
+    controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'zoom', 'picture_in_picture', 'quality', 'fullscreen'],
+    addBigPlayButton: false,
     overflowMenuButtons: [],
     seekBarColors: {
       base: 'rgba(255, 255, 255, 0.15)',
@@ -193,25 +182,25 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   player.configure({
     drm: { clearKeys: { [keyId]: key } },
-    abr: { enabled: true, defaultBandwidthEstimate: 10000000 },
-    streaming: { lowLatencyMode: true, bufferingGoal: 6 }
+    abr: { enabled: true },
+    streaming: { lowLatencyMode: true }
   });
 
-  // ক্যাপশন বা টেক্সট ট্রাক সম্পূর্ণ বন্ধ করা
+  // ক্যাপশন বা সাবটাইটেল পুরোপুরি বন্ধ করা
   player.setTextTrackVisibility(false);
 
   try {
     await player.load(streamUrl, -3);
     
-    // পোস্টারে ক্লিক করলে ভিডিও আনমিউট হবে এবং প্লে হবে
+    // পোস্টারে ক্লিক করলে ভিডিও আনমিউট এবং প্লে হবে
     poster.addEventListener('click', () => {
-      video.muted = false;
+      video.muted = false; // আনমিউট হবে
       video.play();
-      poster.style.display = 'none';
+      poster.style.display = 'none'; // পোস্টার চলে যাবে
     });
 
   } catch (e) {
-    console.error(e);
+    console.error("Error loading video:", e);
   }
 });
 </script>
