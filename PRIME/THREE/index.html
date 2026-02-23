@@ -1,110 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prime By Sayan</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  
-  <style>
-  
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
-    .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; }
-    video { width: 100%; height: 100%; object-fit: contain; }
-    .shaka-volume-bar-container { display: none !important; }
-    /* Watermark Style */
-    .custom-watermark { position: absolute; z-index: 40; pointer-events: none; top: 65%; left: 6%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.22); }
-    @media (max-width: 700px) { .custom-watermark { font-size: 9px; top: 60%; left: 16%; } }
-    .shaka-spinner-container { display: none !important; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>Custom Live Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css" crossorigin="anonymous">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+
+.shaka-video-container{
+  position:fixed;
+  inset:0;
+  background:#000;
+}
+
+video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+}
+
+.shaka-spinner-container{
+  display:none !important;
+}
+
+.shaka-scrim-container {
+  background: transparent !important;
+}
+
+.shaka-controls-container{
+  background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0));
+  padding:6px 10px;
+}
+
+.shaka-seek-bar-container{
+  padding:0 !important;
+  margin:0 0 10px 0 !important;
+  width:100% !important;
+}
+
+.shaka-seek-bar{
+  margin:0 !important;
+  width:100% !important;
+  height:4px;
+}
+
+.shaka-seek-bar .shaka-progress-bar{
+  background: #ffffff !important;
+}
+.shaka-seek-bar .shaka-buffer-bar{
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+.shaka-seek-bar .shaka-base-bar{
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.shaka-play-button,
+.shaka-mute-button,
+.shaka-pip-button,
+.shaka-fullscreen-button,
+.shaka-quality-button,
+.shaka-current-time,
+.shaka-time-and-duration {
+  color:#fff !important;
+}
+
+.shaka-zoom-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shaka-zoom-button svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+}
+</style>
 </head>
+
 <body>
 
-  <div class="shaka-video-container" id="player-container">
-    <video id="video" autoplay playsinline></video>
-    <div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎    Sayan Official ™</div>
-  </div>
+<div class="shaka-video-container" id="player-container">
+  <video id="video" autoplay playsinline muted></video>
+</div>
 
-  <script>
- 
-    const DATA_URL = "https://raw.githubusercontent.com/Cricketstan/Allrounder-/refs/heads/main/prame.html";
+<script>
+class ZoomButton extends shaka.ui.Element {
+  constructor(parent, controls) {
+    super(parent, controls);
+    this.button_ = document.createElement('button');
+    this.button_.classList.add('shaka-zoom-button');
+    this.button_.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+    parent.appendChild(this.button_);
 
-    async function initPlayer() {
-      shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) {
-        console.error('Browser not supported!');
-        return;
+    this.eventManager.listen(this.button_, 'click', () => {
+      const video = this.controls.getVideo();
+      const currentFit = video.style.objectFit || 'contain';
+      
+      if (currentFit === 'contain') {
+        video.style.objectFit = 'cover';
+      } else if (currentFit === 'cover') {
+        video.style.objectFit = 'fill';
+      } else {
+        video.style.objectFit = 'contain';
       }
+    });
+  }
+}
 
-      const video = document.getElementById('video');
-      const container = document.getElementById('player-container');
-      const player = new shaka.Player();
-      await player.attach(video);
+ZoomButton.Factory = class {
+  create(rootElement, controls) {
+    return new ZoomButton(rootElement, controls);
+  }
+};
 
-      const ui = new shaka.ui.Overlay(player, container, video);
-      ui.configure({
-        controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'quality', 'picture_in_picture', 'fullscreen'],
-        seekBarColors: { base: 'white', buffered: 'red', played: 'green' }
-      });
+document.addEventListener('DOMContentLoaded', async function () {
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) return;
 
-      try {
-        console.log("Fetching data from GitHub...");
-        const response = await fetch(DATA_URL);
-        const textData = await response.text();
+  shaka.ui.Controls.registerElement('zoom', new ZoomButton.Factory());
 
-        const urlMatch = textData.match(/streamUrl\s*=\s*["']([^"']+)["']/);
-        const streamUrl = urlMatch ? urlMatch[1].trim() : null;
+  const video = document.getElementById('video');
+  const container = document.getElementById('player-container');
 
-        // 2. ClearKeys (তালা-চাবি) বের করা
-        // এটি খুঁজবে: "keyId": "key" ফরম্যাট
-        // (32 অক্ষরের হেক্স কোড খুঁজবে)
-        const keyMatch = textData.match(/["']([a-fA-F0-9]{32})["']\s*:\s*["']([a-fA-F0-9]{32})["']/);
-        
-        let clearKeys = {};
-        if (keyMatch) {
-            const keyId = keyMatch[1];
-            const key = keyMatch[2];
-            clearKeys[keyId] = key;
-            console.log("Keys found:", clearKeys);
-        } else {
-            console.warn("No keys found in external file");
-        }
+  const streamUrl = "https://live-pv-ta.amazon.fastly-edge.com/syd-nitro/live/clients/dash/enc/wwrmho82pc/out/v1/d7130f460d41486ea7e8e3eb45f0522f/cenc.mpd";
+  const keyId = "baafdb8ebcbbc0655332291da6f121da";
+  const key = "60ac892e0ea0b2c46fc6837c97ed641a";
 
-        if (!streamUrl) {
-            alert("Video Link not found in the source file!");
-            return;
-        }
+  const player = new shaka.Player();
+  await player.attach(video);
 
-    
-        player.configure({
-          drm: { 
-            clearKeys: clearKeys 
-          },
-          streaming: {
-            lowLatencyMode: true,
-            rebufferingGoal: 2,
-            bufferingGoal: 15,
-            ignoreDeviceMaxResolution: true
-          }
-        });
+  const ui = new shaka.ui.Overlay(player, container, video);
 
-        console.log("Loading Stream:", streamUrl);
-       
-        await player.load(streamUrl);
-       
-        if (player.isLive()) {
-            const seekRange = player.seekRange();
-            video.currentTime = seekRange.end - 5;
-        }
-
-      } catch (e) {
-        console.error("Error setting up player:", e);
-      }
+  ui.configure({
+    controlPanelElements: [
+      'play_pause',
+      'mute',
+      'time_and_duration',
+      'spacer',
+      'zoom',
+      'picture_in_picture',
+      'quality',
+      'fullscreen'
+    ],
+    addBigPlayButton: true,
+    overflowMenuButtons: [],
+    seekBarColors: {
+      base: 'rgba(255, 255, 255, 0.15)',
+      buffered: 'rgba(255, 255, 255, 0.4)',
+      played: '#ffffff'
     }
+  });
 
-    document.addEventListener('DOMContentLoaded', initPlayer);
-  </script>
+  player.configure({
+    drm: {
+      clearKeys: {
+        [keyId]: key
+      }
+    },
+    abr: {
+      enabled: true,
+      defaultBandwidthEstimate: 10000000
+    },
+    streaming: {
+      lowLatencyMode: true,
+      bufferingGoal: 6,
+      rebufferingGoal: 1,
+      bufferBehind: 8
+    }
+  });
+
+  try {
+    await player.load(streamUrl, -3);
+    await video.play();
+  } catch (e) {
+    console.error(e);
+  }
+});
+</script>
+
 </body>
 </html>
