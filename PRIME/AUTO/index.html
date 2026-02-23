@@ -1,87 +1,27 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prime By Sayan</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
-    .shaka-video-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; }
-    video { width: 100%; height: 100%; object-fit: contain; }
-    .shaka-volume-bar-container { display: none !important; }
-    .custom-watermark { position: absolute; z-index: 40; pointer-events: none; top: 65%; left: 6%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.22); }
-    @media (max-width: 700px) { .custom-watermark { font-size: 9px; top: 60%; left: 16%; } }
-    .shaka-spinner-container { display: none !important; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime // Sayan × Dillzy</title>
 </head>
 <body>
-  <div class="shaka-video-container" id="player-container">
-    <video id="video" autoplay playsinline></video>
-    <div class="custom-watermark">‎‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
-  </div>
-  
-  <script>
-  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-</script>
-  
-<script defer src="/_vercel/speed-insights/script.js"></script>
-  <script>
-    const DATA_URL = "https://raw.githubusercontent.com/Cricketstan/Allrounder-/refs/heads/main/prame.html";
-
-    async function initPlayer() {
-      shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) return;
-
-      const video = document.getElementById('video');
-      const container = document.getElementById('player-container');
-      const player = new shaka.Player(video);
-      const ui = new shaka.ui.Overlay(player, container, video);
-
-      ui.configure({
-        controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'quality', 'picture_in_picture', 'fullscreen'],
-        seekBarColors: { base: 'white', buffered: 'red', played: 'green' }
-      });
-
-      player.configure({
-        streaming: {
-          bufferingGoal: 2,
-          rebufferingGoal: 0.5,
-          lowLatencyMode: true,
-          inaccurateManifestTolerance: 0,
-          jumpLargeGaps: true,
-          alwaysStreamText: false
-        },
-        abr: {
-          enabled: true,
-          defaultBandwidthEstimate: 1000000,
-          switchInterval: 2
+    <script>
+        // The encrypted string is injected here:
+        let encrypted = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0idXRmLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCxpbml0aWFsLXNjYWxlPTEiIC8+CiAgPHRpdGxlPlByaW1lIEJ5IFNheWFuPC90aXRsZT4KICA8c2NyaXB0IHNyYz0iaHR0cHM6Ly9jZG5qcy5jbG91ZGZsYXJlLmNvbS9hamF4L2xpYnMvc2hha2EtcGxheWVyLzQuNy4xMS9zaGFrYS1wbGF5ZXIudWkubWluLmpzIj48L3NjcmlwdD4KICA8bGluayByZWw9InN0eWxlc2hlZXQiIGhyZWY9Imh0dHBzOi8vY2RuanMuY2xvdWRmbGFyZS5jb20vYWpheC9saWJzL3NoYWthLXBsYXllci80LjcuMTEvY29udHJvbHMubWluLmNzcyIgLz4KICA8c3R5bGU+CiAgICAqIHsgbWFyZ2luOjA7IHBhZGRpbmc6MDsgYm94LXNpemluZzpib3JkZXItYm94OyB9CiAgICBodG1sLCBib2R5IHsgd2lkdGg6IDEwMCU7IGhlaWdodDogMTAwJTsgYmFja2dyb3VuZDogIzAwMDsgb3ZlcmZsb3c6IGhpZGRlbjsgZm9udC1mYW1pbHk6IHNhbnMtc2VyaWY7IH0KICAgIC5zaGFrYS12aWRlby1jb250YWluZXIgeyBwb3NpdGlvbjogYWJzb2x1dGU7IGluc2V0OiAwOyB3aWR0aDogMTAwJTsgaGVpZ2h0OiAxMDAlOyBiYWNrZ3JvdW5kOiAjMDAwOyBkaXNwbGF5OiBmbGV4OyBhbGlnbi1pdGVtczogY2VudGVyOyBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsgfQogICAgdmlkZW8geyB3aWR0aDogMTAwJTsgaGVpZ2h0OiAxMDAlOyBvYmplY3QtZml0OiBjb250YWluOyB9CiAgICAuc2hha2Etdm9sdW1lLWJhci1jb250YWluZXIgeyBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7IH0KICAgIC5jdXN0b20td2F0ZXJtYXJrIHsgcG9zaXRpb246IGFic29sdXRlOyB6LWluZGV4OiA0MDsgcG9pbnRlci1ldmVudHM6IG5vbmU7IHRvcDogNjUlOyBsZWZ0OiA2JTsgdHJhbnNmb3JtOiB0cmFuc2xhdGVZKC01MCUpOyBmb250LXNpemU6IDExcHg7IGZvbnQtd2VpZ2h0OiA2MDA7IGNvbG9yOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMjIpOyB9CiAgICBAbWVkaWEgKG1heC13aWR0aDogNzAwcHgpIHsgLmN1c3RvbS13YXRlcm1hcmsgeyBmb250LXNpemU6IDlweDsgdG9wOiA2MCU7IGxlZnQ6IDE2JTsgfSB9CiAgICAuc2hha2Etc3Bpbm5lci1jb250YWluZXIgeyBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7IH0KICA8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5PgogIDxkaXYgY2xhc3M9InNoYWthLXZpZGVvLWNvbnRhaW5lciIgaWQ9InBsYXllci1jb250YWluZXIiPgogICAgPHZpZGVvIGlkPSJ2aWRlbyIgYXV0b3BsYXkgcGxheXNpbmxpbmU+PC92aWRlbz4KICAgIDxkaXYgY2xhc3M9ImN1c3RvbS13YXRlcm1hcmsiPuKAjuKAjiDigI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4gU2F5YW4gT2ZmaWNpYWwg4oSiPC9kaXY+CiAgPC9kaXY+CiAgCiAgPHNjcmlwdD4KICB3aW5kb3cuc2kgPSB3aW5kb3cuc2kgfHwgZnVuY3Rpb24gKCkgeyAod2luZG93LnNpcSA9IHdpbmRvdy5zaXEgfHwgW10pLnB1c2goYXJndW1lbnRzKTsgfTsKPC9zY3JpcHQ+CiAgCjxzY3JpcHQgZGVmZXIgc3JjPSIvX3ZlcmNlbC9zcGVlZC1pbnNpZ2h0cy9zY3JpcHQuanMiPjwvc2NyaXB0PgogIDxzY3JpcHQ+CiAgICBjb25zdCBEQVRBX1VSTCA9ICJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vQ3JpY2tldHN0YW4vQWxscm91bmRlci0vcmVmcy9oZWFkcy9tYWluL3ByYW1lLmh0bWwiOwoKICAgIGFzeW5jIGZ1bmN0aW9uIGluaXRQbGF5ZXIoKSB7CiAgICAgIHNoYWthLnBvbHlmaWxsLmluc3RhbGxBbGwoKTsKICAgICAgaWYgKCFzaGFrYS5QbGF5ZXIuaXNCcm93c2VyU3VwcG9ydGVkKCkpIHJldHVybjsKCiAgICAgIGNvbnN0IHZpZGVvID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3ZpZGVvJyk7CiAgICAgIGNvbnN0IGNvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwbGF5ZXItY29udGFpbmVyJyk7CiAgICAgIGNvbnN0IHBsYXllciA9IG5ldyBzaGFrYS5QbGF5ZXIodmlkZW8pOwogICAgICBjb25zdCB1aSA9IG5ldyBzaGFrYS51aS5PdmVybGF5KHBsYXllciwgY29udGFpbmVyLCB2aWRlbyk7CgogICAgICB1aS5jb25maWd1cmUoewogICAgICAgIGNvbnRyb2xQYW5lbEVsZW1lbnRzOiBbJ3BsYXlfcGF1c2UnLCAnbXV0ZScsICd0aW1lX2FuZF9kdXJhdGlvbicsICdzcGFjZXInLCAncXVhbGl0eScsICdwaWN0dXJlX2luX3BpY3R1cmUnLCAnZnVsbHNjcmVlbiddLAogICAgICAgIHNlZWtCYXJDb2xvcnM6IHsgYmFzZTogJ3doaXRlJywgYnVmZmVyZWQ6ICdyZWQnLCBwbGF5ZWQ6ICdncmVlbicgfQogICAgICB9KTsKCiAgICAgIHBsYXllci5jb25maWd1cmUoewogICAgICAgIHN0cmVhbWluZzogewogICAgICAgICAgYnVmZmVyaW5nR29hbDogMiwKICAgICAgICAgIHJlYnVmZmVyaW5nR29hbDogMC41LAogICAgICAgICAgbG93TGF0ZW5jeU1vZGU6IHRydWUsCiAgICAgICAgICBpbmFjY3VyYXRlTWFuaWZlc3RUb2xlcmFuY2U6IDAsCiAgICAgICAgICBqdW1wTGFyZ2VHYXBzOiB0cnVlLAogICAgICAgICAgYWx3YXlzU3RyZWFtVGV4dDogZmFsc2UKICAgICAgICB9LAogICAgICAgIGFicjogewogICAgICAgICAgZW5hYmxlZDogdHJ1ZSwKICAgICAgICAgIGRlZmF1bHRCYW5kd2lkdGhFc3RpbWF0ZTogMTAwMDAwMCwKICAgICAgICAgIHN3aXRjaEludGVydmFsOiAyCiAgICAgICAgfQogICAgICB9KTsKCiAgICAgIHRyeSB7CiAgICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaChEQVRBX1VSTCk7CiAgICAgICAgY29uc3QgdGV4dERhdGEgPSBhd2FpdCByZXNwb25zZS50ZXh0KCk7CgogICAgICAgIGNvbnN0IHVybE1hdGNoID0gdGV4dERhdGEubWF0Y2goL3N0cmVhbVVybFxzKj1ccypbIiddKFteIiddKylbIiddLyk7CiAgICAgICAgY29uc3Qgc3RyZWFtVXJsID0gdXJsTWF0Y2ggPyB1cmxNYXRjaFsxXS50cmltKCkgOiBudWxsOwoKICAgICAgICBjb25zdCBrZXlNYXRjaCA9IHRleHREYXRhLm1hdGNoKC9bIiddKFthLWZBLUYwLTldezMyfSlbIiddXHMqOlxzKlsiJ10oW2EtZkEtRjAtOV17MzJ9KVsiJ10vKTsKICAgICAgICBsZXQgY2xlYXJLZXlzID0ge307CiAgICAgICAgaWYgKGtleU1hdGNoKSB7CiAgICAgICAgICBjbGVhcktleXNba2V5TWF0Y2hbMV1dID0ga2V5TWF0Y2hbMl07CiAgICAgICAgfQoKICAgICAgICBpZiAoc3RyZWFtVXJsKSB7CiAgICAgICAgICBwbGF5ZXIuY29uZmlndXJlKHsgZHJtOiB7IGNsZWFyS2V5czogY2xlYXJLZXlzIH0gfSk7CiAgICAgICAgICBhd2FpdCBwbGF5ZXIubG9hZChzdHJlYW1VcmwpOwogICAgICAgICAgdmlkZW8ucGxheSgpOwogICAgICAgIH0KICAgICAgfSBjYXRjaCAoZSkge30KICAgIH0KICAgIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoJ0RPTUNvbnRlbnRMb2FkZWQnLCBpbml0UGxheWVyKTsKICA8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+"; 
+        
+        function decryptAndExecute() {
+            try {
+                let original = decodeURIComponent(escape(atob(encrypted)));
+                document.open();
+                document.write(original);
+                document.close();
+            } catch (e) {
+                document.write('<h1 style="color:red; text-align: center; margin-top: 50px;">DECRYPTION ERROR!</h1><p style="text-align: center;">' + e.message + '</p>');
+            }
         }
-      });
-
-      try {
-        const response = await fetch(DATA_URL);
-        const textData = await response.text();
-
-        const urlMatch = textData.match(/streamUrl\s*=\s*["']([^"']+)["']/);
-        const streamUrl = urlMatch ? urlMatch[1].trim() : null;
-
-        const keyMatch = textData.match(/["']([a-fA-F0-9]{32})["']\s*:\s*["']([a-fA-F0-9]{32})["']/);
-        let clearKeys = {};
-        if (keyMatch) {
-          clearKeys[keyMatch[1]] = keyMatch[2];
-        }
-
-        if (streamUrl) {
-          player.configure({ drm: { clearKeys: clearKeys } });
-          await player.load(streamUrl);
-          video.play();
-        }
-      } catch (e) {}
-    }
-    document.addEventListener('DOMContentLoaded', initPlayer);
-  </script>
+        decryptAndExecute();
+    </script>
 </body>
 </html>
