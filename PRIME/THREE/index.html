@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<title>Custom Live Player</title>
+<title>Ultra Fast Live Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css" crossorigin="anonymous">
@@ -26,7 +26,16 @@ video{
   background:#000;
 }
 
-/* কাস্টম থাম্বনেইল পোস্টার স্টাইল */
+/* কালো ফিল্টার বা আফজাল ছাপ দূর করা */
+.shaka-scrim-container, .shaka-scrim-vertical {
+  display: none !important; /* ভিডিওর ওপরের কালো শ্যাডো পুরোপুরি রিমুভ */
+}
+
+.shaka-controls-container {
+  background: transparent !important; /* কন্ট্রোলারের ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট */
+}
+
+/* কাস্টম থাম্বনেইল পোস্টার */
 #custom-poster {
   position: absolute;
   top: 0;
@@ -34,50 +43,17 @@ video{
   width: 100%;
   height: 100%;
   background-color: #000;
-  /* আপনার দেওয়া ইমেজ লিঙ্ক */
   background-image: url('https://elamplificador.com/wp-content/uploads/2023/08/trucos-amazon-primevideo-ksrD-620x349@abc.png');
-  background-size: contain; /* জুম হবে না, ঠিকঠাক ফিট হবে */
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
+  z-index: 5;
   cursor: pointer;
 }
 
-/* মাঝখানের বড় প্লে বাটন */
-.big-play-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  transition: transform 0.2s ease;
-}
-
-.big-play-icon svg {
-  width: 45px;
-  height: 45px;
-  fill: white;
-  margin-left: 5px; /* ত্রিভুজটি সেন্টারে দেখানোর জন্য */
-}
-
-#custom-poster:hover .big-play-icon {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.shaka-spinner-container{ display:none !important; }
-.shaka-scrim-container { background: transparent !important; }
-
-.shaka-controls-container{
-  background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0));
-  padding:6px 10px;
+/* ডিফল্ট বড় প্লে বাটনকে পোস্টারের ওপরে আনা */
+.shaka-unveiling-controls-panel .shaka-big-play-button {
+  z-index: 11 !important;
 }
 
 /* প্রিমিয়াম হোয়াইট সিকার বার */
@@ -86,16 +62,11 @@ video{
   margin:0 0 10px 0 !important;
   width:100% !important;
 }
-.shaka-seek-bar{
-  margin:0 !important;
-  width:100% !important;
-  height:4px;
-}
 .shaka-seek-bar .shaka-progress-bar{ background: #ffffff !important; }
 .shaka-seek-bar .shaka-buffer-bar{ background: rgba(255, 255, 255, 0.4) !important; }
 .shaka-seek-bar .shaka-base-bar{ background: rgba(255, 255, 255, 0.15) !important; }
 
-/* জুম বাটন স্টাইল */
+/* জুম বাটন */
 .shaka-zoom-button {
   background: transparent;
   border: none;
@@ -107,25 +78,23 @@ video{
 }
 .shaka-zoom-button svg { width: 24px; height: 24px; fill: white; }
 
-/* ক্যাপশন বাটন এবং টেক্সট হাইড */
+/* ক্যাপশন অফ */
 .shaka-caption-button, .shaka-text-container { display: none !important; }
+
+.shaka-spinner-container { display: none !important; }
 </style>
 </head>
 
 <body>
 
-<div class="shaka-video-container" id="player-container" shaka-controls="true">
-  <div id="custom-poster">
-    <div class="big-play-icon">
-        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    </div>
-  </div>
+<div class="shaka-video-container" id="player-container">
+  <div id="custom-poster"></div>
   
   <video id="video" autoplay playsinline muted></video>
 </div>
 
 <script>
-// জুম ফাংশনালিটি ক্লাস
+// জুম বাটন ক্লাস
 class ZoomButton extends shaka.ui.Element {
   constructor(parent, controls) {
     super(parent, controls);
@@ -143,17 +112,11 @@ class ZoomButton extends shaka.ui.Element {
     });
   }
 }
-
-ZoomButton.Factory = class {
-  create(rootElement, controls) {
-    return new ZoomButton(rootElement, controls);
-  }
-};
+ZoomButton.Factory = class { create(rootElement, controls) { return new ZoomButton(rootElement, controls); } };
 
 document.addEventListener('DOMContentLoaded', async function () {
   shaka.polyfill.installAll();
-  if (!shaka.Player.isBrowserSupported()) return;
-
+  
   shaka.ui.Controls.registerElement('zoom', new ZoomButton.Factory());
 
   const video = document.getElementById('video');
@@ -171,36 +134,46 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   ui.configure({
     controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'zoom', 'picture_in_picture', 'quality', 'fullscreen'],
-    addBigPlayButton: false,
-    overflowMenuButtons: [],
-    seekBarColors: {
-      base: 'rgba(255, 255, 255, 0.15)',
-      buffered: 'rgba(255, 255, 255, 0.4)',
-      played: '#ffffff'
-    }
+    addBigPlayButton: true, // ডিফল্ট শাকা প্লে বাটন অন রাখা হলো
+    seekBarColors: { base: 'rgba(255, 255, 255, 0.15)', buffered: 'rgba(255, 255, 255, 0.4)', played: '#ffffff' }
   });
 
+  // দ্রুত প্লে হওয়ার জন্য কনফিগারেশন (Low Latency)
   player.configure({
     drm: { clearKeys: { [keyId]: key } },
-    abr: { enabled: true },
-    streaming: { lowLatencyMode: true }
+    streaming: {
+      lowLatencyMode: true,
+      autoLowLatencyMode: true,
+      bufferingGoal: 2, // মাত্র ২ সেকেন্ড বাফার করবে দ্রুত শুরুর জন্য
+      rebufferingGoal: 1,
+      bufferBehind: 0,
+      infiniteBuffer: false
+    },
+    abr: { enabled: true }
   });
 
-  // ক্যাপশন বা সাবটাইটেল পুরোপুরি বন্ধ করা
   player.setTextTrackVisibility(false);
 
   try {
-    await player.load(streamUrl, -3);
-    
-    // পোস্টারে ক্লিক করলে ভিডিও আনমিউট এবং প্লে হবে
-    poster.addEventListener('click', () => {
-      video.muted = false; // আনমিউট হবে
+    // '-1' বা '0' দিলে ভিডিও লাইভ এজের একদম শেষ থেকে শুরু হবে, কোনো ডিলে থাকবে না
+    await player.load(streamUrl, 0);
+
+    // ক্লিক ইভেন্ট: প্লেয়ারের যেকোনো জায়গায় বা পোস্টারে ক্লিক করলে আনমিউট হবে
+    const startPlayer = () => {
+      video.muted = false;
       video.play();
-      poster.style.display = 'none'; // পোস্টার চলে যাবে
+      poster.style.display = 'none';
+    };
+
+    poster.addEventListener('click', startPlayer);
+    
+    // ভিডিও প্লে হতে শুরু করলে অটোমেটিক পোস্টার রিমুভ করার ব্যাকআপ
+    video.addEventListener('playing', () => {
+       poster.style.display = 'none';
     });
 
   } catch (e) {
-    console.error("Error loading video:", e);
+    console.error(e);
   }
 });
 </script>
