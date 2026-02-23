@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<title>Ultra Fast Live Player</title>
+<title>Premium Fast Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css" crossorigin="anonymous">
@@ -26,16 +26,12 @@ video{
   background:#000;
 }
 
-/* কালো ফিল্টার বা আফজাল ছাপ দূর করা */
-.shaka-scrim-container, .shaka-scrim-vertical {
-  display: none !important; /* ভিডিওর ওপরের কালো শ্যাডো পুরোপুরি রিমুভ */
+/* কালো আফছা ফিল্টার বা শ্যাডো রিমুভ */
+.shaka-scrim-container, .shaka-scrim-vertical, .shaka-controls-container {
+  background: transparent !important;
 }
 
-.shaka-controls-container {
-  background: transparent !important; /* কন্ট্রোলারের ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট */
-}
-
-/* কাস্টম থাম্বনেইল পোস্টার */
+/* কাস্টম থাম্বনেইল পোস্টার (জুম হবে না) */
 #custom-poster {
   position: absolute;
   top: 0;
@@ -49,11 +45,19 @@ video{
   background-position: center;
   z-index: 5;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ডিফল্ট বড় প্লে বাটনকে পোস্টারের ওপরে আনা */
-.shaka-unveiling-controls-panel .shaka-big-play-button {
-  z-index: 11 !important;
+/* ডিফল্ট বড় প্লে বাটনকে পোস্টারের ওপরে সুন্দর করে দেখানো */
+.shaka-big-play-button {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  width: 70px !important;
+  height: 70px !important;
+  z-index: 10 !important;
 }
 
 /* প্রিমিয়াম হোয়াইট সিকার বার */
@@ -78,9 +82,7 @@ video{
 }
 .shaka-zoom-button svg { width: 24px; height: 24px; fill: white; }
 
-/* ক্যাপশন অফ */
-.shaka-caption-button, .shaka-text-container { display: none !important; }
-
+/* স্পিনার হাইড */
 .shaka-spinner-container { display: none !important; }
 </style>
 </head>
@@ -94,7 +96,7 @@ video{
 </div>
 
 <script>
-// জুম বাটন ক্লাস
+// কাস্টম জুম বাটন ক্লাস (Cycle: contain -> cover -> fill)
 class ZoomButton extends shaka.ui.Element {
   constructor(parent, controls) {
     super(parent, controls);
@@ -116,7 +118,6 @@ ZoomButton.Factory = class { create(rootElement, controls) { return new ZoomButt
 
 document.addEventListener('DOMContentLoaded', async function () {
   shaka.polyfill.installAll();
-  
   shaka.ui.Controls.registerElement('zoom', new ZoomButton.Factory());
 
   const video = document.getElementById('video');
@@ -133,41 +134,54 @@ document.addEventListener('DOMContentLoaded', async function () {
   const ui = new shaka.ui.Overlay(player, container, video);
 
   ui.configure({
-    controlPanelElements: ['play_pause', 'mute', 'time_and_duration', 'spacer', 'zoom', 'picture_in_picture', 'quality', 'fullscreen'],
-    addBigPlayButton: true, // ডিফল্ট শাকা প্লে বাটন অন রাখা হলো
+    // মেইন কন্ট্রোল বারে যা থাকবে
+    controlPanelElements: [
+      'play_pause', 
+      'mute', 
+      'time_and_duration', 
+      'spacer', 
+      'quality', 
+      'zoom', 
+      'fullscreen', 
+      'overflow_menu' // এটি সেটিংস বাটন হিসেবে কাজ করবে
+    ],
+    // সেটিংস মেনুর ভেতরে যা থাকবে (PIP & Captions)
+    overflowMenuButtons: [
+      'picture_in_picture', 
+      'captions'
+    ],
+    addBigPlayButton: true,
     seekBarColors: { base: 'rgba(255, 255, 255, 0.15)', buffered: 'rgba(255, 255, 255, 0.4)', played: '#ffffff' }
   });
 
-  // দ্রুত প্লে হওয়ার জন্য কনফিগারেশন (Low Latency)
+  // ফাস্ট লোডিং সেটিংস
   player.configure({
     drm: { clearKeys: { [keyId]: key } },
     streaming: {
       lowLatencyMode: true,
-      autoLowLatencyMode: true,
-      bufferingGoal: 2, // মাত্র ২ সেকেন্ড বাফার করবে দ্রুত শুরুর জন্য
+      bufferingGoal: 1.5, // আরও দ্রুত লোড হওয়ার জন্য
       rebufferingGoal: 1,
-      bufferBehind: 0,
-      infiniteBuffer: false
-    },
-    abr: { enabled: true }
+      bufferBehind: 0
+    }
   });
 
+  // শুরুতে ক্যাপশন বন্ধ রাখা
   player.setTextTrackVisibility(false);
 
   try {
-    // '-1' বা '0' দিলে ভিডিও লাইভ এজের একদম শেষ থেকে শুরু হবে, কোনো ডিলে থাকবে না
+    // 0 দিলে একদম বর্তমান লাইভ পয়েন্ট থেকে দ্রুত শুরু হবে
     await player.load(streamUrl, 0);
 
-    // ক্লিক ইভেন্ট: প্লেয়ারের যেকোনো জায়গায় বা পোস্টারে ক্লিক করলে আনমিউট হবে
     const startPlayer = () => {
-      video.muted = false;
+      video.muted = false; // আনমিউট হবে
       video.play();
-      poster.style.display = 'none';
+      poster.style.display = 'none'; // পোস্টার চলে যাবে
     };
 
+    // পোস্টার বা শাকা-র ডিফল্ট বড় প্লে বাটনে ক্লিক করলে
     poster.addEventListener('click', startPlayer);
     
-    // ভিডিও প্লে হতে শুরু করলে অটোমেটিক পোস্টার রিমুভ করার ব্যাকআপ
+    // ভিডিও প্লে হলে পোস্টার অটো রিমুভ করার সেফটি চেক
     video.addEventListener('playing', () => {
        poster.style.display = 'none';
     });
