@@ -26,6 +26,36 @@ video{
   background:#000;
 }
 
+/* কাস্টম পোস্টার এবং প্লে বাটন স্টাইল */
+#custom-poster {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  background-image: url('https://elamplificador.com/wp-content/uploads/2023/08/trucos-amazon-primevideo-ksrD-620x349@abc.png'); /* এখানে আপনার পোস্টার ইমেজের লিঙ্ক দিন */
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  cursor: pointer;
+}
+
+#custom-poster svg {
+  width: 80px;
+  height: 80px;
+  fill: white;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+  transition: transform 0.2s;
+}
+
+#custom-poster:hover svg {
+  transform: scale(1.1);
+}
+
 .shaka-spinner-container{
   display:none !important;
 }
@@ -61,16 +91,6 @@ video{
   background: rgba(255, 255, 255, 0.15) !important;
 }
 
-.shaka-play-button,
-.shaka-mute-button,
-.shaka-pip-button,
-.shaka-fullscreen-button,
-.shaka-quality-button,
-.shaka-current-time,
-.shaka-time-and-duration {
-  color:#fff !important;
-}
-
 .shaka-zoom-button {
   background: transparent;
   border: none;
@@ -86,12 +106,19 @@ video{
     height: 24px;
     fill: white;
 }
+
+/* ক্যাপশন বাটন হাইড করার জন্য */
+.shaka-caption-button { display: none !important; }
 </style>
 </head>
 
 <body>
 
 <div class="shaka-video-container" id="player-container">
+  <div id="custom-poster">
+    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </div>
+  
   <video id="video" autoplay playsinline muted></video>
 </div>
 
@@ -133,6 +160,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const video = document.getElementById('video');
   const container = document.getElementById('player-container');
+  const poster = document.getElementById('custom-poster');
 
   const streamUrl = "https://live-pv-ta.amazon.fastly-edge.com/syd-nitro/live/clients/dash/enc/wwrmho82pc/out/v1/d7130f460d41486ea7e8e3eb45f0522f/cenc.mpd";
   const keyId = "baafdb8ebcbbc0655332291da6f121da";
@@ -154,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       'quality',
       'fullscreen'
     ],
-    addBigPlayButton: true,
+    addBigPlayButton: false, // আমাদের কাস্টম বাটন আছে তাই এটি অফ
     overflowMenuButtons: [],
     seekBarColors: {
       base: 'rgba(255, 255, 255, 0.15)',
@@ -164,26 +192,24 @@ document.addEventListener('DOMContentLoaded', async function () {
   });
 
   player.configure({
-    drm: {
-      clearKeys: {
-        [keyId]: key
-      }
-    },
-    abr: {
-      enabled: true,
-      defaultBandwidthEstimate: 10000000
-    },
-    streaming: {
-      lowLatencyMode: true,
-      bufferingGoal: 6,
-      rebufferingGoal: 1,
-      bufferBehind: 8
-    }
+    drm: { clearKeys: { [keyId]: key } },
+    abr: { enabled: true, defaultBandwidthEstimate: 10000000 },
+    streaming: { lowLatencyMode: true, bufferingGoal: 6 }
   });
+
+  // ক্যাপশন বা টেক্সট ট্রাক সম্পূর্ণ বন্ধ করা
+  player.setTextTrackVisibility(false);
 
   try {
     await player.load(streamUrl, -3);
-    await video.play();
+    
+    // পোস্টারে ক্লিক করলে ভিডিও আনমিউট হবে এবং প্লে হবে
+    poster.addEventListener('click', () => {
+      video.muted = false;
+      video.play();
+      poster.style.display = 'none';
+    });
+
   } catch (e) {
     console.error(e);
   }
