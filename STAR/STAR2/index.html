@@ -1,27 +1,237 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Star Sports // Sayan 2026</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prime TV • Sayan 2026</title>
+  <meta name="referrer" content="no-referrer">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+
+    .shaka-video-container{
+      position:fixed;
+      inset:0;
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    video{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      background:#000;
+    }
+
+    .shaka-volume-bar-container,
+    .shaka-spinner-container{display:none!important}
+
+    .custom-watermark{
+      position:absolute;
+      z-index:40;
+      pointer-events:none;
+      top:65%;
+      left:6%;
+      transform:translateY(-50%);
+      font-size:11px;
+      font-weight:600;
+      color:rgba(255,255,255,0.12);
+    }
+
+    @media(max-width:700px){
+      .custom-watermark{font-size:9px;top:60%;left:16%;}
+    }
+
+    #error-screen{
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      background:linear-gradient(135deg,#0f0f0f,#1c1c1c);
+      align-items:center;
+      justify-content:center;
+      font-family:'Orbitron',sans-serif;
+      color:#ffffff;
+      flex-direction:column;
+    }
+
+    .error-container{
+      text-align:center;
+      padding:20px;
+      width:100%;
+    }
+
+    .error-svg{
+      width:100%;
+      max-width:900px;
+    }
+
+    .sub-text{
+      margin-top:25px;
+      font-size:18px;
+      color:#bbbbbb;
+      letter-spacing:1px;
+    }
+
+    .contact-btn{
+      display:inline-block;
+      margin-top:30px;
+      padding:12px 28px;
+      text-decoration:none;
+      color:#ffffff;
+      border:2px solid #ff0033;
+      border-radius:40px;
+      transition:0.3s ease;
+      font-size:16px;
+    }
+
+    .contact-btn:hover{
+      background-color:#ff0033;
+      box-shadow:0 0 15px #ff0033;
+    }
+  </style>
 </head>
 <body>
-    <script>
-        // The encrypted string is injected here:
-        let encrypted = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0idXRmLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCxpbml0aWFsLXNjYWxlPTEiIC8+CiAgPHRpdGxlPlN0YXIgU3BvcnRzIC8vIFNheWFuIDIwMjY8L3RpdGxlPgogIDxtZXRhIG5hbWU9InJlZmVycmVyIiBjb250ZW50PSJuby1yZWZlcnJlciI+CgogIDxzY3JpcHQgc3JjPSJodHRwczovL2NkbmpzLmNsb3VkZmxhcmUuY29tL2FqYXgvbGlicy9zaGFrYS1wbGF5ZXIvNC43LjExL3NoYWthLXBsYXllci51aS5taW4uanMiPjwvc2NyaXB0PgogIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iaHR0cHM6Ly9jZG5qcy5jbG91ZGZsYXJlLmNvbS9hamF4L2xpYnMvc2hha2EtcGxheWVyLzQuNy4xMS9jb250cm9scy5taW4uY3NzIiAvPgogIDxsaW5rIGhyZWY9Imh0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20vY3NzMj9mYW1pbHk9T3JiaXRyb246d2dodEA2MDA7NzAwOzkwMCZkaXNwbGF5PXN3YXAiIHJlbD0ic3R5bGVzaGVldCI+CgogIDxzdHlsZT4KICAgICp7bWFyZ2luOjA7cGFkZGluZzowO2JveC1zaXppbmc6Ym9yZGVyLWJveH0KICAgIGh0bWwsYm9keXt3aWR0aDoxMDAlO2hlaWdodDoxMDAlO2JhY2tncm91bmQ6IzAwMDtvdmVyZmxvdzpoaWRkZW47Zm9udC1mYW1pbHk6c3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZn0KCiAgICAuc2hha2EtdmlkZW8tY29udGFpbmVyewogICAgICBwb3NpdGlvbjpmaXhlZDsKICAgICAgaW5zZXQ6MDsKICAgICAgYmFja2dyb3VuZDojMDAwOwogICAgICBkaXNwbGF5OmZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOmNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OmNlbnRlcjsKICAgIH0KCiAgICB2aWRlb3sKICAgICAgd2lkdGg6MTAwJTsKICAgICAgaGVpZ2h0OjEwMCU7CiAgICAgIG9iamVjdC1maXQ6Y29udGFpbjsKICAgICAgYmFja2dyb3VuZDojMDAwOwogICAgfQoKICAgIC5zaGFrYS12b2x1bWUtYmFyLWNvbnRhaW5lciwKICAgIC5zaGFrYS1zcGlubmVyLWNvbnRhaW5lcntkaXNwbGF5Om5vbmUhaW1wb3J0YW50fQoKICAgIC5jdXN0b20td2F0ZXJtYXJrewogICAgICBwb3NpdGlvbjphYnNvbHV0ZTsKICAgICAgei1pbmRleDo0MDsKICAgICAgcG9pbnRlci1ldmVudHM6bm9uZTsKICAgICAgdG9wOjY1JTsKICAgICAgbGVmdDo2JTsKICAgICAgdHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTUwJSk7CiAgICAgIGZvbnQtc2l6ZToxMXB4OwogICAgICBmb250LXdlaWdodDo2MDA7CiAgICAgIGNvbG9yOnJnYmEoMjU1LDI1NSwyNTUsMC4xMik7CiAgICB9CgogICAgQG1lZGlhKG1heC13aWR0aDo3MDBweCl7CiAgICAgIC5jdXN0b20td2F0ZXJtYXJre2ZvbnQtc2l6ZTo5cHg7dG9wOjYwJTtsZWZ0OjE2JTt9CiAgICB9CgogICAgI2Vycm9yLXNjcmVlbnsKICAgICAgZGlzcGxheTpub25lOwogICAgICBwb3NpdGlvbjpmaXhlZDsKICAgICAgaW5zZXQ6MDsKICAgICAgei1pbmRleDo5OTk5OwogICAgICBiYWNrZ3JvdW5kOmxpbmVhci1ncmFkaWVudCgxMzVkZWcsIzBmMGYwZiwjMWMxYzFjKTsKICAgICAgYWxpZ24taXRlbXM6Y2VudGVyOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyOwogICAgICBmb250LWZhbWlseTonT3JiaXRyb24nLHNhbnMtc2VyaWY7CiAgICAgIGNvbG9yOiNmZmZmZmY7CiAgICAgIGZsZXgtZGlyZWN0aW9uOmNvbHVtbjsKICAgIH0KCiAgICAuZXJyb3ItY29udGFpbmVyewogICAgICB0ZXh0LWFsaWduOmNlbnRlcjsKICAgICAgcGFkZGluZzoyMHB4OwogICAgICB3aWR0aDoxMDAlOwogICAgfQoKICAgIC5lcnJvci1zdmd7CiAgICAgIHdpZHRoOjEwMCU7CiAgICAgIG1heC13aWR0aDo5MDBweDsKICAgIH0KCiAgICAuc3ViLXRleHR7CiAgICAgIG1hcmdpbi10b3A6MjVweDsKICAgICAgZm9udC1zaXplOjE4cHg7CiAgICAgIGNvbG9yOiNiYmJiYmI7CiAgICAgIGxldHRlci1zcGFjaW5nOjFweDsKICAgIH0KCiAgICAuY29udGFjdC1idG57CiAgICAgIGRpc3BsYXk6aW5saW5lLWJsb2NrOwogICAgICBtYXJnaW4tdG9wOjMwcHg7CiAgICAgIHBhZGRpbmc6MTJweCAyOHB4OwogICAgICB0ZXh0LWRlY29yYXRpb246bm9uZTsKICAgICAgY29sb3I6I2ZmZmZmZjsKICAgICAgYm9yZGVyOjJweCBzb2xpZCAjZmYwMDMzOwogICAgICBib3JkZXItcmFkaXVzOjQwcHg7CiAgICAgIHRyYW5zaXRpb246MC4zcyBlYXNlOwogICAgICBmb250LXNpemU6MTZweDsKICAgIH0KCiAgICAuY29udGFjdC1idG46aG92ZXJ7CiAgICAgIGJhY2tncm91bmQtY29sb3I6I2ZmMDAzMzsKICAgICAgYm94LXNoYWRvdzowIDAgMTVweCAjZmYwMDMzOwogICAgfQogIDwvc3R5bGU+CjwvaGVhZD4KPGJvZHk+CgogIDxkaXYgY2xhc3M9InNoYWthLXZpZGVvLWNvbnRhaW5lciIgaWQ9InBsYXllci1jb250YWluZXIiPgogICAgPHZpZGVvIGlkPSJ2aWRlbyIgYXV0b3BsYXkgcGxheXNpbmxpbmUgcHJlbG9hZD0ibWV0YWRhdGEiPjwvdmlkZW8+CiAgICA8ZGl2IGNsYXNzPSJjdXN0b20td2F0ZXJtYXJrIj7igI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIFNheWFuIE9mZmljaWFsIOKEojwvZGl2PgogIDwvZGl2PgoKICA8ZGl2IGlkPSJlcnJvci1zY3JlZW4iPgogICAgPGRpdiBjbGFzcz0iZXJyb3ItY29udGFpbmVyIj4KICAgICAgPHN2ZyBjbGFzcz0iZXJyb3Itc3ZnIiB2aWV3Qm94PSIwIDAgMTAwMCAyMDAiPgogICAgICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZjAwMzMiIHN0cm9rZS13aWR0aD0iNCIgZm9udC1zaXplPSI5MCIgZm9udC13ZWlnaHQ9IjkwMCI+CiAgICAgICAgICBBQ0NFU1MgREVOSUVECiAgICAgICAgPC90ZXh0PgogICAgICA8L3N2Zz4KICAgICAgPGRpdiBjbGFzcz0ic3ViLXRleHQiPkxpdmUgVmlkZW8gUGxheWJhY2sgSXMgTm90IFBlcm1pdHRlZCBPbiBUaGlzIFdlYnNpdGUuPC9kaXY+CiAgICAgIDxhIGhyZWY9Imh0dHBzOi8vdC5tZS9TYXlhbl94eXoiIHRhcmdldD0iX2JsYW5rIiBjbGFzcz0iY29udGFjdC1idG4iPkNvbnRhY3QgRGV2ZWxvcGVyPC9hPgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDxzY3JpcHQ+CiAgICBjb25zdCBBTExPV0VEX0RPTUFJTlMgPSBbCiAgICAgICJodHRwczovL2NucG9pbnQucGFnZXMuZGV2IiwKICAgICAgImh0dHBzOi8vY25wdHYucGFnZXMuZGV2IiwKICAgICAgImh0dHBzOi8vZGlzaHR2LnBhZ2VzLmRldiIsCiAgICAgICJodHRwczovL2FsbC1pbi1vbmUtY2hhbm5lbC1hbWJlci52ZXJjZWwuYXBwIgogICAgXTsKICA8L3NjcmlwdD4KCiAgPHNjcmlwdD4KICAgIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoJ0RPTUNvbnRlbnRMb2FkZWQnLCBhc3luYyAoKSA9PiB7CiAgICAgIHNldFRpbWVvdXQoKCkgPT4gewogICAgICAgIGNvbnN0IGN1cnJlbnREb21haW4gPSB3aW5kb3cubG9jYXRpb24uaG9zdG5hbWU7CiAgICAgICAgaWYgKCFBTExPV0VEX0RPTUFJTlMuaW5jbHVkZXMoY3VycmVudERvbWFpbikgJiYgY3VycmVudERvbWFpbiAhPT0gIiIpIHsKICAgICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwbGF5ZXItY29udGFpbmVyJykuc3R5bGUuZGlzcGxheSA9ICdub25lJzsKICAgICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdlcnJvci1zY3JlZW4nKS5zdHlsZS5kaXNwbGF5ID0gJ2ZsZXgnOwogICAgICAgICAgCiAgICAgICAgICBjb25zdCB2aWRlb1BsYXllciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd2aWRlbycpOwogICAgICAgICAgaWYgKHZpZGVvUGxheWVyKSB7CiAgICAgICAgICAgIHZpZGVvUGxheWVyLnBhdXNlKCk7CiAgICAgICAgICAgIHZpZGVvUGxheWVyLnJlbW92ZUF0dHJpYnV0ZSgnc3JjJyk7CiAgICAgICAgICAgIHZpZGVvUGxheWVyLmxvYWQoKTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgIH0sIDUwMDApOwoKICAgICAgc2hha2EucG9seWZpbGwuaW5zdGFsbEFsbCgpOwogICAgICBpZiAoIXNoYWthLlBsYXllci5pc0Jyb3dzZXJTdXBwb3J0ZWQoKSkgcmV0dXJuOwoKICAgICAgY29uc3QgdmlkZW9FbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd2aWRlbycpOwogICAgICBjb25zdCBjb250YWluZXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncGxheWVyLWNvbnRhaW5lcicpOwogICAgICBjb25zdCB1cmxQYXJhbXMgPSBuZXcgVVJMU2VhcmNoUGFyYW1zKHdpbmRvdy5sb2NhdGlvbi5zZWFyY2gpOwogICAgICBjb25zdCByZXF1ZXN0ZWRJZCA9IHVybFBhcmFtcy5nZXQoJ2lkJykgfHwgdXJsUGFyYW1zLmdldCgnY2hhbm5lbCcpOwoKICAgICAgaWYgKCFyZXF1ZXN0ZWRJZCkgewogICAgICAgIGFsZXJ0KCJQbGVhc2UgcHJvdmlkZSBhIENoYW5uZWwgSUQgKGUuZy4sID9pZD0yMDQpIik7CiAgICAgICAgcmV0dXJuOwogICAgICB9CgogICAgICBsZXQgc3RyZWFtVXJsID0gIiI7CiAgICAgIGxldCBkcm1Db25maWcgPSB7IGNsZWFyS2V5czoge30gfTsKICAgICAgbGV0IGNvb2tpZUhlYWRlciA9ICIiOwoKICAgICAgdHJ5IHsKICAgICAgICBjb25zdCBbY2hSZXMsIGNvb2tSZXNdID0gYXdhaXQgUHJvbWlzZS5hbGwoWwogICAgICAgICAgZmV0Y2goJ2h0dHBzOi8vYWxscm91bmRlcmlkLnBhZ2VzLmRldi9hcGkvamlvdHYyLmpzb24nLCB7IGNhY2hlOiAnbm8tc3RvcmUnIH0pLAogICAgICAgICAgZmV0Y2goJ2h0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS8yNHNwb3J0cy1uZXQvY29va2llLXVwZGF0ZXIvcmVmcy9oZWFkcy9tYWluL2Nvb2tpZS5qc29uJywgeyBjYWNoZTogJ25vLXN0b3JlJyB9KQogICAgICAgIF0pOwoKICAgICAgICBjb25zdCBhbGxDaGFubmVscyA9IGF3YWl0IGNoUmVzLmpzb24oKTsKICAgICAgICBjb25zdCBjb29raWVEYXRhID0gYXdhaXQgY29va1Jlcy5qc29uKCk7CgogICAgICAgIGNvbnN0IGNoYW5uZWwgPSBhbGxDaGFubmVscy5maW5kKGNoID0+IFN0cmluZyhjaC5jaGFubmVsX2lkIHx8IGNoLmlkKSA9PT0gU3RyaW5nKHJlcXVlc3RlZElkKSk7CgogICAgICAgIGlmIChjaGFubmVsKSB7CiAgICAgICAgICBzdHJlYW1VcmwgPSAoY2hhbm5lbC5jaGFubmVsX3VybCB8fCBjaGFubmVsLnVybCB8fCAiIikuc3BsaXQoJz8nKVswXTsKICAgICAgICAgIGlmIChjaGFubmVsLmtleUlkICYmIGNoYW5uZWwua2V5KSB7CiAgICAgICAgICAgIGRybUNvbmZpZy5jbGVhcktleXNbY2hhbm5lbC5rZXlJZF0gPSBjaGFubmVsLmtleTsKICAgICAgICAgIH0KICAgICAgICAgIGNvb2tpZUhlYWRlciA9IGNoYW5uZWwuY29va2llIHx8IGNvb2tpZURhdGEuY29va2llSGVhZGVyIHx8IGNvb2tpZURhdGEuY29va2llOwogICAgICAgICAgZG9jdW1lbnQudGl0bGUgPSBgJHtjaGFubmVsLmNoYW5uZWxfbmFtZSB8fCAiTGl2ZSJ9IC0gU2F5YW4gT2ZmaWNpYWxgOwogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICBhbGVydCgiQ2hhbm5lbCBOb3QgRm91bmQhIik7CiAgICAgICAgICByZXR1cm47CiAgICAgICAgfQogICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgY29uc29sZS5lcnJvcigiRGF0YSBmZXRjaCBlcnJvciIpOwogICAgICB9CgogICAgICBjb25zdCBwbGF5ZXIgPSBuZXcgc2hha2EuUGxheWVyKCk7CiAgICAgIGF3YWl0IHBsYXllci5hdHRhY2godmlkZW9FbCk7CiAgICAgIGNvbnN0IHVpID0gbmV3IHNoYWthLnVpLk92ZXJsYXkocGxheWVyLCBjb250YWluZXIsIHZpZGVvRWwpOwoKICAgICAgdWkuY29uZmlndXJlKHsKICAgICAgICBjb250cm9sUGFuZWxFbGVtZW50czogWydwbGF5X3BhdXNlJywndGltZV9hbmRfZHVyYXRpb24nLCdzcGFjZXInLCdsYW5ndWFnZScsJ2NhcHRpb25zJywncGljdHVyZV9pbl9waWN0dXJlJywncXVhbGl0eScsJ2Z1bGxzY3JlZW4nXSwKICAgICAgICBzZWVrQmFyQ29sb3JzOiB7CiAgICAgICAgICBiYXNlOiAnd2hpdGUnLAogICAgICAgICAgYnVmZmVyZWQ6ICdyZWQnLAogICAgICAgICAgcGxheWVkOiAnZ3JlZW4nCiAgICAgICAgfQogICAgICB9KTsKCiAgICAgIHBsYXllci5jb25maWd1cmUoewogICAgICAgIGRybTogZHJtQ29uZmlnLAogICAgICAgIG1hbmlmZXN0OiB7CiAgICAgICAgICBkZWZhdWx0UHJlc2VudGF0aW9uRGVsYXk6IDUgCiAgICAgICAgfSwKICAgICAgICBzdHJlYW1pbmc6IHsKICAgICAgICAgIHNhZmVTZWVrT2Zmc2V0OiA1LAogICAgICAgICAgYnVmZmVyaW5nR29hbDogMTAsCiAgICAgICAgICByZWJ1ZmZlcmluZ0dvYWw6IDIsCiAgICAgICAgICBsb3dMYXRlbmN5TW9kZTogdHJ1ZQogICAgICAgIH0KICAgICAgfSk7CgogICAgICBwbGF5ZXIuZ2V0TmV0d29ya2luZ0VuZ2luZSgpLnJlZ2lzdGVyUmVxdWVzdEZpbHRlcigodHlwZSwgcmVxdWVzdCkgPT4gewogICAgICAgIHJlcXVlc3QuaGVhZGVyc1snUmVmZXJlciddID0gJ2h0dHBzOi8vd3d3Lmppb3R2LmNvbS8nOwogICAgICAgIHJlcXVlc3QuaGVhZGVyc1snVXNlci1BZ2VudCddID0gJ3BsYVl0di83LjEuNSAoTGludXg7QW5kcm9pZCAxMykgRXhvUGxheWVyTGliLzIuMTEuNic7CgogICAgICAgIGlmIChjb29raWVIZWFkZXIpIHsKICAgICAgICAgIHJlcXVlc3QuaGVhZGVyc1snQ29va2llJ10gPSBjb29raWVIZWFkZXI7CiAgICAgICAgICBpZiAoKHR5cGUgPT09IHNoYWthLm5ldC5OZXR3b3JraW5nRW5naW5lLlJlcXVlc3RUeXBlLk1BTklGRVNUIHx8IHR5cGUgPT09IHNoYWthLm5ldC5OZXR3b3JraW5nRW5naW5lLlJlcXVlc3RUeXBlLlNFR01FTlQpICYmICFyZXF1ZXN0LnVyaXNbMF0uaW5jbHVkZXMoJ19faGRuZWFfXycpKSB7CiAgICAgICAgICAgIGNvbnN0IHNlcCA9IHJlcXVlc3QudXJpc1swXS5pbmNsdWRlcygnPycpID8gJyYnIDogJz8nOwogICAgICAgICAgICByZXF1ZXN0LnVyaXNbMF0gKz0gc2VwICsgY29va2llSGVhZGVyOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfSk7CgogICAgICB0cnkgewogICAgICAgIGF3YWl0IHBsYXllci5sb2FkKHN0cmVhbVVybCk7CiAgICAgICAgdmlkZW9FbC5wbGF5KCk7CiAgICAgIH0gY2F0Y2ggKGUpIHsKICAgICAgICBjb25zb2xlLmVycm9yKCJTdHJlYW0gbG9hZCBlcnJvciIsIGUpOwogICAgICB9CiAgICB9KTsKICA8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+Cg=="; 
-        
-        function decryptAndExecute() {
-            try {
-                let original = decodeURIComponent(escape(atob(encrypted)));
-                document.open();
-                document.write(original);
-                document.close();
-            } catch (e) {
-                document.write('<h1 style="color:red; text-align: center; margin-top: 50px;">DECRYPTION ERROR!</h1><p style="text-align: center;">' + e.message + '</p>');
-            }
+
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" autoplay playsinline preload="metadata"></video>
+    <div class="custom-watermark">Sayan Official ™</div>
+  </div>
+
+  <div id="error-screen">
+    <div class="error-container">
+      <svg class="error-svg" viewBox="0 0 1000 200">
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="none" stroke="#ff0033" stroke-width="4" font-size="90" font-weight="900">
+          ACCESS DENIED
+        </text>
+      </svg>
+      <div class="sub-text">Live Video Playback Is Not Permitted On This Website.</div>
+      <a href="https://t.me/Sayan_xyz" target="_blank" class="contact-btn">Contact Developer</a>
+    </div>
+  </div>
+
+  <script>
+    const ALLOWED_DOMAINS = [
+      "localhost",
+      "127.0.0.1",
+      "yourdomain.com",
+      "https://all-in-one-channel-amber.vercel.app/"
+    ];
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      setTimeout(() => {
+        const currentDomain = window.location.hostname;
+        if (!ALLOWED_DOMAINS.includes(currentDomain) && currentDomain !== "") {
+          document.getElementById('player-container').style.display = 'none';
+          document.getElementById('error-screen').style.display = 'flex';
+          
+          const videoPlayer = document.getElementById('video');
+          if (videoPlayer) {
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            videoPlayer.load();
+          }
         }
-        decryptAndExecute();
-    </script>
+      }, 5000);
+
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) return;
+
+      const videoEl = document.getElementById('video');
+      const container = document.getElementById('player-container');
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestedId = urlParams.get('id') || urlParams.get('channel');
+
+      if (!requestedId) {
+        alert("Please provide a Channel ID (e.g., ?id=204)");
+        return;
+      }
+
+      let streamUrl = "";
+      let drmConfig = { clearKeys: {} };
+      let cookieHeader = "";
+
+      try {
+        const [chRes, cookRes] = await Promise.all([
+          fetch('https://allrounderid.pages.dev/api/jiotv2.json', { cache: 'no-store' }),
+          fetch('https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json', { cache: 'no-store' })
+        ]);
+
+        const allChannels = await chRes.json();
+        const cookieData = await cookRes.json();
+
+        const channel = allChannels.find(ch => String(ch.channel_id || ch.id) === String(requestedId));
+
+        if (channel) {
+          streamUrl = (channel.channel_url || channel.url || "").split('?')[0];
+          if (channel.keyId && channel.key) {
+            drmConfig.clearKeys[channel.keyId] = channel.key;
+          }
+          cookieHeader = channel.cookie || cookieData.cookieHeader || cookieData.cookie;
+          document.title = `${channel.channel_name || "Live"} - Sayan Official`;
+        } else {
+          alert("Channel Not Found!");
+          return;
+        }
+      } catch (e) {
+        console.error("Data fetch error");
+      }
+
+      const player = new shaka.Player();
+      await player.attach(videoEl);
+      const ui = new shaka.ui.Overlay(player, container, videoEl);
+
+      ui.configure({
+        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+        seekBarColors: {
+          base: 'white',
+          buffered: 'red',
+          played: 'green'
+        }
+      });
+
+      player.configure({
+        drm: drmConfig,
+        manifest: {
+          defaultPresentationDelay: 5 
+        },
+        streaming: {
+          safeSeekOffset: 5,
+          bufferingGoal: 10,
+          rebufferingGoal: 2,
+          lowLatencyMode: true
+        }
+      });
+
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        request.headers['Referer'] = 'https://www.jiotv.com/';
+        request.headers['User-Agent'] = 'plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6';
+
+        if (cookieHeader) {
+          request.headers['Cookie'] = cookieHeader;
+          if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) && !request.uris[0].includes('__hdnea__')) {
+            const sep = request.uris[0].includes('?') ? '&' : '?';
+            request.uris[0] += sep + cookieHeader;
+          }
+        }
+      });
+
+      try {
+        await player.load(streamUrl);
+        videoEl.play();
+      } catch (e) {
+        console.error("Stream load error", e);
+      }
+    });
+  </script>
 </body>
 </html>
