@@ -119,18 +119,34 @@
 
   <script>
     const ALLOWED_DOMAINS = [
+      "cnpoint.pages.dev",
+      "cnptv.pages.dev",
+      "dishtv.pages.dev",
+      "all-in-one-channel-amber.vercel.app",
       "localhost",
-      "127.0.0.1",
-      "yourdomain.com",
-      "https://all-in-one-channel-amber.vercel.app/"
+      "127.0.0.1"
     ];
   </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      
       setTimeout(() => {
-        const currentDomain = window.location.hostname;
-        if (!ALLOWED_DOMAINS.includes(currentDomain) && currentDomain !== "") {
+        const currentDomain = window.location.hostname.toLowerCase();
+        let isAllowed = false;
+
+        if (currentDomain === "") {
+          isAllowed = true;
+        } else {
+          for (let i = 0; i < ALLOWED_DOMAINS.length; i++) {
+            if (currentDomain.includes(ALLOWED_DOMAINS[i].toLowerCase())) {
+              isAllowed = true;
+              break;
+            }
+          }
+        }
+
+        if (!isAllowed) {
           document.getElementById('player-container').style.display = 'none';
           document.getElementById('error-screen').style.display = 'flex';
           
@@ -183,7 +199,7 @@
           return;
         }
       } catch (e) {
-        console.error("Data fetch error");
+        console.error("Data fetch error", e);
       }
 
       const player = new shaka.Player();
