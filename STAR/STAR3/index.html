@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prime TV • Sayan 2026</title>
+  <meta name="referrer" content="no-referrer">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+    .shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+    video{width:100%;height:100%;object-fit:contain;background:#000}
+    .shaka-volume-bar-container,.shaka-spinner-container{display:none!important}
+    .custom-watermark{position:absolute;z-index:40;pointer-events:none;top:60%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+    @media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
+    .denied-body{height:100vh;background:linear-gradient(135deg,#0f0f0f,#1c1c1c);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;color:#ffffff;overflow:hidden}
+    .denied-container{text-align:center;padding:20px;width:100%}
+    .denied-container svg{width:100%;max-width:900px}
+    .denied-sub-text{margin-top:25px;font-size:18px;color:#bbbbbb;letter-spacing:1px}
+    .denied-contact-btn{display:inline-block;margin-top:30px;padding:12px 28px;text-decoration:none;color:#ffffff;border:2px solid #ff0033;border-radius:40px;transition:0.3s ease;font-size:16px}
+    .denied-contact-btn:hover{background-color:#ff0033;box-shadow:0 0 15px #ff0033}
+  </style>
+</head>
+<body>
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" autoplay playsinline preload="metadata"></video>
+    <div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
+  </div>
+  <script>
+    let playerInstance = null;
+
+    const allowedDomains = [
+      "all-in-one-channel-amber.vercel.app",
+      "cnpoint.pages.dev",
+      "dishtv.pages.dev",
+      "cnptv.pages.dev",
+      "web-testing-ai.pages.dev"
+    ];
+
+    function showAccessDenied() {
+      if (playerInstance) {
+        playerInstance.destroy().catch(() => {});
+      }
+      document.body.className = "denied-body";
+      document.body.innerHTML = `
+        <div class="denied-container">
+            <svg viewBox="0 0 1000 200">
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                      fill="none" stroke="#ff0033" stroke-width="4"
+                      font-size="90" font-weight="900">
+                    ACCESS DENIED 
+                </text>
+            </svg>
+            <div class="denied-sub-text">Live Video Playback Is Not Permitted On This Website.</div>
+            <a href="https://t.me/Sayan_xyz" target="_blank" class="denied-contact-btn">Contact Developer</a>
+        </div>
+      `;
+    }
+
+    function verifyDomainAccess() {
+      let currentDomain = window.location.hostname;
+      let referrerDomain = "";
+      try {
+        if (window.top !== window.self && document.referrer) {
+          referrerDomain = new URL(document.referrer).hostname;
+        }
+      } catch (e) {}
+
+      let isAllowed = allowedDomains.includes(currentDomain) || allowedDomains.includes(referrerDomain);
+      
+      if (!isAllowed && currentDomain !== "localhost" && currentDomain !== "127.0.0.1") {
+        showAccessDenied();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) return;
+
+      const videoEl = document.getElementById('video');
+      const container = document.getElementById('player-container');
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestedId = urlParams.get('id') || urlParams.get('channel');
+
+      if (!requestedId) {
+        alert("Please provide a Channel ID");
+        return;
+      }
+
+      let streamUrl = "";
+      let drmConfig = { clearKeys: {} };
+      let cookieHeader = "";
+
+      try {
+        const [chRes, cookRes] = await Promise.all([
+          fetch('https://allrounderid.pages.dev/api/jiotv2.json', { cache: 'no-store' }),
+          fetch('https://raw.githubusercontent.com/24sports-net/cookie-updater/refs/heads/main/cookie.json', { cache: 'no-store' })
+        ]);
+
+        const allChannels = await chRes.json();
+        const cookieData = await cookRes.json();
+        const channel = allChannels.find(ch => String(ch.channel_id || ch.id) === String(requestedId));
+
+        if (channel) {
+          streamUrl = (channel.channel_url || channel.url || "").split('?')[0];
+          if (channel.keyId && channel.key) {
+            drmConfig.clearKeys[channel.keyId] = channel.key;
+          }
+          cookieHeader = channel.cookie || cookieData.cookieHeader || cookieData.cookie;
+          document.title = `${channel.channel_name || "Live"} - Sayan Official`;
+        } else {
+          alert("Channel Not Found!");
+          return;
+        }
+      } catch (e) {
+        showAccessDenied();
+        return;
+      }
+
+      playerInstance = new shaka.Player();
+      await playerInstance.attach(videoEl);
+      
+      const ui = new shaka.ui.Overlay(playerInstance, container, videoEl);
+      ui.configure({
+        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+        seekBarColors: { base: 'white', buffered: 'red', played: 'green' }
+      });
+
+      playerInstance.configure({
+        drm: drmConfig,
+        manifest: { defaultPresentationDelay: 5 },
+        streaming: { safeSeekOffset: 5, bufferingGoal: 10, rebufferingGoal: 2, lowLatencyMode: true }
+      });
+
+      playerInstance.getNetworkingEngine().registerRequestFilter((type, request) => {
+        request.headers['Referer'] = 'https://www.jiotv.com/';
+        request.headers['User-Agent'] = 'plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6';
+        if (cookieHeader) {
+          request.headers['Cookie'] = cookieHeader;
+          if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) && !request.uris[0].includes('__hdnea__')) {
+            const sep = request.uris[0].includes('?') ? '&' : '?';
+            request.uris[0] += sep + cookieHeader;
+          }
+        }
+      });
+
+      try {
+        await playerInstance.load(streamUrl);
+        videoEl.play();
+      } catch (e) {
+        showAccessDenied();
+      }
+
+      setTimeout(() => {
+        verifyDomainAccess();
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
+
