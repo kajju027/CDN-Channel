@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -8,11 +8,10 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet">
 
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui, -apple-system, sans-serif}
 
     .shaka-video-container{
       position:fixed;
@@ -31,7 +30,7 @@
     }
 
     .shaka-volume-bar-container,
-    .shaka-spinner-container{display:none!important}
+    .shaka-spinner-container { display:none!important; }
 
     .custom-watermark{
       position:absolute;
@@ -39,62 +38,14 @@
       pointer-events:none;
       top:65%;
       left:6%;
-      transform:translateY(-50%);
+      transform: translateY(-50%);
       font-size:11px;
       font-weight:600;
-      color:rgba(255,255,255,0.12);
+      color: rgba(255, 255, 255, 0.12);
     }
 
     @media(max-width:700px){
-      .custom-watermark{font-size:9px;top:60%;left:16%;}
-    }
-
-    #error-screen{
-      display:none;
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      background:linear-gradient(135deg,#0f0f0f,#1c1c1c);
-      align-items:center;
-      justify-content:center;
-      font-family:'Orbitron',sans-serif;
-      color:#ffffff;
-      flex-direction:column;
-    }
-
-    .error-container{
-      text-align:center;
-      padding:20px;
-      width:100%;
-    }
-
-    .error-svg{
-      width:100%;
-      max-width:900px;
-    }
-
-    .sub-text{
-      margin-top:25px;
-      font-size:18px;
-      color:#bbbbbb;
-      letter-spacing:1px;
-    }
-
-    .contact-btn{
-      display:inline-block;
-      margin-top:30px;
-      padding:12px 28px;
-      text-decoration:none;
-      color:#ffffff;
-      border:2px solid #ff0033;
-      border-radius:40px;
-      transition:0.3s ease;
-      font-size:16px;
-    }
-
-    .contact-btn:hover{
-      background-color:#ff0033;
-      box-shadow:0 0 15px #ff0033;
+      .custom-watermark{ font-size:9px; top:60%; left:16%; }
     }
   </style>
 </head>
@@ -105,60 +56,8 @@
     <div class="custom-watermark">Sayan Official ™</div>
   </div>
 
-  <div id="error-screen">
-    <div class="error-container">
-      <svg class="error-svg" viewBox="0 0 1000 200">
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="none" stroke="#ff0033" stroke-width="4" font-size="90" font-weight="900">
-          ACCESS DENIED
-        </text>
-      </svg>
-      <div class="sub-text">Live Video Playback Is Not Permitted On This Website.</div>
-      <a href="https://t.me/Sayan_xyz" target="_blank" class="contact-btn">Contact Developer</a>
-    </div>
-  </div>
-
-  <script>
-    const ALLOWED_DOMAINS = [
-      "cnpoint.pages.dev",
-      "cnptv.pages.dev",
-      "dishtv.pages.dev",
-      "all-in-one-channel-amber.vercel.app",
-      "localhost",
-      "127.0.0.1"
-    ];
-  </script>
-
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      
-      setTimeout(() => {
-        const currentDomain = window.location.hostname.toLowerCase();
-        let isAllowed = false;
-
-        if (currentDomain === "") {
-          isAllowed = true;
-        } else {
-          for (let i = 0; i < ALLOWED_DOMAINS.length; i++) {
-            if (currentDomain.includes(ALLOWED_DOMAINS[i].toLowerCase())) {
-              isAllowed = true;
-              break;
-            }
-          }
-        }
-
-        if (!isAllowed) {
-          document.getElementById('player-container').style.display = 'none';
-          document.getElementById('error-screen').style.display = 'flex';
-          
-          const videoPlayer = document.getElementById('video');
-          if (videoPlayer) {
-            videoPlayer.pause();
-            videoPlayer.removeAttribute('src');
-            videoPlayer.load();
-          }
-        }
-      }, 5000);
-
       shaka.polyfill.installAll();
       if (!shaka.Player.isBrowserSupported()) return;
 
@@ -199,7 +98,7 @@
           return;
         }
       } catch (e) {
-        console.error("Data fetch error", e);
+        console.error("Data fetch error");
       }
 
       const player = new shaka.Player();
