@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>Premium Fast Player - Sayan Official</title>
+
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css" crossorigin="anonymous">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+
+.shaka-video-container{
+  position:fixed;
+  inset:0;
+  background:#000;
+  cursor: pointer;
+}
+
+video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+}
+
+/* Watermark Style */
+.custom-watermark {
+  position: absolute;
+  z-index: 40;
+  pointer-events: none;
+  top: 55%;
+  left: 6%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.12);
+}
+
+/* UI Elements Customization */
+.shaka-scrim-container, .shaka-scrim-vertical, .shaka-spinner-container, 
+.shaka-caption-button, .shaka-text-container {
+  display:none !important;
+}
+
+.shaka-controls-container {
+  background:transparent !important;
+  opacity:1 !important;
+  display:flex !important;
+  z-index:20 !important;
+}
+
+.shaka-big-play-button {
+  background-color:rgba(255,255,255,0.2) !important;
+  backdrop-filter:blur(10px);
+  width:90px !important;
+  height:90px !important;
+  border-radius:50% !important;
+  z-index:30 !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="shaka-video-container" id="player-container">
+  <video id="video" playsinline></video>
+  <div class="custom-watermark">‎‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) return;
+
+  const video = document.getElementById('video');
+  const container = document.getElementById('player-container');
+
+  const streamUrl = "https://live-pv-ta.amazon.fastly-edge.com/lhr-nitro/live/dash/enc/pnu10tp36z/out/v1/912e9db56d75403b8a9ac0a719110f36/cenc.mpd";
+  const keyId = "192b1115da041585c77200128549efa1";
+  const key = "634e10efe4abbb14be400a3ccbac0258";
+
+  const player = new shaka.Player(video);
+  const ui = new shaka.ui.Overlay(player, container, video);
+
+  video.muted = false; 
+  video.volume = 1.0;
+
+  ui.configure({
+    controlPanelElements: ['mute', 'time_and_duration', 'spacer', 'quality', 'fullscreen'],
+    addBigPlayButton: true,
+    seekBarColors: {
+      base: 'white',
+      buffered: 'yellow',
+      played: 'green'
+    }
+  });
+
+  player.configure({
+    drm: { clearKeys: { [keyId]: key } },
+    manifest: { 
+      defaultPresentationDelay: 4 
+    },
+    streaming: { 
+        bufferingGoal: 2, 
+        rebufferingGoal: 1,
+        bufferBehind: 10
+    }
+  });
+
+  let isFirstPlay = true;
+  video.addEventListener('play', () => {
+    if (isFirstPlay && player.isLive()) {
+      const seekRange = player.seekRange();
+      const liveEdge = seekRange.end;
+ 
+      video.currentTime = Math.max(seekRange.start, liveEdge - 4);
+      isFirstPlay = false; 
+    }
+  });
+
+  try {
+    await player.load(streamUrl);
+  } catch (e) {
+    console.error("Player Error:", e);
+  }
+
+
+  container.addEventListener('click', function (e) {
+
+    if (e.target.closest('.shaka-controls-container') || e.target.closest('.shaka-big-play-button')) {
+      return;
+    }
+
+    if (video.paused) {
+      video.play().catch(err => console.error("Playback failed:", err));
+    } else {
+      video.pause();
+    }
+  });
+
+});
+</script>
+
+</body>
+</html>
+
