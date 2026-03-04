@@ -1,120 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Star Sports // Sayan Mete </title>
-<meta name="referrer" content="no-referrer">
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.shaka-video-container{
-position:fixed;
-inset:0;
-background:#000;
-display:flex;
-align-items:center;
-justify-content:center;
-}
-video{
-width:100%;
-height:100%;
-object-fit:contain;
-background:#000;
-}
-.custom-watermark{
-position:absolute;
-z-index:40;
-pointer-events:none;
-top:65%;
-left:6%;
-transform:translateY(-50%);
-font-size:11px;
-font-weight:600;
-color:rgba(255,255,255,0.12);
-}
-@media(max-width:700px){
-.custom-watermark{font-size:9px;top:60%;left:16%}
-}
-</style>
-</head>
-<body>
-<div class="shaka-video-container" id="player-container">
-<video id="video" autoplay muted playsinline preload="metadata"></video>
-<div class="custom-watermark">‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ Sayan Official ™</div>
-</div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ===== BASIC SEO ===== -->
+<title>Cricket News Point // Sayan 2026 // Cricket News Point (CNP) – T20 World Cup 2026 & IPL 2026 Live Coverage</title>
+<meta name="description" content="Cricket News Point (CNP) – T20 World Cup 2026 & IPL 2026 Live Coverage | Real-Time Cricket Scores, Match News, Team India Updates, WPL, ILT20, International Cricket & Viral Cricketers Stories">
+<meta name="keywords" content="Cricket News, Live Cricket Scores, T20 World Cup 2026, T20 World Cup Live, IPL 2026, IPL Live Updates, WPL 2026, ILT20 League, International Cricket, Team India News, Indian Cricket Updates, ICC Tournaments, T20 Cricket News, Match Highlights, Pre Match Analysis, Post Match Updates, Viral Cricketers, Cricket Breaking News, Global Cricket Updates, Cricket Fans Community, Cricket WhatsApp Channel, Live Match Links, Cricket World Cup, T20 Leagues, Cricket Insights">
+<meta name="author" content="sayan">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://cnptv.pages.dev/">
+
+<!-- ===== OPEN GRAPH (Facebook / WhatsApp Preview) ===== -->
+<meta property="og:title" content="Cricket News Point">
+<meta property="og:description" content="Cricket News Point (CNP) – T20 World Cup 2026 & IPL 2026 Live Coverage | Real-Time Cricket Scores, Match News, Team India Updates, WPL, ILT20, International Cricket & Viral Cricketers Stories">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cnptv.pages.dev/">
+<meta property="og:image" content="https://cnptv.pages.dev/file_0000000040247208bac79a46b2a55a4a.png">
+
+<!-- ===== TWITTER CARD ===== -->
+<meta name="twitter:card" content="https://cnptv.pages.dev/file_0000000040247208bac79a46b2a55a4a.png">
+<meta name="twitter:title" content="Cricket News Point // Sayan 2026 // Cricket News Point (CNP) – T20 World Cup 2026 & IPL 2026 Live Coverage">
+<meta name="twitter:description" content="Cricket News, Live Cricket Scores, T20 World Cup 2026, T20 World Cup Live, IPL 2026, IPL Live Updates, WPL 2026, ILT20 League, International Cricket, Team India News, Indian Cricket Updates, ICC Tournaments, T20 Cricket News, Match Highlights, Pre Match Analysis, Post Match Updates, Viral Cricketers, Cricket Breaking News, Global Cricket Updates, Cricket Fans Community, Cricket WhatsApp Channel, Live Match Links, Cricket World Cup, T20 Leagues, Cricket Insights">
+<meta name="twitter:image" content="https://cnptv.pages.dev/file_0000000040247208bac79a46b2a55a4a.png">
+
+<!-- ===== FAVICON ===== -->
+<link rel="icon" type="image/png" href="https://cnptv.pages.dev/file_0000000040247208bac79a46b2a55a4a.png">
+
+<!-- ===== GOOGLE SITE VERIFICATION (Search Console) ===== -->
+<meta name="google-site-verification" content="googlef5395e3bcc48d6bd">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-G5NE717HVD"></script>
 <script>
-(function(){
-  const CONFIG={
-    streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/Star_Sports_HD1_BTS/output/index.mpd",
-    keyId:"965dc2ddb1d85138ad787999a7f30ca5",
-    key:"859695076e67fe961836b564db6d689c",
-    cookieUrl:"https://allrounder-live.pages.dev/api/cookie.json"
-  };
-  document.addEventListener("DOMContentLoaded",async()=>{
-    shaka.polyfill.installAll();
-    if(!shaka.Player.isBrowserSupported()) return;
-    const video=document.getElementById("video");
-    const container=document.getElementById("player-container");
-    video.muted=true;
-    const player=new shaka.Player();
-    await player.attach(video);
-    const ui=new shaka.ui.Overlay(player,container,video);
-    ui.configure({
-      addBigPlayButton:true,
-      controlPanelElements:[
-        "mute",
-        "play_pause",
-        "time_and_duration",
-        "spacer",
-        "quality",
-        "picture_in_picture",
-        "fullscreen"
-      ],
-      seekBarColors:{base:"#FFFFFF",buffered:"#DC143C",played:"#32CD32"}
-    });
-    player.configure({
-      drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}},
-      manifest:{defaultPresentationDelay:5},
-      streaming:{
-        lowLatencyMode:true,
-        bufferingGoal:10,
-        rebufferingGoal:2,
-        safeSeekOffset:5
-      }
-    });
-    let cookieValue="";
-    try{
-      const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
-      const data=await response.json();
-      cookieValue=data.cookie||"";
-    }catch(e){}
-    if(cookieValue){
-      player.getNetworkingEngine().registerRequestFilter((type,request)=>{
-        request.headers["Referer"]="https://www.jiotv.com/";
-        request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
-        request.headers["Cookie"]=cookieValue;
-        let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
-        if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||
-        type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&
-        !request.uris[0].includes("__hdnea__")){
-          const sep=request.uris[0].includes("?")?"&":"?";
-          request.uris[0]+=sep+"__hdnea__="+urlCookie;
-        }
-      });
-    }
-    try{
-      await player.load(CONFIG.streamUrl);
-      video.play().catch(()=>{});
-    }catch(e){}
-    video.addEventListener("play",()=>{
-      video.muted=false;
-    });
-  });
-})();
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-G5NE717HVD');
 </script>
+
+<!-- ===== STRUCTURED DATA (SCHEMA) ===== -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "WebSite",
+ "name": "Cricket News Point",
+ "url": "https://cnptv.pages.dev/file_0000000040247208bac79a46b2a55a4a.png"
+}
+</script>
+    <script>
+        // The encrypted string is injected here:
+        let encrypted = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9InV0Zi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCxpbml0aWFsLXNjYWxlPTEiPgo8dGl0bGU+SmlvdHYgLy8gU2F5YW4gTWV0ZTwvdGl0bGU+CjxtZXRhIG5hbWU9InJlZmVycmVyIiBjb250ZW50PSJuby1yZWZlcnJlciI+CjxzY3JpcHQgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvbnBtL3NoYWthLXBsYXllckA0LjE2LjIvZGlzdC9zaGFrYS1wbGF5ZXIudWkubWluLmpzIj48L3NjcmlwdD4KPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvbnBtL3NoYWthLXBsYXllckA0LjE2LjIvZGlzdC9jb250cm9scy5jc3MiLz4KPHN0eWxlPgoqe21hcmdpbjowO3BhZGRpbmc6MDtib3gtc2l6aW5nOmJvcmRlci1ib3h9Cmh0bWwsYm9keXt3aWR0aDoxMDAlO2hlaWdodDoxMDAlO2JhY2tncm91bmQ6IzAwMDtvdmVyZmxvdzpoaWRkZW47Zm9udC1mYW1pbHk6c3lzdGVtLXVpLHNhbnMtc2VyaWZ9Ci5zaGFrYS12aWRlby1jb250YWluZXJ7cG9zaXRpb246Zml4ZWQ7aW5zZXQ6MDtiYWNrZ3JvdW5kOiMwMDA7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyfQp2aWRlb3t3aWR0aDoxMDAlO2hlaWdodDoxMDAlO29iamVjdC1maXQ6Y29udGFpbjtiYWNrZ3JvdW5kOiMwMDB9Ci5jdXN0b20td2F0ZXJtYXJre3Bvc2l0aW9uOmFic29sdXRlO3otaW5kZXg6NDA7cG9pbnRlci1ldmVudHM6bm9uZTt0b3A6NjUlO2xlZnQ6NiU7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTUwJSk7Zm9udC1zaXplOjExcHg7Zm9udC13ZWlnaHQ6NjAwO2NvbG9yOnJnYmEoMjU1LDI1NSwyNTUsMC4xMil9CiNyZXN0cmljdGlvbi1sYXllcntwb3NpdGlvbjpmaXhlZDtpbnNldDowO2JhY2tncm91bmQ6cmFkaWFsLWdyYWRpZW50KGNpcmNsZSBhdCBjZW50ZXIsIzFhMWExYSAwJSwjMDAwIDEwMCUpO2Rpc3BsYXk6bm9uZTtmbGV4LWRpcmVjdGlvbjpjb2x1bW47YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpjZW50ZXI7ei1pbmRleDo5OTk5OTk7YmFja2Ryb3AtZmlsdGVyOmJsdXIoMTVweCk7Y29sb3I6I2ZmZjt0ZXh0LWFsaWduOmNlbnRlcn0KLmVycm9yLWJveHtwYWRkaW5nOjQwcHh9Ci5sb2NrLWljb257d2lkdGg6MTAwcHg7aGVpZ2h0OjEwMHB4O2ZpbGw6I2ZmM2IzYjttYXJnaW4tYm90dG9tOjIwcHg7YW5pbWF0aW9uOnB1bHNlIDJzIGluZmluaXRlfQpAa2V5ZnJhbWVzIHB1bHNlezAle3RyYW5zZm9ybTpzY2FsZSgxKX01MCV7dHJhbnNmb3JtOnNjYWxlKDEuMSl9MTAwJXt0cmFuc2Zvcm06c2NhbGUoMSl9fQpAbWVkaWEobWF4LXdpZHRoOjcwMHB4KXsuY3VzdG9tLXdhdGVybWFya3tmb250LXNpemU6OXB4O3RvcDo2MCU7bGVmdDoxNiV9fQo8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5Pgo8ZGl2IGlkPSJyZXN0cmljdGlvbi1sYXllciI+CjxkaXYgY2xhc3M9ImVycm9yLWJveCI+CjxzdmcgY2xhc3M9ImxvY2staWNvbiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMkM5LjI0MyAyIDcgNC4yNDMgNyA3djNINmMtMS4xMDMgMC0yIC44OTctMiAydjhjMCAxLjEwMy44OTcgMiAyIDJoMTJjMS4xMDMgMCAyLS44OTcgMi0ydi04YzAtMS4xMDMtLjg5Ny0yLTItMmgtMVY3YzAtMi43NTctMi4yNDMtNS01LTV6TTkgN2MwLTEuNjU0IDEuMzQ2LTMgMy0zczMgMS4zNDYgMyAzdjNIOVY3em00IDEwLjcyM1YxOWgtMnYtMS4yNzdjLS41OTYtLjM0Ny0xLS45ODQtMS0xLjcyMyAwLTEuMTAzLjg5Ny0yIDItMnMyIC44OTcgMiAyYzAgLjczOS0uNDA0IDEuMzc2LTEgMS43MjN6Ii8+PC9zdmc+CjxoMiBzdHlsZT0iY29sb3I6I2ZmM2IzYjtsZXR0ZXItc3BhY2luZzoxcHgiPlVOQVVUSE9SSVpFRCBET01BSU48L2gyPgo8cCBzdHlsZT0ibWFyZ2luLXRvcDoxMHB4O2NvbG9yOiM5Y2EzYWYiPkFjY2VzcyBEZW5pZWQuIFBsZWFzZSBjb250YWN0IHRoZSBkZXZlbG9wZXIgZm9yIHBlcm1pc3Npb24uPC9wPgo8L2Rpdj4KPC9kaXY+CjxkaXYgY2xhc3M9InNoYWthLXZpZGVvLWNvbnRhaW5lciIgaWQ9InBsYXllci1jb250YWluZXIiPgo8dmlkZW8gaWQ9InZpZGVvIiBhdXRvcGxheSBtdXRlZCBwbGF5c2lubGluZSBwcmVsb2FkPSJtZXRhZGF0YSI+PC92aWRlbz4KPGRpdiBjbGFzcz0iY3VzdG9tLXdhdGVybWFyayI+4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIFNheWFuIE9mZmljaWFsIOKEojwvZGl2Pgo8L2Rpdj4KPHNjcmlwdD4KKGZ1bmN0aW9uKCl7CmNvbnN0IENPTkZJRz17CnN0cmVhbVVybDoiaHR0cHM6Ly9qaW90dnBsbGl2ZS5jZG4uamlvLmNvbS9icGstdHYvU3Rhcl9TcG9ydHNfSEQxX0JUUy9vdXRwdXQvaW5kZXgubXBkIiwKa2V5SWQ6Ijk2NWRjMmRkYjFkODUxMzhhZDc4Nzk5OWE3ZjMwY2E1IiwKa2V5OiI4NTk2OTUwNzZlNjdmZTk2MTgzNmI1NjRkYjZkNjg5YyIsCmNvb2tpZVVybDoiaHR0cHM6Ly9hbGxyb3VuZGVyLWxpdmUucGFnZXMuZGV2L2FwaS9jb29raWUuanNvbiIsCmFsbG93ZWREb21haW5zOlsKImFsbC1pbi1vbmUtY2hhbm5lbC5wYWdlcy5kZXYiLAoiY25wdHYucGFnZXMuZGV2IiwKImRpc2h0di5wYWdlcy5kZXYiLAoiYWxsLWluLW9uZS1jaGFubmVsLTg4OC52ZXJjZWwuYXBwIiwKImxvY2FsaG9zdCIKXQp9Owpkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJET01Db250ZW50TG9hZGVkIixhc3luYygpPT57CmNvbnN0IHZpZGVvPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJ2aWRlbyIpOwpjb25zdCBjb250YWluZXI9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInBsYXllci1jb250YWluZXIiKTsKY29uc3QgbGF5ZXI9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlc3RyaWN0aW9uLWxheWVyIik7CmNvbnN0IGNoZWNrU2VjdXJpdHk9KCk9PnsKY29uc3QgY3VycmVudEhvc3Q9d2luZG93LmxvY2F0aW9uLmhvc3RuYW1lOwpsZXQgcGFyZW50SG9zdD0iIjsKaWYod2luZG93LnNlbGYhPT13aW5kb3cudG9wKXsKdHJ5ewpwYXJlbnRIb3N0PW5ldyBVUkwoZG9jdW1lbnQucmVmZXJyZXIpLmhvc3RuYW1lOwp9Y2F0Y2goZSl7CnBhcmVudEhvc3Q9InVua25vd24iOwp9Cn0KY29uc3QgaXNDdXJyZW50QWxsb3dlZD1DT05GSUcuYWxsb3dlZERvbWFpbnMuaW5jbHVkZXMoY3VycmVudEhvc3QpOwpjb25zdCBpc1BhcmVudEFsbG93ZWQ9KHBhcmVudEhvc3Q9PT0iInx8Q09ORklHLmFsbG93ZWREb21haW5zLmluY2x1ZGVzKHBhcmVudEhvc3QpKTsKaWYoIWlzQ3VycmVudEFsbG93ZWR8fCFpc1BhcmVudEFsbG93ZWQpewppZih3aW5kb3cucGxheWVyKSB3aW5kb3cucGxheWVyLmRlc3Ryb3koKTsKdmlkZW8ucGF1c2UoKTsKdmlkZW8uc3JjPSIiOwpjb250YWluZXIuc3R5bGUuZGlzcGxheT0ibm9uZSI7CmxheWVyLnN0eWxlLmRpc3BsYXk9ImZsZXgiOwpyZXR1cm4gZmFsc2U7Cn0KcmV0dXJuIHRydWU7Cn07CmlmKCFjaGVja1NlY3VyaXR5KCkpIHJldHVybjsKc2hha2EucG9seWZpbGwuaW5zdGFsbEFsbCgpOwppZighc2hha2EuUGxheWVyLmlzQnJvd3NlclN1cHBvcnRlZCgpKSByZXR1cm47CmNvbnN0IHBsYXllcj1uZXcgc2hha2EuUGxheWVyKCk7CndpbmRvdy5wbGF5ZXI9cGxheWVyOwphd2FpdCBwbGF5ZXIuYXR0YWNoKHZpZGVvKTsKY29uc3QgdWk9bmV3IHNoYWthLnVpLk92ZXJsYXkocGxheWVyLGNvbnRhaW5lcix2aWRlbyk7CnVpLmNvbmZpZ3VyZSh7CmFkZEJpZ1BsYXlCdXR0b246dHJ1ZSwKY29udHJvbFBhbmVsRWxlbWVudHM6WyJtdXRlIiwicGxheV9wYXVzZSIsInRpbWVfYW5kX2R1cmF0aW9uIiwic3BhY2VyIiwicXVhbGl0eSIsInBpY3R1cmVfaW5fcGljdHVyZSIsImZ1bGxzY3JlZW4iXSwKc2Vla0JhckNvbG9yczp7YmFzZToiI0ZGRkZGRiIsYnVmZmVyZWQ6IiNEQzE0M0MiLHBsYXllZDoiIzMyQ0QzMiJ9Cn0pOwpwbGF5ZXIuY29uZmlndXJlKHsKZHJtOntjbGVhcktleXM6e1tDT05GSUcua2V5SWRdOkNPTkZJRy5rZXl9fSwKbWFuaWZlc3Q6e2RlZmF1bHRQcmVzZW50YXRpb25EZWxheTo1fSwKc3RyZWFtaW5nOntsb3dMYXRlbmN5TW9kZTp0cnVlLGJ1ZmZlcmluZ0dvYWw6MTAscmVidWZmZXJpbmdHb2FsOjIsc2FmZVNlZWtPZmZzZXQ6NX0KfSk7CmxldCBjb29raWVWYWx1ZT0iIjsKdHJ5ewpjb25zdCByZXNwb25zZT1hd2FpdCBmZXRjaChDT05GSUcuY29va2llVXJsLHtjYWNoZToibm8tc3RvcmUifSk7CmNvbnN0IGRhdGE9YXdhaXQgcmVzcG9uc2UuanNvbigpOwpjb29raWVWYWx1ZT1kYXRhLmNvb2tpZXx8IiI7Cn1jYXRjaChlKXt9CmlmKGNvb2tpZVZhbHVlKXsKcGxheWVyLmdldE5ldHdvcmtpbmdFbmdpbmUoKS5yZWdpc3RlclJlcXVlc3RGaWx0ZXIoKHR5cGUscmVxdWVzdCk9PnsKcmVxdWVzdC5oZWFkZXJzWyJSZWZlcmVyIl09Imh0dHBzOi8vd3d3Lmppb3R2LmNvbS8iOwpyZXF1ZXN0LmhlYWRlcnNbIlVzZXItQWdlbnQiXT0icGxhWXR2LzcuMS41IChMaW51eDtBbmRyb2lkIDEzKSBFeG9QbGF5ZXJMaWIvMi4xMS42IjsKcmVxdWVzdC5oZWFkZXJzWyJDb29raWUiXT1jb29raWVWYWx1ZTsKbGV0IHVybENvb2tpZT1jb29raWVWYWx1ZS5zdGFydHNXaXRoKCJfX2hkbmVhX189Iik/Y29va2llVmFsdWUuc3Vic3RyaW5nKDEwKTpjb29raWVWYWx1ZTsKaWYoKHR5cGU9PT1zaGFrYS5uZXQuTmV0d29ya2luZ0VuZ2luZS5SZXF1ZXN0VHlwZS5NQU5JRkVTVHx8dHlwZT09PXNoYWthLm5ldC5OZXR3b3JraW5nRW5naW5lLlJlcXVlc3RUeXBlLlNFR01FTlQpJiYhcmVxdWVzdC51cmlzWzBdLmluY2x1ZGVzKCJfX2hkbmVhX18iKSl7CmNvbnN0IHNlcD1yZXF1ZXN0LnVyaXNbMF0uaW5jbHVkZXMoIj8iKT8iJiI6Ij8iOwpyZXF1ZXN0LnVyaXNbMF0rPXNlcCsiX19oZG5lYV9fPSIrdXJsQ29va2llOwp9Cn0pOwp9CnRyeXsKYXdhaXQgcGxheWVyLmxvYWQoQ09ORklHLnN0cmVhbVVybCk7CnZpZGVvLnBsYXkoKS5jYXRjaCgoKT0+e30pOwp9Y2F0Y2goZSl7fQp2aWRlby5hZGRFdmVudExpc3RlbmVyKCJwbGF5IiwoKT0+e3ZpZGVvLm11dGVkPWZhbHNlfSk7CnNldEludGVydmFsKGNoZWNrU2VjdXJpdHksMTAwMDApOwp9KTsKfSkoKTsKPC9zY3JpcHQ+CjwvYm9keT4KPC9odG1sPgo="; 
+        
+        function decryptAndExecute() {
+            try {
+                let original = decodeURIComponent(escape(atob(encrypted)));
+                document.open();
+                document.write(original);
+                document.close();
+            } catch (e) {
+                document.write('<h1 style="color:red; text-align: center; margin-top: 50px;">DECRYPTION ERROR!</h1><p style="text-align: center;">' + e.message + '</p>');
+            }
+        }
+        decryptAndExecute();
+    </script>
 </body>
 </html>
-
