@@ -1,87 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prime TV • Sayan 2026</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
-    .shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
-    video{width:100%;height:100%;object-fit:contain;background:#000}
-    .shaka-volume-bar-container,.shaka-spinner-container{display:none!important}
-    .custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
-    @media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jiotv // Sayan Mete</title>
+<meta name="referrer" content="no-referrer">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.shaka-volume-bar-container,.shaka-spinner-container{display:none!important}
+.custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+#restriction-layer{position:fixed;inset:0;background:radial-gradient(circle at center,#1a1a1a 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(15px);color:#fff;text-align:center}
+.error-box{padding:40px}
+.lock-icon{width:100px;height:100px;fill:#ff3b3b;margin-bottom:20px;animation:pulse 2s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
+</style>
 </head>
 <body>
-  <div class="shaka-video-container" id="player-container">
-    <video id="video" autoplay playsinline></video>
-    <div class="custom-watermark">‎  ‎ ‎ ‎ ‎ Sayan Official ™</div>
-  </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      shaka.polyfill.installAll();
-      if (!shaka.Player.isBrowserSupported()) return;
 
-      const videoEl = document.getElementById('video');
-      const container = document.getElementById('player-container');
+<div id="restriction-layer">
+<div class="error-box">
+<svg class="lock-icon" viewBox="0 0 24 24"><path d="M12 2C9.243 2 7 4.243 7 7v3H6c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-8c0-1.103-.897-2-2-2h-1V7c0-2.757-2.243-5-5-5zM9 7c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm4 10.723V19h-2v-1.277c-.596-.347-1-.984-1-1.723 0-1.103.897-2 2-2s2 .897 2 2c0 .739-.404 1.376-1 1.723z"/></svg>
+<h2 style="color:#ff3b3b;letter-spacing:1px">UNAUTHORIZED DOMAIN</h2>
+<p style="margin-top:10px;color:#9ca3af">Access Denied. Please contact the developer for permission.</p>
+</div>
+</div>
 
-      const streamUrl = "https://otte.cache.aiv-cdn.net/syd-nitro/live/dash/enc/wese7mithc/out/v1/2f30a0bcdbc64a09b2e101d0b71ed290/cenc.mpd";
-      const keyId = "98f575d59c64c89f8431d0d8c02d8550";
-      const key = "e28cd2cda190f7566520480bff3bca7c";
+<div class="shaka-video-container" id="player-container">
+<video id="video" autoplay muted playsinline preload="metadata"></video>
+<div class="custom-watermark">Sayan Official ™</div>
+</div>
 
-      const player = new shaka.Player();
-      await player.attach(videoEl);
-      const ui = new shaka.ui.Overlay(player, container, videoEl);
+<script>
+(function(){
+const CONFIG={
+streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/Sports18_1_HD_BTS/output/index.mpd",
+keyId:"bd1ea6a1c1fb5dcdb709434e0826bbc0",
+key:"f57f22cba32739ce7beb1fab3f3d060b",
+cookieUrl:"https://allrounder-live.pages.dev/api/cookie.json",
+allowedDomains:[
+"all-in-one-channel.pages.dev",
+"cnptv.pages.dev",
+"dishtv.pages.dev",
+"all-in-one-channel-888.vercel.app",
+"localhost"
+]
+};
 
-      ui.configure({
-        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
-        seekBarColors: {
-          base: 'white',
-          buffered: 'red',
-          played: 'green'
-        }
-      });
+document.addEventListener("DOMContentLoaded",async()=>{
 
-      player.configure({
-        drm: {
-          clearKeys: {
-            [keyId]: key
-          }
-        },
-        abr: {
-          defaultBandwidthEstimate: 10000,
-          enabled: true,
-          switchInterval: 1
-        },
-        manifest: {
-          defaultPresentationDelay: 4,
-          dash: {
-            ignoreSuggestedPresentationDelay: true,
-            ignoreMinBufferTime: true,
-            autoCorrectDrift: true
-          }
-        },
-        streaming: {
-          bufferingGoal: 8,
-          rebufferingGoal: 2,
-          bufferBehind: 10,
-          lowLatencyMode: true,
-          safeSeekOffset: 4,
-          stallThreshold: 1,
-          jumpLargeGaps: true
-        }
-      });
+const video=document.getElementById("video");
+const container=document.getElementById("player-container");
+const layer=document.getElementById("restriction-layer");
 
-      try {
-        await player.load(streamUrl, -4);
-        videoEl.play();
-      } catch (e) {
-      }
-    });
-  </script>
+const checkSecurity=()=>{
+const currentHost=window.location.hostname;
+let parentHost="";
+if(window.self!==window.top){
+try{parentHost=new URL(document.referrer).hostname}catch(e){parentHost="unknown"}
+}
+const isCurrentAllowed=CONFIG.allowedDomains.includes(currentHost);
+const isParentAllowed=(parentHost===""||CONFIG.allowedDomains.includes(parentHost));
+if(!isCurrentAllowed||!isParentAllowed){
+if(window.player) window.player.destroy();
+video.pause();
+video.src="";
+container.style.display="none";
+layer.style.display="flex";
+return false;
+}
+return true;
+};
+
+if(!checkSecurity()) return;
+
+shaka.polyfill.installAll();
+if(!shaka.Player.isBrowserSupported()) return;
+
+const player=new shaka.Player();
+window.player=player;
+await player.attach(video);
+const ui=new shaka.ui.Overlay(player,container,video);
+
+ui.configure({
+controlPanelElements:['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+seekBarColors:{base:'#FFFFFF',buffered:'#DC143C',played:'#32CD32'}
+});
+
+player.configure({
+drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}},
+abr:{defaultBandwidthEstimate:10000,enabled:true,switchInterval:1},
+manifest:{
+defaultPresentationDelay:4,
+dash:{ignoreSuggestedPresentationDelay:true,ignoreMinBufferTime:true,autoCorrectDrift:true}
+},
+streaming:{
+bufferingGoal:8,
+rebufferingGoal:2,
+bufferBehind:10,
+lowLatencyMode:true,
+safeSeekOffset:4,
+stallThreshold:1
+}
+});
+
+let cookieValue="";
+try{
+const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
+const data=await response.json();
+cookieValue=data.cookie||"";
+}catch(e){}
+
+if(cookieValue){
+player.getNetworkingEngine().registerRequestFilter((type,request)=>{
+request.headers["Referer"]="https://www.jiotv.com/";
+request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+request.headers["Cookie"]=cookieValue;
+let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
+if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&!request.uris[0].includes("__hdnea__")){
+const sep=request.uris[0].includes("?")?"&":"?";
+request.uris[0]+=sep+"__hdnea__="+urlCookie;
+}
+});
+}
+
+try{
+await player.load(CONFIG.streamUrl,-4);
+video.play().catch(()=>{});
+}catch(e){}
+
+video.addEventListener("play",()=>{video.muted=false});
+setInterval(checkSecurity,10000);
+
+});
+})();
+</script>
 </body>
 </html>
