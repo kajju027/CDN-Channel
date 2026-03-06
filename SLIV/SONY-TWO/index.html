@@ -1,148 +1,27 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> $Sony LIV Events 2</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;overflow:hidden}
-.shaka-video-container{position:absolute;inset:0}
-
-video{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  background:#000;
-}
-
-
-.shaka-volume-bar-container,
-.shaka-spinner-container{display:none!important}
-
-.custom-watermark{
-  position:absolute;
-  top:60%;
-  left:5%;
-  font-size:13px;
-  letter-spacing:1.5px;
-  color:rgba(255,255,255,.35);
-  opacity:0;
-  pointer-events:none;
-  transition:opacity 1.2s ease;
-  z-index:3;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
 </head>
-
 <body>
-<div class="shaka-video-container">
-  <video id="video" autoplay playsinline></video>
-
-  <!-- Poster overlay -->
-  <div id="poster-overlay"></div>
-
-  <div class="custom-watermark" id="watermark">Sayan xyz</div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', initApp);
-
-const LOG={
-  info:m=>console.log('%c[PLAYER]','color:#4caf50',m),
-  warn:m=>console.warn('%c[PLAYER]','color:#ff9800',m),
-  error:m=>console.error('%c[PLAYER]','color:#f44336',m)
-};
-
-const STREAM_URL = "https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_2_MOB/WDVLive/index.mpd";
-
-const CLEAR_KEY_CONFIG = {
-  drm:{
-    clearKeys:{
-      "ef24516ae38b50d18049343cd1cd998a":
-      "eb4810ec250a1795a0019dba7881ff45"
-    }
-  }
-};
-
-async function initApp(){
-  shaka.polyfill.installAll();
-
-  if(!shaka.Player.isBrowserSupported()){
-    LOG.error('Browser not supported'); return;
-  }
-
-  const video = document.getElementById('video');
-  const container = document.querySelector('.shaka-video-container');
-  const watermark = document.getElementById('watermark');
-  const posterOverlay = document.getElementById('poster-overlay');
-
-  const player = new shaka.Player();
-  await player.attach(video);
-
-  const ui = new shaka.ui.Overlay(player, container, video);
-
-  ui.configure({
-    controlPanelElements: [
-      'play_pause','mute','time_and_duration',
-      'spacer','quality','overflow_menu','fullscreen'
-    ],
-    overflowMenuButtons: [
-      'picture_in_picture','language','captions'
-    ]
-  });
-
-
-  const colors=['#1a73e8','#00b020','#00e0f5','#9b00a6'];
-  let idx = 0;
-  function applySeek(){
-    ui.configure({
-      seekBarColors:{
-        base:'rgba(255,255,255,.15)',
-        played:colors[idx],
-        buffered:colors[(idx+1)%colors.length]
-      }
-    });
-  }
-  applySeek();
-  setInterval(()=>{idx=(idx+1)%colors.length; applySeek()}, 14400000);
-
-  async function smartLoad(){
-    try{
-      player.configure({ drm:{} });
-      await player.load(STREAM_URL);
-      LOG.info('Cookie / default playback OK');
-    }catch{
-      try{
-        player.configure(CLEAR_KEY_CONFIG);
-        await player.load(STREAM_URL);
-        LOG.info('ClearKey fallback OK');
-      }catch{
-        LOG.error('Playback failed');
-      }
-    }
-  }
-
-  await smartLoad();
-
-  player.addEventListener('error', ()=>{});
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState==='visible' && video.paused){
-      video.play().catch(()=>{});
-    }
-  });
-
-  setTimeout(()=>watermark.style.opacity='0.4', 5000);
-
-  video.addEventListener('loadeddata', ()=>{
-    if(posterOverlay) posterOverlay.style.display='none';
-  });
-}
-
-</script>
+    <script>
+        // The encrypted string is injected here:
+        let encrypted = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9InV0Zi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCxpbml0aWFsLXNjYWxlPTEiPgo8dGl0bGU+U29ueSBTcG9ydHMgLy8gRGlsbHp5IDwvdGl0bGU+CjxtZXRhIG5hbWU9InJlZmVycmVyIiBjb250ZW50PSJuby1yZWZlcnJlciI+CjxzY3JpcHQgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvbnBtL3NoYWthLXBsYXllckA0LjE2LjIvZGlzdC9zaGFrYS1wbGF5ZXIudWkubWluLmpzIj48L3NjcmlwdD4KPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvbnBtL3NoYWthLXBsYXllckA0LjE2LjIvZGlzdC9jb250cm9scy5jc3MiLz4KPHN0eWxlPgoqe21hcmdpbjowO3BhZGRpbmc6MDtib3gtc2l6aW5nOmJvcmRlci1ib3h9Cmh0bWwsYm9keXt3aWR0aDoxMDAlO2hlaWdodDoxMDAlO2JhY2tncm91bmQ6IzAwMDtvdmVyZmxvdzpoaWRkZW47Zm9udC1mYW1pbHk6J1NlZ29lIFVJJyxSb2JvdG8sSGVsdmV0aWNhLEFyaWFsLHNhbnMtc2VyaWZ9Ci5zaGFrYS12aWRlby1jb250YWluZXJ7CnBvc2l0aW9uOmZpeGVkOwppbnNldDowOwpiYWNrZ3JvdW5kOiMwMDA7CmRpc3BsYXk6ZmxleDsKYWxpZ24taXRlbXM6Y2VudGVyOwpqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyOwp9CnZpZGVvewp3aWR0aDoxMDAlOwpoZWlnaHQ6MTAwJTsKb2JqZWN0LWZpdDpjb250YWluOwpiYWNrZ3JvdW5kOiMwMDA7Cn0KLmN1c3RvbS13YXRlcm1hcmt7CnBvc2l0aW9uOmFic29sdXRlOwp6LWluZGV4OjQwOwpwb2ludGVyLWV2ZW50czpub25lOwp0b3A6NjUlOwpsZWZ0OjYlOwp0cmFuc2Zvcm06dHJhbnNsYXRlWSgtNTAlKTsKZm9udC1zaXplOjExcHg7CmZvbnQtd2VpZ2h0OjYwMDsKY29sb3I6cmdiYSgyNTUsMjU1LDI1NSwwLjEyKTsKfQpAbWVkaWEobWF4LXdpZHRoOjcwMHB4KXsKLmN1c3RvbS13YXRlcm1hcmt7Zm9udC1zaXplOjlweDt0b3A6NjAlO2xlZnQ6MTYlfQp9Cjwvc3R5bGU+CjwvaGVhZD4KPGJvZHk+CjxkaXYgY2xhc3M9InNoYWthLXZpZGVvLWNvbnRhaW5lciIgaWQ9InBsYXllci1jb250YWluZXIiPgo8dmlkZW8gaWQ9InZpZGVvIiBhdXRvcGxheSBtdXRlZCBwbGF5c2lubGluZSBwcmVsb2FkPSJtZXRhZGF0YSI+PC92aWRlbz4KPGRpdiBjbGFzcz0iY3VzdG9tLXdhdGVybWFyayI+4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIOKAjiDigI4g4oCOIFNheWFuIE9mZmljaWFsIOKEojwvZGl2Pgo8L2Rpdj4KPHNjcmlwdD4KKGZ1bmN0aW9uKCl7CiAgY29uc3QgQ09ORklHPXsKICAgIHN0cmVhbVVybDoiaHR0cHM6Ly9qaW90dnBsbGl2ZS5jZG4uamlvLmNvbS9icGstdHYvU29ueUxJVl9TcG9ydHNfMl9NT0IvV0RWTGl2ZS9pbmRleC5tcGQ/IiwKICAgIGtleUlkOiJlZjI0NTE2YWUzOGI1MGQxODA0OTM0M2NkMWNkOTk4YSIsCiAgICBrZXk6ImViNDgxMGVjMjUwYTE3OTVhMDAxOWRiYTc4ODFmZjQ1IiwKICAgIGNvb2tpZVVybDoiaHR0cHM6Ly9hbGxyb3VuZGVyLWxpdmUucGFnZXMuZGV2L2FwaS9jb29raWUuanNvbiIKICB9OwogIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoIkRPTUNvbnRlbnRMb2FkZWQiLGFzeW5jKCk9PnsKICAgIHNoYWthLnBvbHlmaWxsLmluc3RhbGxBbGwoKTsKICAgIGlmKCFzaGFrYS5QbGF5ZXIuaXNCcm93c2VyU3VwcG9ydGVkKCkpIHJldHVybjsKICAgIGNvbnN0IHZpZGVvPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJ2aWRlbyIpOwogICAgY29uc3QgY29udGFpbmVyPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJwbGF5ZXItY29udGFpbmVyIik7CiAgICB2aWRlby5tdXRlZD10cnVlOwogICAgY29uc3QgcGxheWVyPW5ldyBzaGFrYS5QbGF5ZXIoKTsKICAgIGF3YWl0IHBsYXllci5hdHRhY2godmlkZW8pOwogICAgY29uc3QgdWk9bmV3IHNoYWthLnVpLk92ZXJsYXkocGxheWVyLGNvbnRhaW5lcix2aWRlbyk7CiAgICB1aS5jb25maWd1cmUoewogICAgICBhZGRCaWdQbGF5QnV0dG9uOnRydWUsCiAgICAgIGNvbnRyb2xQYW5lbEVsZW1lbnRzOlsKICAgICAgICAibXV0ZSIsCiAgICAgICAgInBsYXlfcGF1c2UiLAogICAgICAgICJ0aW1lX2FuZF9kdXJhdGlvbiIsCiAgICAgICAgInNwYWNlciIsCiAgICAgICAgInF1YWxpdHkiLAogICAgICAgICJwaWN0dXJlX2luX3BpY3R1cmUiLAogICAgICAgICJmdWxsc2NyZWVuIgogICAgICBdLAogICAgICBzZWVrQmFyQ29sb3JzOntiYXNlOiIjRkZGRkZGIixidWZmZXJlZDoiI0RDMTQzQyIscGxheWVkOiIjMzJDRDMyIn0KICAgIH0pOwogICAgcGxheWVyLmNvbmZpZ3VyZSh7CiAgICAgIGRybTp7Y2xlYXJLZXlzOntbQ09ORklHLmtleUlkXTpDT05GSUcua2V5fX0sCiAgICAgIG1hbmlmZXN0OntkZWZhdWx0UHJlc2VudGF0aW9uRGVsYXk6NX0sCiAgICAgIHN0cmVhbWluZzp7CiAgICAgICAgbG93TGF0ZW5jeU1vZGU6dHJ1ZSwKICAgICAgICBidWZmZXJpbmdHb2FsOjEwLAogICAgICAgIHJlYnVmZmVyaW5nR29hbDoyLAogICAgICAgIHNhZmVTZWVrT2Zmc2V0OjUKICAgICAgfQogICAgfSk7CiAgICBsZXQgY29va2llVmFsdWU9IiI7CiAgICB0cnl7CiAgICAgIGNvbnN0IHJlc3BvbnNlPWF3YWl0IGZldGNoKENPTkZJRy5jb29raWVVcmwse2NhY2hlOiJuby1zdG9yZSJ9KTsKICAgICAgY29uc3QgZGF0YT1hd2FpdCByZXNwb25zZS5qc29uKCk7CiAgICAgIGNvb2tpZVZhbHVlPWRhdGEuY29va2llfHwiIjsKICAgIH1jYXRjaChlKXt9CiAgICBpZihjb29raWVWYWx1ZSl7CiAgICAgIHBsYXllci5nZXROZXR3b3JraW5nRW5naW5lKCkucmVnaXN0ZXJSZXF1ZXN0RmlsdGVyKCh0eXBlLHJlcXVlc3QpPT57CiAgICAgICAgcmVxdWVzdC5oZWFkZXJzWyJSZWZlcmVyIl09Imh0dHBzOi8vd3d3Lmppb3R2LmNvbS8iOwogICAgICAgIHJlcXVlc3QuaGVhZGVyc1siVXNlci1BZ2VudCJdPSJwbGFZdHYvNy4xLjUgKExpbnV4O0FuZHJvaWQgMTMpIEV4b1BsYXllckxpYi8yLjExLjYiOwogICAgICAgIHJlcXVlc3QuaGVhZGVyc1siQ29va2llIl09Y29va2llVmFsdWU7CiAgICAgICAgbGV0IHVybENvb2tpZT1jb29raWVWYWx1ZS5zdGFydHNXaXRoKCJfX2hkbmVhX189Iik/Y29va2llVmFsdWUuc3Vic3RyaW5nKDEwKTpjb29raWVWYWx1ZTsKICAgICAgICBpZigodHlwZT09PXNoYWthLm5ldC5OZXR3b3JraW5nRW5naW5lLlJlcXVlc3RUeXBlLk1BTklGRVNUfHwKICAgICAgICB0eXBlPT09c2hha2EubmV0Lk5ldHdvcmtpbmdFbmdpbmUuUmVxdWVzdFR5cGUuU0VHTUVOVCkmJgogICAgICAgICFyZXF1ZXN0LnVyaXNbMF0uaW5jbHVkZXMoIl9faGRuZWFfXyIpKXsKICAgICAgICAgIGNvbnN0IHNlcD1yZXF1ZXN0LnVyaXNbMF0uaW5jbHVkZXMoIj8iKT8iJiI6Ij8iOwogICAgICAgICAgcmVxdWVzdC51cmlzWzBdKz1zZXArIl9faGRuZWFfXz0iK3VybENvb2tpZTsKICAgICAgICB9CiAgICAgIH0pOwogICAgfQogICAgdHJ5ewogICAgICBhd2FpdCBwbGF5ZXIubG9hZChDT05GSUcuc3RyZWFtVXJsKTsKICAgICAgdmlkZW8ucGxheSgpLmNhdGNoKCgpPT57fSk7CiAgICB9Y2F0Y2goZSl7fQogICAgdmlkZW8uYWRkRXZlbnRMaXN0ZW5lcigicGxheSIsKCk9PnsKICAgICAgdmlkZW8ubXV0ZWQ9ZmFsc2U7CiAgICB9KTsKICB9KTsKfSkoKTsKPC9zY3JpcHQ+CjwvYm9keT4KPC9odG1sPgo="; 
+        
+        function decryptAndExecute() {
+            try {
+                let original = decodeURIComponent(escape(atob(encrypted)));
+                document.open();
+                document.write(original);
+                document.close();
+            } catch (e) {
+                document.write('<h1 style="color:red; text-align: center; margin-top: 50px;">DECRYPTION ERROR!</h1><p style="text-align: center;">' + e.message + '</p>');
+            }
+        }
+        decryptAndExecute();
+    </script>
 </body>
 </html>
