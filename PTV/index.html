@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prime TV • Sayan 2026</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+    .shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+    video{width:100%;height:100%;object-fit:contain;background:#000}
+    .shaka-volume-bar-container,.shaka-spinner-container{display:none!important}
+    .custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+    @media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
+  </style>
+</head>
+<body>
+  <div class="shaka-video-container" id="player-container">
+    <video id="video" autoplay playsinline></video>
+    <div class="custom-watermark">‎  ‎ ‎ ‎ ‎ Sayan Official ™</div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) return;
+
+      const videoEl = document.getElementById('video');
+      const container = document.getElementById('player-container');
+
+      const streamUrl = "https://ottlive.dishhome.com.np/protected/jQTOzZkB0RDJ74Ryniuo/dash/manifest.mpd";
+      const keyId = "a7712196dbee413ab510c825e5c4d3f0";
+      const key = "1ade126fa6a9162ba34bd5de5b1427ca";
+
+      const player = new shaka.Player();
+      await player.attach(videoEl);
+      const ui = new shaka.ui.Overlay(player, container, videoEl);
+
+      ui.configure({
+        controlPanelElements: ['play_pause','time_and_duration','spacer','language','captions','picture_in_picture','quality','fullscreen'],
+        seekBarColors: {
+          base: 'white',
+          buffered: 'red',
+          played: 'green'
+        }
+      });
+
+      player.configure({
+        drm: {
+          clearKeys: {
+            [keyId]: key
+          }
+        },
+        abr: {
+          defaultBandwidthEstimate: 10000,
+          enabled: true,
+          switchInterval: 1
+        },
+        manifest: {
+          defaultPresentationDelay: 4,
+          dash: {
+            ignoreSuggestedPresentationDelay: true,
+            ignoreMinBufferTime: true,
+            autoCorrectDrift: true
+          }
+        },
+        streaming: {
+          bufferingGoal: 8,
+          rebufferingGoal: 2,
+          bufferBehind: 10,
+          lowLatencyMode: true,
+          safeSeekOffset: 4,
+          stallThreshold: 1,
+          jumpLargeGaps: true
+        }
+      });
+
+      try {
+        await player.load(streamUrl, -4);
+        videoEl.play();
+      } catch (e) {
+      }
+    });
+  </script>
+</body>
+</html>
