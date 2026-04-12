@@ -153,7 +153,7 @@
 
     // --- CONFIGURATION ---
     const CONFIG = {
-        streamUrl: "https://jiotvpllive.cdn.jio.com/bpk-tv/Star_Sports_HD1_Hindi_BTS/WDVLive/index.mpd|cookie=__hdnea__=st=1775996669~exp=1776018269~acl=/bpk-tv/Star_Sports_HD1_Hindi_BTS/WDVLive/*~hmac=41efee3fdae442df26936d4ddb64bae4cb895945b91924eb4c825c3d268c7180",
+        streamUrl: "https://jiotvpllive.cdn.jio.com/bpk-tv/Star_Sports_HD1_Hindi_BTS/WDVLive/index.mpd",
         keyId: "400131994b445d8c8817202248760fda",
         key: "2d56cb6f07a75b9aff165d534ae2bfc4",
         
@@ -214,7 +214,7 @@
         if(cookieValue) {
             player.getNetworkingEngine().registerRequestFilter((type, request) => {
                 request.headers["Referer"] = "https://www.jiotv.com/";
-                request.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0";
+                request.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
                 request.headers["Cookie"] = cookieValue;
 
                 let urlCookie = cookieValue.startsWith("__hdnea__=") ? cookieValue.substring(10) : cookieValue;
