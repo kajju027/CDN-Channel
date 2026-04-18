@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Star Sports Player</title>
+<meta name="referrer" content="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+@media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
+</style>
+</head>
+<body>
+<div class="shaka-video-container" id="player-container">
+<video id="video" autoplay muted playsinline preload="metadata"></video>
+<div class="custom-watermark">Sayan Official ™</div>
+</div>
+<script>
+(function(){
+  const CONFIG={
+    streamUrl:"https://dice-live-oc.akamaized.net/hdntl=exp=1776580323~acl=%2F*~id=c3306428-dcb4-4a74-a24a-d10f3725b3bc~data=hdntl,aXA9MzguMTM3LjIwLjQ1JmV4cD0xNzc2NDkzOTUyJmVpZD04Mzc5MTcmb2lkPTIyJnR5cGU9Vk9EJnVpZD1udWxsJmNpZD1udWxsJnB0PW51bGw~hmac=2693665239735aa8fa728925ce4cee35dcc6f06599c7fcd5068d359e1a9f97ed/dash/live/2093734/219028-313801/manifest-d.mpd",
+    keyId:"2e2636daa74141b68cc14882ea3ff82b",
+    key:"0961f48287324adbb4b7ff3c9d82b3c9"
+  };
+
+  document.addEventListener("DOMContentLoaded",async()=>{
+    shaka.polyfill.installAll();
+    if(!shaka.Player.isBrowserSupported()) return;
+
+    const video=document.getElementById("video");
+    const container=document.getElementById("player-container");
+
+    const player=new shaka.Player();
+    await player.attach(video);
+
+    const ui=new shaka.ui.Overlay(player,container,video);
+    ui.configure({
+      addBigPlayButton: true,
+      controlPanelElements: ["mute","play_pause","time_and_duration","spacer","quality","picture_in_picture","fullscreen"],
+      seekBarColors: {base: "white", buffered: "red", played: "green"}
+    });
+
+    player.configure({
+      drm:{
+        clearKeys:{
+          [CONFIG.keyId]: CONFIG.key
+        }
+      },
+      manifest:{defaultPresentationDelay:5},
+      streaming:{
+        lowLatencyMode:true,
+        bufferingGoal:10,
+        rebufferingGoal:2,
+        safeSeekOffset:5
+      }
+    });
+
+    try{
+      await player.load(CONFIG.streamUrl);
+      video.play().catch(()=>{});
+    }catch(e){}
+
+    video.addEventListener("play",()=>{
+      video.muted=false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
+
+ 
