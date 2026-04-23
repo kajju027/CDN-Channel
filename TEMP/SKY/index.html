@@ -1,122 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Star Sports Player - Fixed</title>
-    <meta name="referrer" content="no-referrer">
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { 
-            width: 100%; height: 100%; 
-            background: #000; overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        }
-        .shaka-video-container { 
-            position: fixed; inset: 0; 
-            background: #000; display: flex; 
-            align-items: center; justify-content: center; 
-        }
-        video { width: 100%; height: 100%; object-fit: contain; }
-        
-        /* Custom Watermark Styling */
-        .custom-watermark {
-            position: absolute;
-            z-index: 10;
-            bottom: 20%;
-            left: 5%;
-            font-size: 12px;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.15);
-            pointer-events: none;
-            user-select: none;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Star Sports Player</title>
+<meta name="referrer" content="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+@media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
+</style>
 </head>
 <body>
+<div class="shaka-video-container" id="player-container">
+<video id="video" autoplay muted playsinline preload="metadata"></video>
+<div class="custom-watermark">Sayan Official ™</div>
+</div>
+<script>
+(function(){
+  const CONFIG={
+    streamUrl:"https://dice-live-oc.akamaized.net/hdntl=exp=1777006815~acl=%2f*~id=aafa15a2-55df-43bb-8a00-2474fac0d16a~data=hdntl,dWlkPTY1OTg2NnxkY2Uuc2t5bnomaXA9MjQwNjo1YTAwOmFhMjA6OTQwMDo5NGM3OjcwZjM6Njc4MDo4Yzc3JmV4cD0xNzc3MDA2ODQzJmVpZD0yMTkwMjcmY2lkPWRjZS5za3lueiZvaWQ9MzE4JnR5cGU9TElWRQ~hmac=3fcadf3b194bf33a108d8babfe7a76d0285ab4e71e9e946c2cdf0d6db89d901c/dash/live/2093733/219027-313800/manifest-d.mpd",
+    keyId:"708a98b352bd4418a73a028edd84da8f",
+    key:"b1fa5c2bca4c4b57b924b748564532cb"
+  };
 
-    <div class="shaka-video-container" id="player-container">
-        <video id="video" autoplay muted playsinline></video>
-        <div class="custom-watermark">©</div>
-    </div>
+  document.addEventListener("DOMContentLoaded",async()=>{
+    shaka.polyfill.installAll();
+    if(!shaka.Player.isBrowserSupported()) return;
 
-    <script>
-        const CONFIG = {
-            streamUrl: "https://bks02.starhubgo.com/bpk-token/1aa@xpwq3cyyzcwlamxab0pvgmb1fa3tfmxaxnrbhmaa/bpk-tv/HubSports4HDnew/output/manifest.mpd",
-            keyId: "9a29d4f3b6e540b3aa2f36927c01b6f4",
-            key: "57b670b45b5cb453a9f48fa975b702c1"
-        };
+    const video=document.getElementById("video");
+    const container=document.getElementById("player-container");
 
-        async function initApp() {
-            // Install built-in polyfills
-            shaka.polyfill.installAll();
+    const player=new shaka.Player();
+    await player.attach(video);
 
-            // Check browser compatibility
-            if (!shaka.Player.isBrowserSupported()) {
-                console.error('Browser not supported!');
-                return;
-            }
+    const ui=new shaka.ui.Overlay(player,container,video);
+    ui.configure({
+      addBigPlayButton: true,
+      controlPanelElements: ["mute","play_pause","time_and_duration","spacer","quality","picture_in_picture","fullscreen"],
+      seekBarColors: {base: "white", buffered: "red", played: "green"}
+    });
 
-            const video = document.getElementById('video');
-            const container = document.getElementById('player-container');
-            const player = new shaka.Player(video);
-
-            // Configure UI
-            const ui = new shaka.ui.Overlay(player, container, video);
-            const controls = ui.getControls();
-            
-            ui.configure({
-                'addBigPlayButton': true,
-                'controlPanelElements': ["play_pause", "time_and_duration", "spacer", "mute", "volume", "quality", "fullscreen"],
-                'seekBarColors': {
-                    base: 'rgba(255, 255, 255, 0.3)',
-                    buffered: 'rgba(255, 255, 255, 0.5)',
-                    played: 'rgb(255, 0, 0)',
-                }
-            });
-
-            // Player Configuration with DRM
-            player.configure({
-                drm: {
-                    clearKeys: {
-                        [CONFIG.keyId]: CONFIG.key
-                    }
-                },
-                streaming: {
-                    lowLatencyMode: true,
-                    bufferingGoal: 15,
-                    rebufferingGoal: 3
-                }
-            });
-
-            // Error handling
-            player.addEventListener('error', (event) => {
-                console.error('Shaka Player Error:', event.detail);
-            });
-
-            try {
-                await player.load(CONFIG.streamUrl);
-                console.log('The video has now been loaded!');
-            } catch (e) {
-                console.error('Error loading stream:', e);
-            }
-
-            // Unmute on first user play interaction
-            video.addEventListener('play', () => {
-                video.muted = false;
-            }, { once: true });
+    player.configure({
+      drm:{
+        clearKeys:{
+          [CONFIG.keyId]: CONFIG.key
         }
+      },
+      manifest:{defaultPresentationDelay:5},
+      streaming:{
+        lowLatencyMode:true,
+        bufferingGoal:10,
+        rebufferingGoal:2,
+        safeSeekOffset:5
+      }
+    });
 
-        document.addEventListener('shaka-ui-loaded', initApp);
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!window['shaka-ui-loaded']) {
-                initApp();
-            }
-        });
-    </script>
+    try{
+      await player.load(CONFIG.streamUrl);
+      video.play().catch(()=>{});
+    }catch(e){}
+
+    video.addEventListener("play",()=>{
+      video.muted=false;
+    });
+  });
+})();
+</script>
 </body>
 </html>
