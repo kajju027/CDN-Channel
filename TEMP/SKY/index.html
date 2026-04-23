@@ -1,76 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Star Sports Player</title>
-<meta name="referrer" content="no-referrer">
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
-video{width:100%;height:100%;object-fit:contain;background:#000}
-.custom-watermark{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
-@media(max-width:700px){.custom-watermark{font-size:9px;top:60%;left:16%}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Player</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css"/>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .player-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+  </style>
 </head>
+
 <body>
-<div class="shaka-video-container" id="player-container">
-<video id="video" autoplay muted playsinline preload="metadata"></video>
-<div class="custom-watermark">Sayan Official ™</div>
+
+<div class="player-container" data-shaka-player>
+  <video autoplay playsinline></video>
 </div>
+
 <script>
-(function(){
-  const CONFIG={
-    streamUrl:"https://dice-live-oc.akamaized.net/hdntl=exp=1777006815~acl=%2f*~id=aafa15a2-55df-43bb-8a00-2474fac0d16a~data=hdntl,dWlkPTY1OTg2NnxkY2Uuc2t5bnomaXA9MjQwNjo1YTAwOmFhMjA6OTQwMDo5NGM3OjcwZjM6Njc4MDo4Yzc3JmV4cD0xNzc3MDA2ODQzJmVpZD0yMTkwMjcmY2lkPWRjZS5za3lueiZvaWQ9MzE4JnR5cGU9TElWRQ~hmac=3fcadf3b194bf33a108d8babfe7a76d0285ab4e71e9e946c2cdf0d6db89d901c/dash/live/2093733/219027-313800/manifest-d.mpd",
-    keyId:"708a98b352bd4418a73a028edd84da8f",
-    key:"b1fa5c2bca4c4b57b924b748564532cb"
-  };
+document.addEventListener("DOMContentLoaded", async () => {
 
-  document.addEventListener("DOMContentLoaded",async()=>{
-    shaka.polyfill.installAll();
-    if(!shaka.Player.isBrowserSupported()) return;
+  shaka.polyfill.installAll();
 
-    const video=document.getElementById("video");
-    const container=document.getElementById("player-container");
+  if (!shaka.Player.isBrowserSupported()) {
+    console.error("Browser not supported");
+    return;
+  }
 
-    const player=new shaka.Player();
-    await player.attach(video);
+  const video = document.querySelector("video");
+  const container = document.querySelector(".player-container");
 
-    const ui=new shaka.ui.Overlay(player,container,video);
-    ui.configure({
-      addBigPlayButton: true,
-      controlPanelElements: ["mute","play_pause","time_and_duration","spacer","quality","picture_in_picture","fullscreen"],
-      seekBarColors: {base: "white", buffered: "red", played: "green"}
-    });
+  const player = new shaka.Player();
+  await player.attach(video);
 
-    player.configure({
-      drm:{
-        clearKeys:{
-          [CONFIG.keyId]: CONFIG.key
-        }
-      },
-      manifest:{defaultPresentationDelay:5},
-      streaming:{
-        lowLatencyMode:true,
-        bufferingGoal:10,
-        rebufferingGoal:2,
-        safeSeekOffset:5
-      }
-    });
+  const ui = new shaka.ui.Overlay(player, container, video);
 
-    try{
-      await player.load(CONFIG.streamUrl);
-      video.play().catch(()=>{});
-    }catch(e){}
-
-    video.addEventListener("play",()=>{
-      video.muted=false;
-    });
+  ui.configure({
+    controlPanelElements: [
+      "play_pause",
+      "time_and_duration",
+      "mute",
+      "volume",
+      "spacer",
+      "quality",
+      "fullscreen"
+    ]
   });
-})();
+
+  // ✅ YOUR ORIGINAL STREAM
+  const streamUrl = "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/88tcrziisd/out/v1/14a712da109749bc8160010644e21708/cenc.mpd";
+
+  // ✅ YOUR DRM KEYS
+  player.configure({
+    drm: {
+      clearKeys: {
+        "72e996f31b04e633c00ec579c8fb39e9": "4b87096cb3e8e359097aa6092fb1f455"
+      }
+    },
+
+    streaming: {
+      bufferingGoal: 60,
+      rebufferingGoal: 20,
+      bufferBehind: 30,
+      lowLatencyMode: true
+    }
+  });
+
+  // ✅ HEADERS (IMPORTANT FOR STREAM)
+  player.getNetworkingEngine().registerRequestFilter((type, request) => {
+    request.headers["Referer"] = "https://live-pv-ta.amazon.fastly-edge.com/";
+    request.headers["User-Agent"] = "Mozilla/5.0";
+  });
+
+  // ✅ ERROR HANDLING
+  player.addEventListener("error", (e) => {
+    console.error("Error:", e.detail);
+  });
+
+  try {
+    await player.load(streamUrl);
+    console.log("Stream started");
+  } catch (err) {
+    console.error("Load failed:", err);
+  }
+
+});
 </script>
+
 </body>
 </html>
