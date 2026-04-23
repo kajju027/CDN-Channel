@@ -26,19 +26,10 @@
     }
 
     .player-container {
-      position: fixed;
-      inset: 0;
+      position: relative;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: #000;
-    }
-
-    .shaka-video-container {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
       background: #000;
     }
 
@@ -52,6 +43,23 @@
       display: block;
     }
 
+    /* Shaka UI Controls */
+    .shaka-controls-container {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 10 !important;
+      pointer-events: none !important;
+    }
+
+    .shaka-controls-container > * {
+      pointer-events: auto !important;
+    }
+
+    .shaka-bottom-controls,
+    .shaka-top-controls {
+      z-index: 11 !important;
+    }
+
     .shaka-spinner-container,
     .shaka-spinner,
     .shaka-spinner-svg {
@@ -59,11 +67,22 @@
       visibility: hidden !important;
       opacity: 0 !important;
     }
+
+    /* Ensure menus/overlays are clickable */
+    .shaka-context-menu,
+    .shaka-settings-menu,
+    .shaka-quality-selection,
+    .shaka-caption-selection,
+    .shaka-language-selection,
+    .shaka-resolutions-menu {
+      z-index: 100 !important;
+      pointer-events: auto !important;
+    }
   </style>
 </head>
 
 <body>
-  <div class="player-container shaka-video-container" data-shaka-player>
+  <div class="player-container" id="player-container">
     <video autoplay playsinline preload="auto"></video>
   </div>
 
@@ -77,11 +96,12 @@
       }
 
       const video = document.querySelector("video");
-      const container = document.querySelector(".player-container");
+      const container = document.getElementById("player-container");
 
       const player = new shaka.Player();
       await player.attach(video);
 
+      // UI create করার আগে player ready আছে কিনা নিশ্চিত করো
       const ui = new shaka.ui.Overlay(player, container, video);
 
       ui.configure({
@@ -107,6 +127,13 @@
           played: "rgba(63, 187, 1, 1)"
         }
       });
+
+      const controls = ui.getControls();
+      if (controls) {
+        console.log("Controls ready:", controls);
+      } else {
+        console.warn("Controls not found");
+      }
 
       const streamUrl = "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/88tcrziisd/out/v1/14a712da109749bc8160010644e21708/cenc.mpd";
 
@@ -162,7 +189,7 @@
 
       try {
         await player.load(streamUrl);
-        console.log("Stream loaded");
+        console.log("Stream loaded successfully");
       } catch (err) {
         console.error("Load failed:", err);
       }
