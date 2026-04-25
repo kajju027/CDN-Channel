@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Player</title>
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
@@ -135,12 +135,12 @@
         console.warn("Controls not found");
       }
 
-      const streamUrl = "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/g1dfcfuab2/out/v1/3e19da83817d4e24911c982e1416ab50/cenc.mpd";
+      const streamUrl = "https://dck1-fs-live.dtcdn.dazn.com/out/v1/814bffb9b389f652/a511cb4e7b1b4fb0994a6842db0b8f7a/index.mpd";
 
       player.configure({
         drm: {
           clearKeys: {
-            "010fb417309c2465556825c02413a153": "1f95533191c36d9c2ee0d2e4d4c476e9"
+            "b554932375b255b9a70be27acf822808": "15ce76bf0ae86b12205bb00f0324ac9e"
           }
         },
         streaming: {
