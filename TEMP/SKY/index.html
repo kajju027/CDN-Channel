@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
 
@@ -101,7 +100,6 @@
       const player = new shaka.Player();
       await player.attach(video);
 
-      // UI create করার আগে player ready আছে কিনা নিশ্চিত করো
       const ui = new shaka.ui.Overlay(player, container, video);
 
       ui.configure({
@@ -128,51 +126,38 @@
         }
       });
 
-      const controls = ui.getControls();
-      if (controls) {
-        console.log("Controls ready:", controls);
-      } else {
-        console.warn("Controls not found");
-      }
-
-      const streamUrl = "https://dck1-fs-live.dtcdn.dazn.com/out/v1/814bffb9b389f652/a511cb4e7b1b4fb0994a6842db0b8f7a/index.mpd";
+      const streamUrl = "https://foxteldashmtgmpxlive01.akamaized.net/v1/dash/40a0de4a910d426b321814c25ab1ea7bbc30818d/prod-dash-switch-gambproxy-akamai/live/channel091/channel091_mcs.isml/playlist_high.mpd?hdnts=exp=1777145784~hmac=2ba30b713211ce738273ff2ca7261f5e7d3e58de79e7a5f7a9c3cc7178949fa8";
 
       player.configure({
         drm: {
           clearKeys: {
-            "b554932375b255b9a70be27acf822808": "15ce76bf0ae86b12205bb00f0324ac9e"
+            "6a70902dcc79493f98d00064d93e8460": "eb950593a82a15994676e4431113b551"
           }
         },
-        streaming: {
-          lowLatencyMode: true,
-          bufferingGoal: 60,
-          rebufferingGoal: 20,
-          bufferBehind: 30,
-          retryParameters: {
-            timeout: 15000,
-            maxAttempts: 10,
-            baseDelay: 500,
-            backoffFactor: 1.5
-          },
-          segmentRequestTimeout: 15000,
-          smallGapLimit: 0.5,
-          jumpLargeGaps: true
-        },
         manifest: {
-          retryParameters: {
-            timeout: 15000,
-            maxAttempts: 10,
-            backoffFactor: 1.5
-          },
+          defaultPresentationDelay: 10, // লাইভ থেকে ১০ সেকেন্ড পেছনে শুরু করার জন্য
           dash: {
             ignoreMinBufferTime: true,
             autoCorrectDrift: true
           }
         },
+        streaming: {
+          lowLatencyMode: true,
+          bufferingGoal: 10, // দ্রুত প্লে হওয়ার জন্য কমানো হয়েছে (আগে ৬০ ছিল)
+          rebufferingGoal: 2, // আটকে গেলে মাত্র ২ সেকেন্ড বাফার করেই চলবে
+          bufferBehind: 15,
+          retryParameters: {
+            timeout: 10000,
+            maxAttempts: 5,
+            baseDelay: 500,
+            backoffFactor: 1.5
+          },
+          jumpLargeGaps: true
+        },
         abr: {
           enabled: true,
-          defaultBandwidthEstimate: 8000000,
-          switchInterval: 2,
+          defaultBandwidthEstimate: 1000000, // প্রথমে কম কোয়ালিটিতে দ্রুত শুরু হবে, পরে নিজে থেকে কোয়ালিটি বাড়বে
+          switchInterval: 1,
           bandwidthUpgradeTarget: 0.7,
           bandwidthDowngradeTarget: 0.5
         }
@@ -189,7 +174,7 @@
 
       try {
         await player.load(streamUrl);
-        console.log("Stream loaded successfully");
+        console.log("Stream loaded successfully and starting fast");
       } catch (err) {
         console.error("Load failed:", err);
       }
@@ -197,5 +182,3 @@
   </script>
 </body>
 </html>
-
- 
