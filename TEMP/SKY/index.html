@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
 
   <style>
     * {
@@ -42,7 +41,6 @@
       display: block;
     }
 
-    /* Shaka UI Controls */
     .shaka-controls-container {
       position: absolute !important;
       inset: 0 !important;
@@ -67,7 +65,6 @@
       opacity: 0 !important;
     }
 
-    /* Ensure menus/overlays are clickable */
     .shaka-context-menu,
     .shaka-settings-menu,
     .shaka-quality-selection,
@@ -104,38 +101,34 @@
 
       ui.configure({
         controlPanelElements: [
+          "mute",
           "play_pause",
           "time_and_duration",
-          "mute",
-          "volume",
           "spacer",
-          "language",
-          "captions",
-          "picture_in_picture",
           "quality",
+          "picture_in_picture",
           "fullscreen"
         ],
-        volumeBarColors: {
-          base: "rgba(63, 187, 1, 1)",
-          level: "rgb(255, 69, 0)"
-        },
         seekBarColors: {
-          base: "rgb(41, 41, 163)",
-          buffered: "rgb(35, 99, 3)",
-          played: "rgba(63, 187, 1, 1)"
+          base: "white",
+          buffered: "red",
+          played: "green"
         }
       });
 
       const streamUrl = "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/kdbiww0yq8/out/v1/fef7df2f68424809883abfa4c7cf7e63/cenc.mpd";
+      
+      const combinedKey = "f4214190ce30ed81af4628c998438fb1:bf37f9f11320229a054cf795b880b54d";
+      const [keyId, key] = combinedKey.split(":");
 
       player.configure({
         drm: {
           clearKeys: {
-            "f4214190ce30ed81af4628c998438fb1": "bf37f9f11320229a054cf795b880b54d"
+            [keyId]: key
           }
         },
         manifest: {
-          defaultPresentationDelay: 10, // লাইভ থেকে ১০ সেকেন্ড পেছনে শুরু করার জন্য
+          defaultPresentationDelay: 10,
           dash: {
             ignoreMinBufferTime: true,
             autoCorrectDrift: true
@@ -143,8 +136,8 @@
         },
         streaming: {
           lowLatencyMode: true,
-          bufferingGoal: 10, // দ্রুত প্লে হওয়ার জন্য কমানো হয়েছে (আগে ৬০ ছিল)
-          rebufferingGoal: 2, // আটকে গেলে মাত্র ২ সেকেন্ড বাফার করেই চলবে
+          bufferingGoal: 10,
+          rebufferingGoal: 2,
           bufferBehind: 15,
           retryParameters: {
             timeout: 10000,
@@ -156,7 +149,7 @@
         },
         abr: {
           enabled: true,
-          defaultBandwidthEstimate: 1000000, // প্রথমে কম কোয়ালিটিতে দ্রুত শুরু হবে, পরে নিজে থেকে কোয়ালিটি বাড়বে
+          defaultBandwidthEstimate: 1000000,
           switchInterval: 1,
           bandwidthUpgradeTarget: 0.7,
           bandwidthDowngradeTarget: 0.5
@@ -174,9 +167,9 @@
 
       try {
         await player.load(streamUrl);
-        console.log("Stream loaded successfully and starting fast");
+        console.log("Stream Loaded Successfully.");
       } catch (err) {
-        console.error("Load failed:", err);
+        console.error(" Stream Load Failed:", err);
       }
     });
   </script>
