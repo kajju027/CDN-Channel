@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      position: fixed;
+      inset: 0;
+    }
+
+    .player-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      display: block;
+    }
+
+    .shaka-controls-container {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 10 !important;
+      pointer-events: none !important;
+    }
+
+    .shaka-controls-container > * {
+      pointer-events: auto !important;
+    }
+
+    .shaka-bottom-controls,
+    .shaka-top-controls {
+      z-index: 11 !important;
+    }
+
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+
+    .shaka-context-menu,
+    .shaka-settings-menu,
+    .shaka-quality-selection,
+    .shaka-caption-selection,
+    .shaka-language-selection,
+    .shaka-resolutions-menu {
+      z-index: 100 !important;
+      pointer-events: auto !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="player-container" id="player-container">
+    <video autoplay playsinline preload="auto"></video>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      shaka.polyfill.installAll();
+
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error("Browser not supported");
+        return;
+      }
+
+      const video = document.querySelector("video");
+      const container = document.getElementById("player-container");
+
+      const player = new shaka.Player();
+      await player.attach(video);
+
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      ui.configure({
+        controlPanelElements: [
+          "mute",
+          "play_pause",
+          "time_and_duration",
+          "spacer",
+          "quality",
+          "picture_in_picture",
+          "fullscreen"
+        ],
+        seekBarColors: {
+          base: "white",
+          buffered: "red",
+          played: "green"
+        }
+      });
+
+      const controls = ui.getControls();
+      if (controls) {
+        console.log("Controls ready:", controls);
+      } else {
+        console.warn("Controls not found");
+      }
+
+      const streamUrl = "https://ev-fast-mpd.starzplayarabia.com/live/eds/CricLife1/DASH/CricLife1.mpd";
+      const combinedKey = "1e23e51b09a67b83813c17049870bcd4:c3d6288e378b0dc55320fd0e6fd2e55f";
+      const [keyId, key] = combinedKey.split(":");
+
+      player.configure({
+        drm: {
+          clearKeys: {
+            [keyId]: key
+          }
+        },
+        streaming: {
+          lowLatencyMode: true,
+          bufferingGoal: 60,
+          rebufferingGoal: 20,
+          bufferBehind: 30,
+          retryParameters: {
+            timeout: 15000,
+            maxAttempts: 10,
+            baseDelay: 500,
+            backoffFactor: 1.5
+          },
+          segmentRequestTimeout: 15000,
+          smallGapLimit: 0.5,
+          jumpLargeGaps: true
+        },
+        manifest: {
+          retryParameters: {
+            timeout: 15000,
+            maxAttempts: 10,
+            backoffFactor: 1.5
+          },
+          dash: {
+            ignoreMinBufferTime: true,
+            autoCorrectDrift: true
+          }
+        },
+        abr: {
+          enabled: true,
+          defaultBandwidthEstimate: 8000000,
+          switchInterval: 2,
+          bandwidthUpgradeTarget: 0.7,
+          bandwidthDowngradeTarget: 0.5
+        }
+      });
+
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        request.headers["Referer"] = "https://live-pv-ta.amazon.fastly-edge.com/";
+        request.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13)";
+      });
+
+      player.addEventListener("error", (event) => {
+        console.error("Player error:", event.detail);
+      });
+
+      try {
+        await player.load(streamUrl);
+        console.log("Stream loaded successfully");
+      } catch (err) {
+        console.error("Load failed:", err);
+      }
+    });
+  </script>
+</body>
+</html>
