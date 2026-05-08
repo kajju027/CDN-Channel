@@ -3,7 +3,7 @@
 <head>  
   <meta charset="UTF-8">  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-  <title>Willow</title>     
+  <title> </title>     
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">  
   
@@ -81,13 +81,12 @@ seekBarColors: {
       // ✅ Your DRM Key + MPD URL  
       let drmConfig = {  
         clearKeys: {  
-          "4d346b1d1ae64d4a800409cffa14983e":
- "208c972bd2da4359ac94e6944fe378b6"  
+          "312caacca6c466f5cd0370c2e8e8c9f4":
+ "fc7c0c9b47aa40e38ff54a377324664b"  
         }  
       };  
   
-      let streamUrl = "https://dice-live-oc.akamaized.net/hdntl=exp=1778236322~acl=/*~id=4bf63d5f-1199-4aea-8c29-f3112fe3d0de~data=hdntl,aXA9MzguMTM3LjMzLjkwJmV4cD0xNzc4MTQ5OTUyJmVpZD04Mzc5MTcmb2lkPTIyJnR5cGU9Vk9EJnVpZD1udWxsJmNpZD1udWxsJnB0PW51bGw~hmac=435f0743429ff0b19429bd351e628eb4b8921a8f4caeea14c96990ad6e572758/dash/live/2093666/294921-318514/manifest-d.mpd";  
-  
+      let streamUrl = "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/oza9awjiss/out/v1/2a778994779d49aab71f12a506f7dfd5/cenc.mpd";
       player.configure({  
         drm: drmConfig,  
         streaming: {  
