@@ -4,13 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Shaka Player -->
   <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
 
-
   <style>
-  
     * {
       margin: 0;
       padding: 0;
@@ -25,7 +22,6 @@
       font-family: sans-serif;
     }
 
-
     .shaka-video-container {
       position: absolute;
       inset: 0;
@@ -33,7 +29,6 @@
       height: 100%;
     }
 
-  
     video {
       width: 100%;
       height: 100%;
@@ -41,7 +36,6 @@
       object-fit: contain;
     }
 
-  
     .shaka-spinner-container,
     .shaka-spinner,
     .shaka-spinner-svg {
@@ -57,22 +51,19 @@
       autoplay
       playsinline
       preload="metadata"
-      poster="https://elamplificador.com/wp-content/uploads/2023/08/trucos-amazon-primevideo-ksrD-620x349@abc.png"
+      poster="https://i.ibb.co/d0yXW75V/108693714.jpg"
     ></video>
   </div>
-  
+
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
 
-    
       shaka.polyfill.installAll();
 
-    
-      const video   = document.querySelector('video');
-      const player  = new shaka.Player();
+      const video = document.querySelector('video');
+      const player = new shaka.Player();
       await player.attach(video);
 
-  
       const container = document.querySelector('.shaka-video-container');
       const ui = new shaka.ui.Overlay(player, container, video);
 
@@ -92,10 +83,9 @@
         ]
       });
 
+      const STREAM_URL = "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/oza9awjiss/out/v1/2a778994779d49aab71f12a506f7dfd5/cenc.mpd";
 
-      const STREAM_URL  = "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/oza9awjiss/out/v1/2a778994779d49aab71f12a506f7dfd5/cenc.mpd";
-
-      const CLEAR_KEYS  = {
+      const CLEAR_KEYS = {
         "312caacca6c466f5cd0370c2e8e8c9f4": "fc7c0c9b47aa40e38ff54a377324664b"
       };
 
@@ -108,19 +98,15 @@
         }
       });
 
-
       player.getNetworkingEngine().registerRequestFilter((type, request) => {
-        request.headers["Referer"]   = "https://www.cricbuzz.com/";
-        request.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                                      + "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                      + "Chrome/131.0.0.0 Safari/537.36";
+        request.headers["Referer"] = "https://www.cricbuzz.com/";
+        request.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
       });
 
-  
       try {
         await player.load(STREAM_URL);
       } catch (error) {
-        console.error('Load Faild:', error);
+        console.error('Load Failed:', error);
       }
 
     });
@@ -128,4 +114,3 @@
 
 </body>
 </html>
-
