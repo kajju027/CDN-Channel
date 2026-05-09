@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+    }
+
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="shaka-video-container" data-shaka-player>
+    <video
+      autoplay
+      playsinline
+      preload="metadata"
+      poster="https://i.ibb.co/d0yXW75V/108693714.jpg"
+    ></video>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+
+      shaka.polyfill.installAll();
+
+      const video = document.querySelector('video');
+      const player = new shaka.Player();
+      await player.attach(video);
+
+      const container = document.querySelector('.shaka-video-container');
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      ui.configure({
+        controlPanelElements: [
+          'play_pause',
+          'time_and_duration',
+          'spacer',
+          'fullscreen',
+          'overflow_menu'
+        ],
+        overflowMenuButtons: [
+          'quality',
+          'picture_in_picture',
+          'language',
+          'captions'
+        ]
+      });
+
+      const STREAM_URL = "https://dice-live-oc.akamaized.net/hdntl=exp=1778313608~acl=/*~id=c361535c-05ac-4359-9ef0-3acee7209e31~data=hdntl,aXA9MTgwLjE0OS4yMzEuNzEmZXhwPTE3NzgyMjcyMzQmZWlkPTk1NTQ4OCZvaWQ9MTE1JnR5cGU9Vk9EJnVpZD15WU1DVWd8NjFhYTU0YzktODIzMS00YjVlLWI2ZTItMDhiYzFhODk5OGJmJmNpZD1kY2Uuc2t5bnomcHQ9bnVsbA~hmac=f6dab23a3a13921179684e21d58179a92a29451b4d48b5657b2f76eda197fe86/dash/live/2093715/219027-321028/manifest-d.mpd";
+
+      const CLEAR_KEYS = {
+        "708a98b352bd4418a73a028edd84da8f": "b1fa5c2bca4c4b57b924b748564532cb"
+      };
+
+      player.configure({
+        drm: {
+          clearKeys: CLEAR_KEYS
+        },
+        streaming: {
+          lowLatencyMode: true
+        }
+      });
+
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        request.headers["Referer"] = "https://www.skysports.com/";
+        request.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+      });
+
+      try {
+        await player.load(STREAM_URL);
+      } catch (error) {
+        console.error('Load Failed:', error);
+      }
+
+    });
+  </script>
+
+</body>
+</html>
