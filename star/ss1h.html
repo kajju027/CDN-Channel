@@ -4,30 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>Star Sports 1</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player/dist/controls.css">
+<title>Star Sports </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;background:#000;overflow:hidden;
-    font-family:'Segoe UI',Roboto,Arial,sans-serif;
-    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-  #pc{position:fixed;inset:0;background:#000;
-    display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-  video{width:100%;height:100%;object-fit:contain;background:#000}
-  #overlay{position:fixed;inset:0;background:#000;z-index:9999;
-    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-  #overlay svg{animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  #overlay p{color:#666;font-size:13px;letter-spacing:.5px;text-align:center;padding:0 20px}
-  #status{position:fixed;top:0;right:0;z-index:9997;padding:6px 12px;
-    background:rgba(0,0,0,0.88);font-size:11px;letter-spacing:.04em;
-    border-bottom-left-radius:7px;pointer-events:none;
-    opacity:0;transition:opacity .4s ease;
-    max-width:300px;text-align:right;line-height:1.6;word-break:break-word}
-  #status.show{opacity:1}
-  #status.ok  {color:#4ade80}
-  #status.warn{color:#facc15}
-  #status.err {color:#f87171}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#pc{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+video.mode-fill{object-fit:fill}
+video.mode-cover{object-fit:cover}
+#overlay{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#overlay svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#overlay p{color:#555;font-size:13px;letter-spacing:.5px;text-align:center;padding:0 16px}
+#status{position:fixed;top:0;right:0;z-index:9997;padding:5px 10px;background:rgba(0,0,0,0.82);font-size:10px;letter-spacing:.04em;font-family:'Segoe UI',sans-serif;border-bottom-left-radius:6px;pointer-events:none;opacity:0;transition:opacity .4s ease;max-width:280px;text-align:right;line-height:1.5}
+#status.show{opacity:1}
+#status.ok{color:#4ade80}
+#status.warn{color:#facc15}
+#status.err{color:#f87171}
+#fit-btn{position:absolute;z-index:50;bottom:78px;right:130px;width:22px;height:22px;background:transparent;border:none;cursor:pointer;padding:0;opacity:0;pointer-events:none;transition:opacity .3s ease;display:none}
+#fit-btn.visible{opacity:.85;pointer-events:auto}
+#fit-btn.visible:hover{opacity:1}
+#fit-btn svg{width:100%;height:100%;display:block}
+@media(max-width:700px){#fit-btn{bottom:72px;right:110px}}
 </style>
 </head>
 <body>
@@ -43,225 +42,314 @@
 <div id="status"></div>
 
 <div id="pc">
-  <video id="v" autoplay muted playsinline preload="metadata"></video>
+  <video id="v" autoplay muted playsinline webkit-playsinline preload="metadata"></video>
+  <button id="fit-btn" title="Toggle View Mode"></button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/shaka-player/dist/shaka-player.ui.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <script>
-(function(){
+(function() {
 "use strict";
 
-var API_URL   = "https://sayan-json-2.pages.dev/Data/star_sports_1.json";
-var MAX_RETRY = 3;
+var API_URL = "https://sayan-json-2.pages.dev/Data/star_sports_1_hindi.json";
 
 var stEl      = document.getElementById("status");
-var loadMsg   = document.getElementById("loadMsg");
-var overlay   = document.getElementById("overlay");
-var vid       = document.getElementById("v");
-var container = document.getElementById("pc");
+var stTimer   = null;
 
-var stTimer      = null;
-var isRefreshing = false;
-var stallTimer   = null;
-var refreshCount = 0;
-
-function showStatus(msg, type, dur){
+function showStatus(msg, type, dur) {
   stEl.textContent = msg;
-  stEl.className   = "show " + (type || "ok");
-  if(stTimer) clearTimeout(stTimer);
-  if(dur !== 0){
-    stTimer = setTimeout(function(){
-      stEl.className = "";
+  stEl.className = "show " + (type || "ok");
+  if (stTimer) clearTimeout(stTimer);
+  if (dur !== 0) {
+    stTimer = setTimeout(function() {
+      stEl.className = stEl.className.replace("show","").trim();
       stTimer = null;
     }, dur || 4000);
   }
 }
 
-function setLoadMsg(t){ if(loadMsg) loadMsg.textContent = t; }
-function hideOverlay(){ if(overlay) overlay.style.display = "none"; }
-
-/*
- * WHY URL parameter instead of Cookie header?
- * ─────────────────────────────────────────────
- * Browsers treat "Cookie" as a FORBIDDEN header.
- * Any XHR/fetch call to setRequestHeader("Cookie", ...) is
- * SILENTLY DROPPED — the CDN never receives the token.
- *
- * Akamai's __hdnea__ token is ALSO accepted as a URL query
- * parameter named "hdnea". We use that instead.
- */
-function extractToken(cookie){
-  if(!cookie) return "";
-  return cookie.replace(/^__hdnea__=/, "");
+function setLoadMsg(msg) {
+  var el = document.getElementById("loadMsg");
+  if (el) el.textContent = msg;
 }
 
-function addToken(uri, token){
-  if(!token) return uri;
-  return uri + (uri.indexOf("?") >= 0 ? "&" : "?") + "hdnea=" + token;
+function hideOverlay() {
+  var el = document.getElementById("overlay");
+  if (el) el.style.display = "none";
 }
 
-/*
- * WHY we build clearKeys this way (THE ORIGINAL BUG):
- * ────────────────────────────────────────────────────
- * getConfiguration() returns a DEEP COPY, not a reference.
- * The old code mutated that copy — the player never saw the key.
- * Fix: build the object first, pass it in one configure() call.
- */
-function makeDrmConfig(keyId, key){
-  var ck = {};
-  ck[keyId] = key;
-  return { drm: { clearKeys: ck } };
+// Extract raw token value from cookie string
+function extractRawCookie(cookie) {
+  return cookie && cookie.startsWith("__hdnea__=")
+    ? cookie.substring(10)
+    : (cookie || "");
 }
 
-async function fetchData(attempt){
-  attempt = attempt || 0;
-  try{
-    var res = await fetch(API_URL, { cache:"no-store", headers:{ Accept:"application/json" } });
-    if(!res.ok) throw new Error("API HTTP " + res.status);
-    var d = await res.json();
-    if(!d.stream_url) throw new Error("Missing stream_url");
-    if(!d.key_id)     throw new Error("Missing key_id");
-    if(!d.key)        throw new Error("Missing key");
-    if(!d.cookie)     throw new Error("Missing cookie");
-    return d;
-  } catch(e){
-    if(attempt < 3){
-      showStatus("API retry " + (attempt+1) + "/3: " + e.message, "warn", 0);
-      await new Promise(function(r){ setTimeout(r, 2000*(attempt+1)); });
-      return fetchData(attempt+1);
-    }
-    throw e;
+// Append token to URI only if not already present
+function appendCookieToUri(uri, rawCookie) {
+  if (!uri || !rawCookie) return uri;
+  if (uri.indexOf("__hdnea__") !== -1) return uri;
+  return uri + (uri.indexOf("?") !== -1 ? "&" : "?") + "__hdnea__=" + rawCookie;
+}
+
+// Fetch fresh data — no localStorage, always fresh
+async function fetchChannelData() {
+  var res = await fetch(API_URL, {
+    cache: "no-store",
+    headers: { "Accept": "application/json" }
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  var d = await res.json();
+  if (!d || !d.stream_url || !d.key_id || !d.key || !d.cookie) {
+    throw new Error("Incomplete stream data from API");
   }
+  return d;
 }
 
-async function init(){
+var MODES = ["contain", "fill", "cover"];
+var ICONS = {
+  contain: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="18" height="12" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="6" y="9" width="12" height="6" rx=".5" fill="rgba(255,255,255,0.25)"/></svg>',
+  fill:    '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="3" y="3" width="18" height="18" rx="1" fill="rgba(255,255,255,0.2)"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" stroke="rgba(255,255,255,0.35)" stroke-width="1"/></svg>',
+  cover:   '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="5" y="5" width="14" height="14" rx=".5" fill="rgba(255,255,255,0.25)"/><path d="M3 3l4 4M21 3l-4 4M3 21l4-4M21 21l-4-4" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round"/></svg>'
+};
+
+function isFullscreen() {
+  return !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+}
+
+async function init() {
   shaka.polyfill.installAll();
 
-  if(!shaka.Player.isBrowserSupported()){
-    showStatus("Browser not supported — use Chrome / Firefox", "err", 0);
+  if (!shaka.Player.isBrowserSupported()) {
+    showStatus("Browser not supported. Use Chrome, Firefox or Edge.", "err", 0);
     setLoadMsg("Browser not supported.");
     return;
   }
 
+  // Fetch channel data
   var ch;
-  try{
+  try {
     setLoadMsg("Fetching stream data...");
-    showStatus("Fetching stream data...", "warn", 0);
-    ch = await fetchData();
-  } catch(e){
+    showStatus("Connecting...", "warn", 0);
+    ch = await fetchChannelData();
+  } catch (e) {
     showStatus("Network error: " + e.message, "err", 0);
-    setLoadMsg("Network error. Please reload.");
+    setLoadMsg("Could not connect. Refresh the page.");
+    hideOverlay();
     return;
   }
 
-  var activeCookie = ch.cookie;
-  var activeKeyId  = ch.key_id;
-  var activeKey    = ch.key;
-  var activeUrl    = ch.stream_url;
+  var vid    = document.getElementById("v");
+  var con    = document.getElementById("pc");
+  var fitBtn = document.getElementById("fit-btn");
+
+  vid.muted = true;
 
   var player = new shaka.Player();
   await player.attach(vid);
 
-  var ui = new shaka.ui.Overlay(player, container, vid);
+  var ui = new shaka.ui.Overlay(player, con, vid);
   ui.configure({
-    controlPanelElements:["play_pause","spacer","quality","picture_in_picture","fullscreen"],
-    seekBarColors:{ base:"#9c9a9a", buffered:"#c90000", played:"#00ab17" }
+    controlPanelElements: ["mute","play_pause","time_and_duration","spacer","quality","picture_in_picture","fullscreen"],
+    seekBarColors: { base:"#9c9a9a", buffered:"#c90000", played:"#00ab17" }
   });
 
-  function applyConfig(){
-    player.configure(Object.assign(
-      makeDrmConfig(activeKeyId, activeKey),
-      {
-        streaming:{
-          bufferingGoal:15, rebufferingGoal:3,
-          retryParameters:{ maxAttempts:4, baseDelay:1000, backoffFactor:2, fuzzFactor:.5 }
-        }
+  // Active credentials — refreshed on reconnect
+  var activeCookie = ch.cookie;
+  var activeRaw    = extractRawCookie(activeCookie);
+  var activeKeyId  = ch.key_id;
+  var activeKey    = ch.key;
+  var activeUrl    = ch.stream_url;
+
+  // Apply DRM + streaming config
+  function applyPlayerConfig() {
+    player.configure({
+      drm: {
+        clearKeys: { [activeKeyId]: activeKey }
+      },
+      manifest: {
+        defaultPresentationDelay: 5,
+        retryParameters: { maxAttempts:3, baseDelay:1000, backoffFactor:2, fuzzFactor:0.5 }
+      },
+      streaming: {
+        lowLatencyMode:  true,
+        bufferingGoal:   12,
+        rebufferingGoal: 2,
+        safeSeekOffset:  5,
+        retryParameters: { maxAttempts:4, baseDelay:1000, backoffFactor:2, fuzzFactor:0.5 }
       }
-    ));
+    });
   }
-  applyConfig();
 
-  var RT = shaka.net.NetworkingEngine.RequestType;
-  player.getNetworkingEngine().registerRequestFilter(function(type, req){
-    if(type !== RT.MANIFEST && type !== RT.SEGMENT) return;
-    var token = extractToken(activeCookie);
-    req.uris = req.uris.map(function(u){ return addToken(u, token); });
-    req.headers["Referer"] = "https://www.jiotv.com/";
+  applyPlayerConfig();
+
+  // Request filter: set headers + append token to URL
+  // Both approaches used for maximum device compatibility
+  var T = shaka.net.NetworkingEngine.RequestType;
+  player.getNetworkingEngine().registerRequestFilter(function(type, req) {
+    req.headers["Referer"]    = "https://www.jiotv.com/";
+    req.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+    req.headers["Cookie"]     = activeCookie;
+    if (type === T.MANIFEST || type === T.SEGMENT) {
+      req.uris = req.uris.map(function(uri) {
+        return appendCookieToUri(uri, activeRaw);
+      });
+    }
   });
 
-  async function refresh(reason){
-    if(isRefreshing) return;
-    refreshCount++;
-    if(refreshCount > MAX_RETRY){
-      showStatus("Stopped after " + MAX_RETRY + " retries. Please reload page.", "err", 0);
+  // Bug fix: hard limit on refresh retries to prevent infinite loop
+  var isRefreshing  = false;
+  var refreshCount  = 0;
+  var MAX_REFRESHES = 4;
+
+  async function refreshAndReload(reason) {
+    if (isRefreshing) return;
+    if (refreshCount >= MAX_REFRESHES) {
+      showStatus("Stream down — reload the page to retry.", "err", 0);
       return;
     }
     isRefreshing = true;
-    showStatus("Reconnecting " + refreshCount + "/" + MAX_RETRY + " — " + (reason||"error"), "warn", 0);
-    try{
-      var fresh = await fetchData();
+    refreshCount++;
+    showStatus("Reconnecting (" + refreshCount + "/" + MAX_REFRESHES + ")...", "warn", 0);
+    try {
+      var fresh = await fetchChannelData();
       activeCookie = fresh.cookie;
+      activeRaw    = extractRawCookie(activeCookie);
       activeKeyId  = fresh.key_id;
       activeKey    = fresh.key;
       activeUrl    = fresh.stream_url;
-      applyConfig();
+      applyPlayerConfig();
       await player.load(activeUrl);
-      vid.play().catch(function(){});
+      vid.play().catch(function() {});
       refreshCount = 0;
       showStatus("Live \u25CF", "ok", 5000);
-    } catch(e){
-      showStatus("Reconnect failed: " + e.message, "err", 0);
+    } catch (e) {
+      showStatus("Reconnect failed: " + e.message, "err", 7000);
+    } finally {
+      isRefreshing = false;
     }
-    setTimeout(function(){ isRefreshing = false; }, 3000);
   }
 
-  player.addEventListener("error", function(ev){
-    var d    = ev.detail || {};
-    var code = d.code != null ? d.code : "?";
-    var cat  = d.category != null ? " cat:" + d.category : "";
-    var msg  = d.message || "";
-    showStatus("Shaka error " + code + cat + (msg ? " — " + msg : ""), "err", 0);
-    refresh("shaka error " + code);
+  // Error handler — Shaka errors use .code not .message
+  player.addEventListener("error", function(ev) {
+    var err  = ev.detail;
+    var code = err && err.code;
+    // Build readable error string from Shaka's .category/.code/.data[]
+    var catNames = {1:"Network",2:"Text",3:"Media",4:"Manifest",5:"Streaming",6:"DRM",7:"Player"};
+    var cat  = err && err.category;
+    var label = (catNames[cat] || "Error") + " " + (cat||"?") + ":" + (code||"?");
+    if (err && err.data && err.data[0]) {
+      var d = err.data[0];
+      if (typeof d === "string") label += " — " + d.slice(0, 80);
+    }
+    var recoverableCodes = [1001,1002,1003,6006,6007,7000,7001,7002];
+    if (recoverableCodes.indexOf(code) !== -1) {
+      refreshAndReload("error " + code);
+    } else {
+      showStatus(label, "err", 8000);
+    }
   });
 
-  try{
+  // Initial load
+  try {
     setLoadMsg("Starting playback...");
     await player.load(activeUrl);
-    vid.play().catch(function(){});
+    vid.play().catch(function() {});
     hideOverlay();
     showStatus("Live \u25CF", "ok", 5000);
-  } catch(e){
+  } catch (e) {
     hideOverlay();
-    var c = e && e.code ? " [" + e.code + "]" : "";
-    showStatus("Load failed" + c + ": " + (e.message || e), "err", 0);
+    // Build error message from Shaka error or generic error
+    var msg = (e && e.code) ? ("Player error " + e.category + ":" + e.code) : (e.message || String(e));
+    showStatus("Playback failed: " + msg, "err", 0);
+    setLoadMsg("Playback failed — reload the page.");
     return;
   }
 
-  vid.addEventListener("play", function(){ vid.muted = false; }, { once:true });
+  // Bug fix: {once:true} so unmute only fires on first play
+  vid.addEventListener("play", function() { vid.muted = false; }, { once: true });
 
-  vid.addEventListener("waiting", function(){
-    if(stallTimer) return;
+  // Stall / buffering watchdog
+  var stalledTimer = null;
+
+  function onStall() {
+    if (stalledTimer) return;
     showStatus("Buffering...", "warn", 0);
-    stallTimer = setTimeout(function(){
-      stallTimer = null;
-      refresh("stall >10s");
-    }, 10000);
-  });
+    stalledTimer = setTimeout(function() {
+      stalledTimer = null;
+      refreshAndReload("stall timeout");
+    }, 9000);
+  }
 
-  vid.addEventListener("playing", function(){
-    if(stallTimer){ clearTimeout(stallTimer); stallTimer = null; }
+  vid.addEventListener("waiting", onStall);
+  vid.addEventListener("stalled", onStall);
+
+  vid.addEventListener("playing", function() {
+    if (stalledTimer) { clearTimeout(stalledTimer); stalledTimer = null; }
     showStatus("Live \u25CF", "ok", 4000);
   });
 
-  document.addEventListener("visibilitychange", function(){
-    if(!document.hidden && vid.paused){
-      vid.play().catch(function(){ refresh("tab resume"); });
+  // Bug fix: resume when user comes back to tab
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden && vid.paused && !isRefreshing) {
+      vid.play().catch(function() { refreshAndReload("tab resume"); });
     }
   });
+
+  // Fit / aspect ratio toggle button
+  var modeIdx = 0;
+
+  function applyMode(idx) {
+    modeIdx = idx;
+    var m = MODES[idx];
+    vid.classList.remove("mode-fill","mode-cover");
+    if (m === "fill")  vid.classList.add("mode-fill");
+    if (m === "cover") vid.classList.add("mode-cover");
+    fitBtn.innerHTML = ICONS[m];
+    fitBtn.title = m === "contain" ? "Fit (tap: Stretch)"
+                 : m === "fill"    ? "Stretch (tap: Zoom)"
+                 :                   "Zoom (tap: Fit)";
+  }
+
+  applyMode(0);
+  fitBtn.style.display = "block";
+
+  fitBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    if (!isFullscreen()) return;
+    applyMode((modeIdx + 1) % MODES.length);
+  });
+
+  function onFsChange() {
+    if (!isFullscreen()) applyMode(0);
+  }
+  document.addEventListener("fullscreenchange",       onFsChange);
+  document.addEventListener("webkitfullscreenchange", onFsChange);
+  document.addEventListener("mozfullscreenchange",    onFsChange);
+  document.addEventListener("MSFullscreenChange",     onFsChange);
+
+  // Show controls on interaction
+  var hideTimer = null;
+  function showControls() {
+    fitBtn.classList.add("visible");
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function() {
+      fitBtn.classList.remove("visible");
+      hideTimer = null;
+    }, 3000);
+  }
+  con.addEventListener("mousemove",  showControls);
+  con.addEventListener("touchstart", showControls, { passive: true });
+  con.addEventListener("click",      showControls);
 }
 
-init();
+document.addEventListener("DOMContentLoaded", init);
+
 })();
 </script>
 </body>
