@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Star Sports 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#pc{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+video.mode-fill{object-fit:fill}
+video.mode-cover{object-fit:cover}
+#wm{position:absolute;z-index:40;pointer-events:none;top:65%;left:6%;transform:translateY(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,0.12)}
+@media(max-width:700px){#wm{font-size:9px;top:60%;left:16%}}
+#overlay{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#overlay svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#overlay p{color:#555;font-size:13px;letter-spacing:.5px}
+#status{position:fixed;top:0;right:0;z-index:9997;padding:5px 10px;background:rgba(0,0,0,0.82);font-size:10px;letter-spacing:.04em;font-family:'Segoe UI',sans-serif;border-bottom-left-radius:6px;pointer-events:none;opacity:0;transition:opacity .4s ease;max-width:260px;text-align:right;line-height:1.5}
+#status.show{opacity:1}
+#status.ok{color:#4ade80}
+#status.warn{color:#facc15}
+#status.err{color:#f87171}
+#fit-btn{position:absolute;z-index:50;bottom:78px;right:130px;width:22px;height:22px;background:transparent;border:none;cursor:pointer;padding:0;opacity:0;pointer-events:none;transition:opacity .3s ease;display:none}
+#fit-btn.visible{opacity:.85;pointer-events:auto}
+#fit-btn.visible:hover{opacity:1}
+#fit-btn svg{width:100%;height:100%;display:block}
+@media(max-width:700px){#fit-btn{bottom:72px;right:110px}}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+    <circle cx="20" cy="20" r="16" stroke="#222" stroke-width="4"/>
+    <path d="M20 4a16 16 0 0 1 16 16" stroke="#e74c3c" stroke-width="4" stroke-linecap="round"/>
+  </svg>
+  <p>Loading stream...</p>
+</div>
+
+<div id="status"></div>
+
+<div id="pc">
+  <video id="v" autoplay muted playsinline preload="metadata"></video>
+  <div id="wm"> </div>
+  <button id="fit-btn" title="Toggle View Mode"></button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+<script>
+(function() {
+"use strict";
+
+var API_URL = "https://sayan-json-2.pages.dev/Data/star_sports_2_tamil.json";
+
+var stEl = document.getElementById("status");
+var stTimer = null;
+
+function showStatus(msg, type, dur) {
+  stEl.textContent = msg;
+  stEl.className = "show " + (type || "ok");
+  if (stTimer) clearTimeout(stTimer);
+  if (dur !== 0) {
+    stTimer = setTimeout(function() {
+      stEl.className = stEl.className.replace("show", "").trim();
+      stTimer = null;
+    }, dur || 4000);
+  }
+}
+
+function hideOverlay() {
+  var el = document.getElementById("overlay");
+  if (el) el.style.display = "none";
+}
+
+function parseCookieExpiry(cookie) {
+  try {
+    var m = cookie.match(/~exp=(\d+)~/);
+    if (m && m[1]) return parseInt(m[1], 10) * 1000 - 60000;
+  } catch (e) {}
+  return 0;
+}
+
+function isCookieValid(cookie) {
+  if (!cookie) return false;
+  var exp = parseCookieExpiry(cookie);
+  return exp ? Date.now() < exp : true;
+}
+
+function extractRawCookie(cookie) {
+  return cookie.startsWith("__hdnea__=") ? cookie.substring(10) : cookie;
+}
+
+function appendCookieToUri(uri, rawCookie) {
+  if (uri.includes("__hdnea__")) return uri;
+  return uri + (uri.includes("?") ? "&" : "?") + "__hdnea__=" + rawCookie;
+}
+
+async function fetchChannelData() {
+  var res = await fetch(API_URL, {
+    cache: "no-store",
+    headers: { "Accept": "application/json" }
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+var MODES = ["contain", "fill", "cover"];
+var ICONS = {
+  contain: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="18" height="12" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="6" y="9" width="12" height="6" rx=".5" fill="rgba(255,255,255,0.25)"/></svg>',
+  fill: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="3" y="3" width="18" height="18" rx="1" fill="rgba(255,255,255,0.2)"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" stroke="rgba(255,255,255,0.35)" stroke-width="1"/></svg>',
+  cover: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="5" y="5" width="14" height="14" rx=".5" fill="rgba(255,255,255,0.25)"/><path d="M3 3l4 4M21 3l-4 4M3 21l4-4M21 21l-4-4" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round"/></svg>'
+};
+
+function isFullscreen() {
+  return !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+}
+
+async function init() {
+  shaka.polyfill.installAll();
+
+  if (!shaka.Player.isBrowserSupported()) {
+    showStatus("Browser not supported for streaming.", "err", 0);
+    hideOverlay();
+    return;
+  }
+
+  var ch;
+  try {
+    ch = await fetchChannelData();
+  } catch (e) {
+    showStatus("Could not connect. Check your network.", "err", 0);
+    hideOverlay();
+    return;
+  }
+
+  if (!ch || !ch.stream_url || !ch.key_id || !ch.key) {
+    showStatus("Stream data missing or invalid.", "err", 0);
+    hideOverlay();
+    return;
+  }
+
+  var vid = document.getElementById("v");
+  var con = document.getElementById("pc");
+  var fitBtn = document.getElementById("fit-btn");
+
+  vid.muted = true;
+
+  var player = new shaka.Player();
+  await player.attach(vid);
+
+  var ui = new shaka.ui.Overlay(player, con, vid);
+  ui.configure({
+    controlPanelElements: ["mute", "play_pause", "time_and_duration", "spacer", "quality", "picture_in_picture", "fullscreen"],
+    seekBarColors: { base: "#9c9a9a", buffered: "#c90000", played: "#00ab17" }
+  });
+
+  var activeCookie = ch.cookie;
+  var activeRaw = extractRawCookie(activeCookie);
+  var activeKeyId = ch.key_id;
+  var activeKey = ch.key;
+  var activeUrl = ch.stream_url;
+
+  function applyPlayerConfig() {
+    player.configure({
+      drm: { clearKeys: { [activeKeyId]: activeKey } },
+      manifest: {
+        defaultPresentationDelay: 5,
+        retryParameters: { maxAttempts: 3, baseDelay: 1000, backoffFactor: 2, fuzzFactor: 0.5 }
+      },
+      streaming: {
+        lowLatencyMode: true,
+        bufferingGoal: 12,
+        rebufferingGoal: 2,
+        safeSeekOffset: 5,
+        retryParameters: { maxAttempts: 4, baseDelay: 1000, backoffFactor: 2, fuzzFactor: 0.5 }
+      }
+    });
+  }
+
+  applyPlayerConfig();
+
+  player.getNetworkingEngine().registerRequestFilter(function(type, req) {
+    req.headers["Referer"] = "https://www.jiotv.com/";
+    req.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+    req.headers["Cookie"] = activeCookie;
+    var T = shaka.net.NetworkingEngine.RequestType;
+    if (type === T.MANIFEST || type === T.SEGMENT) {
+      req.uris[0] = appendCookieToUri(req.uris[0], activeRaw);
+    }
+  });
+
+  var isRefreshing = false;
+
+  async function refreshAndReload() {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    showStatus("Reconnecting...", "warn", 0);
+    try {
+      var fresh = await fetchChannelData();
+      if (!fresh || !fresh.stream_url) throw new Error("Invalid data");
+      activeCookie = fresh.cookie;
+      activeRaw = extractRawCookie(activeCookie);
+      activeKeyId = fresh.key_id;
+      activeKey = fresh.key;
+      activeUrl = fresh.stream_url;
+      applyPlayerConfig();
+      await player.load(activeUrl);
+      vid.play().catch(function() {});
+      showStatus("Live \u25CF", "ok", 5000);
+    } catch (e) {
+      showStatus("Stream interrupted. Please refresh the page.", "err", 0);
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
+  player.addEventListener("error", async function(ev) {
+    var code = ev.detail && ev.detail.code;
+    var recoverableCodes = [1001, 1002, 7000, 7001, 7002];
+    if (recoverableCodes.indexOf(code) !== -1) {
+      await refreshAndReload();
+    }
+  });
+
+  try {
+    await player.load(activeUrl);
+    vid.play().catch(function() {});
+    hideOverlay();
+    showStatus("Live \u25CF", "ok", 5000);
+  } catch (e) {
+    hideOverlay();
+    showStatus("Playback failed. Please refresh the page.", "err", 0);
+    return;
+  }
+
+  vid.addEventListener("play", function() { vid.muted = false; });
+
+  var stalledTimer = null;
+
+  vid.addEventListener("waiting", function() {
+    if (stalledTimer) return;
+    showStatus("Buffering...", "warn", 0);
+    stalledTimer = setTimeout(async function() {
+      stalledTimer = null;
+      if (!isCookieValid(activeCookie)) {
+        await refreshAndReload();
+      }
+    }, 9000);
+  });
+
+  vid.addEventListener("stalled", function() {
+    if (stalledTimer) return;
+    showStatus("Buffering...", "warn", 0);
+    stalledTimer = setTimeout(async function() {
+      stalledTimer = null;
+      await refreshAndReload();
+    }, 9000);
+  });
+
+  vid.addEventListener("playing", function() {
+    if (stalledTimer) {
+      clearTimeout(stalledTimer);
+      stalledTimer = null;
+    }
+    showStatus("Live \u25CF", "ok", 4000);
+  });
+
+  var modeIdx = 0;
+
+  function applyMode(idx) {
+    modeIdx = idx;
+    var m = MODES[idx];
+    vid.classList.remove("mode-fill", "mode-cover");
+    if (m === "fill") vid.classList.add("mode-fill");
+    else if (m === "cover") vid.classList.add("mode-cover");
+    fitBtn.innerHTML = ICONS[m];
+    fitBtn.title = m === "contain"
+      ? "Fit (click: Stretch)"
+      : m === "fill"
+      ? "Stretch (click: Zoom)"
+      : "Zoom (click: Fit)";
+  }
+
+  applyMode(0);
+  fitBtn.style.display = "block";
+
+  fitBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    if (!isFullscreen()) return;
+    applyMode((modeIdx + 1) % MODES.length);
+  });
+
+  function onFsChange() {
+    if (!isFullscreen()) applyMode(0);
+  }
+  document.addEventListener("fullscreenchange", onFsChange);
+  document.addEventListener("webkitfullscreenchange", onFsChange);
+  document.addEventListener("mozfullscreenchange", onFsChange);
+  document.addEventListener("MSFullscreenChange", onFsChange);
+
+  var hideTimer = null;
+
+  function showControls() {
+    fitBtn.classList.add("visible");
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function() {
+      fitBtn.classList.remove("visible");
+      hideTimer = null;
+    }, 3000);
+  }
+
+  con.addEventListener("mousemove", showControls);
+  con.addEventListener("touchstart", showControls, { passive: true });
+  con.addEventListener("click", showControls);
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+})();
+</script>
+</body>
+</html>
