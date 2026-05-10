@@ -5,69 +5,33 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
 <title>Star Sports 1</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.11.2/dist/controls.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player/dist/controls.css">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html, body {
-    width: 100%; height: 100%;
-    background: #000; overflow: hidden;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    -webkit-user-select: none; user-select: none;
-    -webkit-touch-callout: none;
-  }
-
-  /* Player container */
-  #pc {
-    position: fixed; inset: 0;
-    background: #000;
-    display: flex; align-items: center; justify-content: center;
-    touch-action: manipulation;
-  }
-
-  video {
-    width: 100%; height: 100%;
-    object-fit: contain; background: #000;
-  }
-
-  /* Loading overlay */
-  #overlay {
-    position: fixed; inset: 0;
-    background: #000; z-index: 9999;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 16px;
-  }
-
-  #overlay svg { animation: spin 1s linear infinite; }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  #overlay p {
-    color: #666; font-size: 13px; letter-spacing: .5px;
-  }
-
-  /* Status toast - top right */
-  #status {
-    position: fixed; top: 0; right: 0;
-    z-index: 9997;
-    padding: 6px 12px;
-    background: rgba(0,0,0,0.85);
-    font-size: 11px; letter-spacing: .04em;
-    border-bottom-left-radius: 7px;
-    pointer-events: none;
-    opacity: 0; transition: opacity .4s ease;
-    max-width: 280px; text-align: right; line-height: 1.6;
-  }
-
-  #status.show  { opacity: 1; }
-  #status.ok    { color: #4ade80; }
-  #status.warn  { color: #facc15; }
-  #status.err   { color: #f87171; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden;
+    font-family:'Segoe UI',Roboto,Arial,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  #pc{position:fixed;inset:0;background:#000;
+    display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+  video{width:100%;height:100%;object-fit:contain;background:#000}
+  #overlay{position:fixed;inset:0;background:#000;z-index:9999;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+  #overlay svg{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #overlay p{color:#666;font-size:13px;letter-spacing:.5px;text-align:center;padding:0 20px}
+  #status{position:fixed;top:0;right:0;z-index:9997;padding:6px 12px;
+    background:rgba(0,0,0,0.88);font-size:11px;letter-spacing:.04em;
+    border-bottom-left-radius:7px;pointer-events:none;
+    opacity:0;transition:opacity .4s ease;
+    max-width:300px;text-align:right;line-height:1.6;word-break:break-word}
+  #status.show{opacity:1}
+  #status.ok  {color:#4ade80}
+  #status.warn{color:#facc15}
+  #status.err {color:#f87171}
 </style>
 </head>
 <body>
 
-<!-- Loading screen -->
 <div id="overlay">
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
     <circle cx="20" cy="20" r="16" stroke="#222" stroke-width="4"/>
@@ -76,271 +40,228 @@
   <p id="loadMsg">Loading stream...</p>
 </div>
 
-<!-- Status toast -->
 <div id="status"></div>
 
-<!-- Player wrapper -->
 <div id="pc">
   <video id="v" autoplay muted playsinline preload="metadata"></video>
 </div>
 
-<!-- Pinned Shaka version for stability -->
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.11.2/dist/shaka-player.ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/shaka-player/dist/shaka-player.ui.min.js"></script>
 
 <script>
-(function () {
-  "use strict";
+(function(){
+"use strict";
 
-  /* ─── API endpoint ─────────────────────────────────────────────── */
-  var API_URL = "https://sayan-json-2.pages.dev/Data/star_sports_1.json";
+var API_URL   = "https://sayan-json-2.pages.dev/Data/star_sports_1.json";
+var MAX_RETRY = 3;
 
-  /* ─── DOM refs ─────────────────────────────────────────────────── */
-  var stEl      = document.getElementById("status");
-  var loadMsg   = document.getElementById("loadMsg");
-  var overlay   = document.getElementById("overlay");
-  var vid       = document.getElementById("v");
-  var container = document.getElementById("pc");
+var stEl      = document.getElementById("status");
+var loadMsg   = document.getElementById("loadMsg");
+var overlay   = document.getElementById("overlay");
+var vid       = document.getElementById("v");
+var container = document.getElementById("pc");
 
-  var stTimer   = null;
-  var isRefreshing = false;
-  var stallTimer   = null;
+var stTimer      = null;
+var isRefreshing = false;
+var stallTimer   = null;
+var refreshCount = 0;
 
-  /* ─── Status toast helper ──────────────────────────────────────── */
-  function showStatus(msg, type, dur) {
-    stEl.textContent = msg;
-    stEl.className   = "show " + (type || "ok");
-    if (stTimer) clearTimeout(stTimer);
-    if (dur !== 0) {
-      stTimer = setTimeout(function () {
-        stEl.className = "";
-        stTimer = null;
-      }, dur || 4000);
+function showStatus(msg, type, dur){
+  stEl.textContent = msg;
+  stEl.className   = "show " + (type || "ok");
+  if(stTimer) clearTimeout(stTimer);
+  if(dur !== 0){
+    stTimer = setTimeout(function(){
+      stEl.className = "";
+      stTimer = null;
+    }, dur || 4000);
+  }
+}
+
+function setLoadMsg(t){ if(loadMsg) loadMsg.textContent = t; }
+function hideOverlay(){ if(overlay) overlay.style.display = "none"; }
+
+/*
+ * WHY URL parameter instead of Cookie header?
+ * ─────────────────────────────────────────────
+ * Browsers treat "Cookie" as a FORBIDDEN header.
+ * Any XHR/fetch call to setRequestHeader("Cookie", ...) is
+ * SILENTLY DROPPED — the CDN never receives the token.
+ *
+ * Akamai's __hdnea__ token is ALSO accepted as a URL query
+ * parameter named "hdnea". We use that instead.
+ */
+function extractToken(cookie){
+  if(!cookie) return "";
+  return cookie.replace(/^__hdnea__=/, "");
+}
+
+function addToken(uri, token){
+  if(!token) return uri;
+  return uri + (uri.indexOf("?") >= 0 ? "&" : "?") + "hdnea=" + token;
+}
+
+/*
+ * WHY we build clearKeys this way (THE ORIGINAL BUG):
+ * ────────────────────────────────────────────────────
+ * getConfiguration() returns a DEEP COPY, not a reference.
+ * The old code mutated that copy — the player never saw the key.
+ * Fix: build the object first, pass it in one configure() call.
+ */
+function makeDrmConfig(keyId, key){
+  var ck = {};
+  ck[keyId] = key;
+  return { drm: { clearKeys: ck } };
+}
+
+async function fetchData(attempt){
+  attempt = attempt || 0;
+  try{
+    var res = await fetch(API_URL, { cache:"no-store", headers:{ Accept:"application/json" } });
+    if(!res.ok) throw new Error("API HTTP " + res.status);
+    var d = await res.json();
+    if(!d.stream_url) throw new Error("Missing stream_url");
+    if(!d.key_id)     throw new Error("Missing key_id");
+    if(!d.key)        throw new Error("Missing key");
+    if(!d.cookie)     throw new Error("Missing cookie");
+    return d;
+  } catch(e){
+    if(attempt < 3){
+      showStatus("API retry " + (attempt+1) + "/3: " + e.message, "warn", 0);
+      await new Promise(function(r){ setTimeout(r, 2000*(attempt+1)); });
+      return fetchData(attempt+1);
     }
+    throw e;
+  }
+}
+
+async function init(){
+  shaka.polyfill.installAll();
+
+  if(!shaka.Player.isBrowserSupported()){
+    showStatus("Browser not supported — use Chrome / Firefox", "err", 0);
+    setLoadMsg("Browser not supported.");
+    return;
   }
 
-  function hideOverlay() {
-    if (overlay) overlay.style.display = "none";
+  var ch;
+  try{
+    setLoadMsg("Fetching stream data...");
+    showStatus("Fetching stream data...", "warn", 0);
+    ch = await fetchData();
+  } catch(e){
+    showStatus("Network error: " + e.message, "err", 0);
+    setLoadMsg("Network error. Please reload.");
+    return;
   }
 
-  function setLoadMsg(msg) {
-    if (loadMsg) loadMsg.textContent = msg;
-  }
+  var activeCookie = ch.cookie;
+  var activeKeyId  = ch.key_id;
+  var activeKey    = ch.key;
+  var activeUrl    = ch.stream_url;
 
-  /* ─── Fetch fresh channel data (no cache, always live) ─────────── */
-  async function fetchChannelData(attempt) {
-    attempt = attempt || 0;
-    try {
-      var res = await fetch(API_URL, {
-        cache:   "no-store",
-        headers: { "Accept": "application/json" }
-      });
-      if (!res.ok) throw new Error("HTTP " + res.status + " from API");
+  var player = new shaka.Player();
+  await player.attach(vid);
 
-      var data = await res.json();
+  var ui = new shaka.ui.Overlay(player, container, vid);
+  ui.configure({
+    controlPanelElements:["play_pause","spacer","quality","picture_in_picture","fullscreen"],
+    seekBarColors:{ base:"#9c9a9a", buffered:"#c90000", played:"#00ab17" }
+  });
 
-      /* Validate required fields */
-      if (!data || !data.stream_url) throw new Error("Missing stream_url in response");
-      if (!data.key_id)              throw new Error("Missing key_id in response");
-      if (!data.key)                 throw new Error("Missing key in response");
-      if (!data.cookie)              throw new Error("Missing cookie in response");
-
-      return data;
-    } catch (e) {
-      if (attempt < 3) {
-        /* Exponential back-off: 2s, 4s, 6s */
-        var delay = 2000 * (attempt + 1);
-        showStatus("API retry " + (attempt + 1) + "/3 — " + e.message, "warn", 0);
-        await new Promise(function (r) { setTimeout(r, delay); });
-        return fetchChannelData(attempt + 1);
+  function applyConfig(){
+    player.configure(Object.assign(
+      makeDrmConfig(activeKeyId, activeKey),
+      {
+        streaming:{
+          bufferingGoal:15, rebufferingGoal:3,
+          retryParameters:{ maxAttempts:4, baseDelay:1000, backoffFactor:2, fuzzFactor:.5 }
+        }
       }
-      throw new Error("API failed after 3 retries: " + e.message);
-    }
+    ));
   }
+  applyConfig();
 
-  /* ─── Build correct clearKeys config object ────────────────────── */
-  /*
-   * BUG FIX:
-   * The old code did:
-   *   player.configure({drm:{clearKeys:{}}});
-   *   player.getConfiguration().drm.clearKeys[keyId] = key;   // WRONG
-   *
-   * getConfiguration() returns a DEEP COPY, not a reference.
-   * Mutating it has zero effect on the player — clearKeys stayed empty
-   * and DRM decryption never worked.
-   *
-   * Fix: build the object first, then pass it in one configure() call.
-   */
-  function buildDrmConfig(keyId, key) {
-    var clearKeys = {};
-    clearKeys[keyId] = key;
-    return {
-      drm: {
-        clearKeys: clearKeys
-      }
-    };
-  }
+  var RT = shaka.net.NetworkingEngine.RequestType;
+  player.getNetworkingEngine().registerRequestFilter(function(type, req){
+    if(type !== RT.MANIFEST && type !== RT.SEGMENT) return;
+    var token = extractToken(activeCookie);
+    req.uris = req.uris.map(function(u){ return addToken(u, token); });
+    req.headers["Referer"] = "https://www.jiotv.com/";
+  });
 
-  /* ─── Main init ─────────────────────────────────────────────────── */
-  async function init() {
-    /* Install polyfills for older / mobile browsers */
-    shaka.polyfill.installAll();
-
-    if (!shaka.Player.isBrowserSupported()) {
-      showStatus("Browser not supported — try Chrome or Firefox", "err", 0);
-      setLoadMsg("Browser not supported.");
+  async function refresh(reason){
+    if(isRefreshing) return;
+    refreshCount++;
+    if(refreshCount > MAX_RETRY){
+      showStatus("Stopped after " + MAX_RETRY + " retries. Please reload page.", "err", 0);
       return;
     }
-
-    /* Always fetch fresh — no localStorage */
-    var ch;
-    try {
-      setLoadMsg("Fetching stream data...");
-      showStatus("Fetching stream data...", "warn", 0);
-      ch = await fetchChannelData();
-    } catch (e) {
-      showStatus("Network Error: " + e.message, "err", 0);
-      setLoadMsg("Network error. Please refresh.");
-      return;
-    }
-
-    /* Create Shaka player and attach to video element */
-    var player = new shaka.Player();
-    await player.attach(vid);
-
-    /* Shaka UI — minimal controls */
-    var ui = new shaka.ui.Overlay(player, container, vid);
-    ui.configure({
-      controlPanelElements: [
-        "play_pause", "spacer", "quality", "picture_in_picture", "fullscreen"
-      ],
-      seekBarColors: {
-        base:     "#9c9a9a",
-        buffered: "#c90000",
-        played:   "#00ab17"
-      }
-    });
-
-    /* Active stream credentials (updated on refresh) */
-    var activeCookie = ch.cookie;
-    var activeKeyId  = ch.key_id;
-    var activeKey    = ch.key;
-    var activeUrl    = ch.stream_url;
-
-    /* Apply player config with correct DRM clearKeys */
-    function applyConfig() {
-      var drmCfg = buildDrmConfig(activeKeyId, activeKey);
-      player.configure(Object.assign(drmCfg, {
-        streaming: {
-          bufferingGoal:   15,
-          rebufferingGoal: 3,
-          retryParameters: {
-            maxAttempts:   5,
-            baseDelay:     1000,
-            backoffFactor: 2,
-            fuzzFactor:    0.5
-          }
-        }
-      }));
-    }
-
-    applyConfig();
-
-    /* Inject required JioTV headers on every manifest / segment request */
-    var RT = shaka.net.NetworkingEngine.RequestType;
-    player.getNetworkingEngine().registerRequestFilter(function (type, req) {
-      if (type !== RT.MANIFEST && type !== RT.SEGMENT) return;
-      req.headers["Referer"]    = "https://www.jiotv.com/";
-      req.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
-      req.headers["Cookie"]     = activeCookie;
-    });
-
-    /* ── Refresh + reload when stream breaks ─────────────────────── */
-    async function refreshAndReload(reason, attempt) {
-      if (isRefreshing) return;
-      isRefreshing = true;
-      attempt = attempt || 0;
-      showStatus("Reconnecting — " + (reason || "stream error"), "warn", 0);
-
-      try {
-        var fresh = await fetchChannelData();
-        activeCookie = fresh.cookie;
-        activeKeyId  = fresh.key_id;
-        activeKey    = fresh.key;
-        activeUrl    = fresh.stream_url;
-        applyConfig();
-        await player.load(activeUrl);
-        vid.play().catch(function () {});
-        showStatus("Live \u25CF", "ok", 5000);
-      } catch (e) {
-        if (attempt < 3) {
-          showStatus("Retry " + (attempt + 1) + "/3 — " + e.message, "warn", 0);
-          isRefreshing = false;
-          setTimeout(function () { refreshAndReload(reason, attempt + 1); }, 3000);
-          return;
-        }
-        showStatus("Stream unavailable: " + e.message, "err", 0);
-      }
-
-      setTimeout(function () { isRefreshing = false; }, 2000);
-    }
-
-    /* Shaka error codes that require a full stream refresh */
-    var REFRESH_CODES = [1001, 1002, 7000, 7001, 7002, 6006, 6007];
-
-    player.addEventListener("error", function (ev) {
-      var code    = ev.detail && ev.detail.code;
-      var message = ev.detail && ev.detail.message;
-      if (REFRESH_CODES.includes(code)) {
-        refreshAndReload("Shaka error " + code);
-      } else {
-        showStatus("Player error " + code + (message ? ": " + message : ""), "err", 5000);
-      }
-    });
-
-    /* ── Initial load ────────────────────────────────────────────── */
-    try {
-      setLoadMsg("Starting playback...");
+    isRefreshing = true;
+    showStatus("Reconnecting " + refreshCount + "/" + MAX_RETRY + " — " + (reason||"error"), "warn", 0);
+    try{
+      var fresh = await fetchData();
+      activeCookie = fresh.cookie;
+      activeKeyId  = fresh.key_id;
+      activeKey    = fresh.key;
+      activeUrl    = fresh.stream_url;
+      applyConfig();
       await player.load(activeUrl);
-      vid.play().catch(function () {});
-      hideOverlay();
+      vid.play().catch(function(){});
+      refreshCount = 0;
       showStatus("Live \u25CF", "ok", 5000);
-    } catch (e) {
-      hideOverlay();
-      showStatus("Playback failed: " + (e.message || e), "err", 0);
-      return;
+    } catch(e){
+      showStatus("Reconnect failed: " + e.message, "err", 0);
     }
+    setTimeout(function(){ isRefreshing = false; }, 3000);
+  }
 
-    /* Unmute after first user interaction / autoplay */
-    vid.addEventListener("play", function () {
-      vid.muted = false;
-    }, { once: true });
+  player.addEventListener("error", function(ev){
+    var d    = ev.detail || {};
+    var code = d.code != null ? d.code : "?";
+    var cat  = d.category != null ? " cat:" + d.category : "";
+    var msg  = d.message || "";
+    showStatus("Shaka error " + code + cat + (msg ? " — " + msg : ""), "err", 0);
+    refresh("shaka error " + code);
+  });
 
-    /* ── Stall / buffering watchdog ──────────────────────────────── */
-    vid.addEventListener("waiting", function () {
-      if (stallTimer) return;
-      showStatus("Buffering — please wait...", "warn", 0);
-      stallTimer = setTimeout(function () {
-        stallTimer = null;
-        refreshAndReload("stall timeout");
-      }, 10000);
-    });
+  try{
+    setLoadMsg("Starting playback...");
+    await player.load(activeUrl);
+    vid.play().catch(function(){});
+    hideOverlay();
+    showStatus("Live \u25CF", "ok", 5000);
+  } catch(e){
+    hideOverlay();
+    var c = e && e.code ? " [" + e.code + "]" : "";
+    showStatus("Load failed" + c + ": " + (e.message || e), "err", 0);
+    return;
+  }
 
-    vid.addEventListener("playing", function () {
-      if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
-      showStatus("Live \u25CF", "ok", 4000);
-    });
+  vid.addEventListener("play", function(){ vid.muted = false; }, { once:true });
 
-    /* ── Visibility change: reload when tab becomes active again ─── */
-    document.addEventListener("visibilitychange", function () {
-      if (!document.hidden && vid.paused) {
-        vid.play().catch(function () { refreshAndReload("tab resumed"); });
-      }
-    });
+  vid.addEventListener("waiting", function(){
+    if(stallTimer) return;
+    showStatus("Buffering...", "warn", 0);
+    stallTimer = setTimeout(function(){
+      stallTimer = null;
+      refresh("stall >10s");
+    }, 10000);
+  });
 
-  } /* end init */
+  vid.addEventListener("playing", function(){
+    if(stallTimer){ clearTimeout(stallTimer); stallTimer = null; }
+    showStatus("Live \u25CF", "ok", 4000);
+  });
 
-  init();
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden && vid.paused){
+      vid.play().catch(function(){ refresh("tab resume"); });
+    }
+  });
+}
 
+init();
 })();
 </script>
 </body>
