@@ -3,37 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Auto Play // Dillzy </title>
+<title>Auto Play // Dillzy</title>
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-
-video{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    background:#000;
-    will-change:transform;
-    transform:translateZ(0);
-    -webkit-transform:translateZ(0);
-}
-
+.shaka-video-container{position:relative;width:100%;height:100%;background:#000;touch-action:manipulation}
+video{width:100%;height:100%;object-fit:contain;background:#000;will-change:transform;transform:translateZ(0);-webkit-transform:translateZ(0)}
 .shaka-spinner-container,.shaka-spinner,.shaka-spinner-svg{display:none!important}
-
-#error-msg{
-    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-    color:#ff4c4c;font-size:15px;text-align:center;z-index:100;display:none;
-    background:rgba(0,0,0,0.9);padding:15px 20px;border-radius:8px;
-    border:1px solid #ff4c4c;max-width:85%; line-height: 1.5;
-}
+#error-msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#ff4c4c;font-size:15px;text-align:center;z-index:100;display:none;background:rgba(0,0,0,0.9);padding:15px 20px;border-radius:8px;border:1px solid #ff4c4c;max-width:85%;line-height:1.5}
 </style>
 </head>
 <body>
 
-<div class="shaka-video-container" data-shaka-player id="pc">
+<div class="shaka-video-container" id="pc">
 <video id="v" autoplay playsinline preload="metadata"></video>
 <div id="error-msg">Loading stream...</div>
 </div>
@@ -52,10 +36,9 @@ const video = document.getElementById('v');
 const container = document.getElementById('pc');
 const errorMsg = document.getElementById('error-msg');
 
-const player = new shaka.Player();
-await player.attach(video);
-
+const player = new shaka.Player(video);
 const ui = new shaka.ui.Overlay(player, container, video);
+
 ui.configure({
 controlPanelElements: [
 'play_pause',
@@ -76,26 +59,20 @@ buffered: "#c90000",
 played: "#00ab17"
 }
 });
+
 async function fetchDynamicStreamData(targetUrl) {
     let htmlContent = null;
-
     try {
-        console.log("Trying direct fetch...");
         const response = await fetch(targetUrl);
         if (response.ok) htmlContent = await response.text();
-    } catch (e) {
-        console.warn("Direct fetch blocked by CORS. Trying proxy...");
-    }
+    } catch (e) {}
 
     if (!htmlContent) {
         try {
-            console.log("Trying AllOrigins proxy...");
             const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
             const response = await fetch(proxyUrl);
             if (response.ok) htmlContent = await response.text();
-        } catch (e) {
-            console.error("Proxy failed:", e.message);
-        }
+        } catch (e) {}
     }
 
     if (!htmlContent) return null;
@@ -110,11 +87,7 @@ async function fetchDynamicStreamData(targetUrl) {
                 url: streamUrlMatch[1],
                 keys: JSON.parse(rawKeys)
             };
-        } catch (parseError) {
-            console.error("Failed to parse clearKeys:", parseError);
-        }
-    } else {
-        console.error("Missing streamUrl or clearKeys in HTML.");
+        } catch (parseError) {}
     }
     return null;
 }
@@ -129,7 +102,7 @@ if (extractedData) {
         },
         streaming: {
             lowLatencyMode: false,
-           bufferingGoal: 15, 
+            bufferingGoal: 15, 
             rebufferingGoal: 3, 
             bufferBehind: 30, 
             retryParameters: {
@@ -156,21 +129,16 @@ if (extractedData) {
     });
 
     try {
-        console.log("Loading stream...");
         await player.load(extractedData.url);
         errorMsg.style.display = "none";
-        console.log("Stream loaded smoothly!");
     } catch (error) {
-        console.error("Shaka Load Error:", error);
         errorMsg.innerText = "Failed to play. Keys or URL may be invalid.";
         errorMsg.style.display = "block";
     }
 } else {
-    console.error("Failed to extract data.");
     errorMsg.innerText = "Failed to fetch data. Proxy might be blocked.";
     errorMsg.style.display = "block";
 }
-
 });
 </script>
 </body>
