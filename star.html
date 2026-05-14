@@ -28,10 +28,49 @@ video{width:100%;height:100%;object-fit:contain;background:#000}
 video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
 
+#tap-gate{
+  position:absolute;
+  inset:0;
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.52);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#tap-gate.hidden{display:none}
+#tap-inner{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  pointer-events:none;
+}
+#tap-btn{
+  width:72px;height:72px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.12);
+  border:2.5px solid rgba(255,255,255,0.55);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  transition:transform .15s ease,background .15s ease;
+}
+#tap-gate:active #tap-btn{transform:scale(.92);background:rgba(255,255,255,0.22)}
+#tap-btn svg{width:30px;height:30px;margin-left:4px}
+#tap-label{
+  color:rgba(255,255,255,0.75);
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:.5px;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+
 #status{position:fixed;top:0;right:0;z-index:9997;padding:5px 10px;background:rgba(0,0,0,0.82);font-size:10px;letter-spacing:.04em;border-bottom-left-radius:6px;pointer-events:none;opacity:0;transition:opacity .4s ease;max-width:280px;text-align:right;line-height:1.5}
 #status.show{opacity:1}
-#status.ok{color:#4ade80}
-#status.warn{color:#facc15}
+#status.ok{color:#38bdf8}
+#status.warn{color:#fb923c}
 #status.err{color:#f87171}
 
 .shaka-fit-btn{background:transparent!important;border:none!important;cursor:pointer!important;padding:0 7px!important;opacity:.85;display:flex;align-items:center;justify-content:center;height:100%}
@@ -44,7 +83,7 @@ video.mode-cover{object-fit:cover}
 <div id="overlay">
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
     <circle cx="20" cy="20" r="16" stroke="#222" stroke-width="4"/>
-    <path d="M20 4a16 16 0 0 1 16 16" stroke="#e74c3c" stroke-width="4" stroke-linecap="round"/>
+    <path d="M20 4a16 16 0 0 1 16 16" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
   </svg>
   <p id="loadMsg">Loading...</p>
 </div>
@@ -52,12 +91,23 @@ video.mode-cover{object-fit:cover}
 <div id="status"></div>
 
 <div id="channel-list">
-  <h1>&#9654; @Sayan_xyz</h1>
+  <h1>&#9654; Sports Live</h1>
   <div id="ch-grid"></div>
 </div>
 
 <div id="pc">
   <video id="v" autoplay muted playsinline webkit-playsinline preload="none"></video>
+
+  <div id="tap-gate">
+    <div id="tap-inner">
+      <div id="tap-btn">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 4l14 8-14 8V4z" fill="rgba(255,255,255,0.95)"/>
+        </svg>
+      </div>
+      <span id="tap-label">TAP TO WATCH LIVE</span>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
@@ -65,7 +115,7 @@ video.mode-cover{object-fit:cover}
 (function () {
 "use strict";
 
-var API_URL  = "https://sayan-json-3.pages.dev/Data/sports.json";
+var API_URL = "https://sayan-json-3.pages.dev/Data/sports.json";
 
 var overlayEl = document.getElementById("overlay");
 var loadMsgEl = document.getElementById("loadMsg");
@@ -74,6 +124,7 @@ var listEl    = document.getElementById("channel-list");
 var gridEl    = document.getElementById("ch-grid");
 var pcEl      = document.getElementById("pc");
 var vidEl     = document.getElementById("v");
+var tapGate   = document.getElementById("tap-gate");
 
 var stTimer   = null;
 
@@ -155,14 +206,11 @@ function shakaErrStr(err) {
 function injectFitButton(container, video) {
   var panel = container.querySelector(".shaka-controls-button-panel");
   if (!panel) return;
-
   var modeIdx = 0;
-
   var btn = document.createElement("button");
   btn.className = "shaka-fit-btn";
   btn.title = "Toggle Fit Mode";
   btn.innerHTML = FIT_ICONS.contain;
-
   var anchor = panel.querySelector(".shaka-fullscreen-button");
   if (anchor) panel.insertBefore(btn, anchor);
   else panel.appendChild(btn);
@@ -206,7 +254,7 @@ async function startPlayer(ch) {
   var ui = new shaka.ui.Overlay(player, pcEl, vidEl);
   ui.configure({
     controlPanelElements: ["mute", "play_pause", "time_and_duration", "spacer", "quality", "picture_in_picture", "fullscreen"],
-    seekBarColors: { base: "#9c9a9a", buffered: "#c90000", played: "#00ab17" }
+    seekBarColors: { base: "rgba(255,255,255,0.2)", buffered: "rgba(56,189,248,0.5)", played: "#38bdf8" }
   });
 
   setTimeout(function () { injectFitButton(pcEl, vidEl); }, 80);
@@ -228,13 +276,13 @@ async function startPlayer(ch) {
         retryParameters: { maxAttempts: 3, baseDelay: 1000, backoffFactor: 2, fuzzFactor: 0.5 }
       },
       streaming: {
-        lowLatencyMode:       false,
-        bufferingGoal:        6,
-        rebufferingGoal:      2,
-        safeSeekOffset:       3,
-        stallEnabled:         true,
-        stallThreshold:       1,
-        stallSkip:            0.1,
+        lowLatencyMode:              false,
+        bufferingGoal:               6,
+        rebufferingGoal:             2,
+        safeSeekOffset:              3,
+        stallEnabled:                true,
+        stallThreshold:              1,
+        stallSkip:                   0.1,
         inaccurateManifestTolerance: 0,
         retryParameters: { maxAttempts: 3, baseDelay: 1000, backoffFactor: 2, fuzzFactor: 0.5 }
       },
@@ -261,6 +309,16 @@ async function startPlayer(ch) {
   var isRefreshing = false;
   var refreshCount = 0;
   var liveEdgeTried = false;
+  var userUnmuted = false;
+
+  tapGate.addEventListener("click", function () {
+    tapGate.classList.add("hidden");
+    userUnmuted = true;
+    vidEl.muted = false;
+    if (vidEl.paused) {
+      vidEl.play().catch(function () {});
+    }
+  }, { once: true });
 
   function tryLiveEdgeRecovery() {
     if (isRefreshing) return;
@@ -276,7 +334,7 @@ async function startPlayer(ch) {
   async function refreshAndReload(reason) {
     if (isRefreshing) return;
     if (refreshCount >= 4) {
-      showStatus("Stream down \u2014 reload the page.", "err", 0);
+      showStatus("Stream down \u2014 reload page.", "err", 0);
       return;
     }
     isRefreshing = true;
@@ -292,6 +350,7 @@ async function startPlayer(ch) {
       activeKey    = fresh.key;
       activeUrl    = fresh.stream_url;
       player.configure(buildConfig());
+      vidEl.muted = !userUnmuted;
       await player.load(activeUrl);
       vidEl.play().catch(function () {});
       refreshCount  = 0;
@@ -320,6 +379,7 @@ async function startPlayer(ch) {
     setLoadMsg("Starting playback...");
     showStatus("Loading stream...", "warn", 0);
     await player.load(activeUrl);
+    vidEl.muted = true;
     vidEl.play().catch(function () {});
     hideOverlay();
     showStatus("Live \u25CF", "ok", 5000);
