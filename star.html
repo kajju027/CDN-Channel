@@ -299,7 +299,7 @@ async function startPlayer(ch) {
   var T = shaka.net.NetworkingEngine.RequestType;
   player.getNetworkingEngine().registerRequestFilter(function (type, req) {
     req.headers["Referer"]    = "https://www.jiotv.com/";
-    req.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+    req.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0";
     req.headers["Cookie"]     = activeCookie;
     if (type === T.MANIFEST || type === T.SEGMENT) {
       req.uris = req.uris.map(function (u) { return appendCookieToUri(u, activeRaw); });
