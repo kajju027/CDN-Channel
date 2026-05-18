@@ -64,10 +64,10 @@ played: "#00ab17"
 }
 });
 
-const STREAM_URL = "https://dice-live-oc.akamaized.net/hdntl=exp=1779158077~acl=/*~id=49805124-7de7-433c-b410-bcc0164e59f4~data=hdntl,aXA9NTIuMTU0LjE5LjIyNSZleHA9MTc3OTA3MTcwNyZlaWQ9OTM2NTc2Jm9pZD0xNTQmdHlwZT1WT0QmdWlkPXZ1Q1Jtenw0ZWJlNjg1ZC1mZGY0LTQ1YWItODlhOS1kZDVjNzQ3YTQzZjAmY2lkPWRjZS5maXNmZWQmcHQ9bnVsbA~hmac=335907a80e190b660c61c6c4b158c55ade2bd1e8894bcaa419ae45efa9b22329/dash/live/2093710/219026-321025/manifest-d.mpd";
+const STREAM_URL = "https://dck1-fs-live.dtcdn.dazn.com/out/v1/814bffb9b389f652/d65feac5647949e6b45b2674d4715398/index.mpd";
 
 const CLEAR_KEYS = {
-"aefc2c8d1c8840f1b6981f856c9269ba": "cf8ea114c45b4d6596b2748258ab74d6"
+"01c9bbf8137e58378a5ead514998a7b4": "fb01e61809e80e5e93a889cd31daab22"
 };
 
 player.configure({
@@ -80,7 +80,7 @@ lowLatencyMode: true
 });
 
 player.getNetworkingEngine().registerRequestFilter((type, request) => {
-request.headers["Referer"] = "https://www.skysports.com/";
+request.headers["Referer"] = "https://dck1-fs-live.dtcdn.dazn.com/";
 request.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
       });
 
