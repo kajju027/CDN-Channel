@@ -5,30 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
 <title>Sonu // Live Stream</title>
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-video{width:100%;height:100%;object-fit:contain;background:#000}
+video{width:100%;height:100%;object-fit:contain;background:#000;will-change:transform}
 video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
 .shaka-spinner-container,.shaka-spinner,.shaka-spinner-svg{display:none!important}
-#fit-btn{position:absolute;z-index:50;bottom:78px;right:130px;width:22px;height:22px;background:transparent;border:none;cursor:pointer;padding:0;opacity:0;pointer-events:none;transition:opacity .3s ease}
-#fit-btn.visible{opacity:.85;pointer-events:auto}
-#fit-btn.visible:hover{opacity:1}
-#fit-btn svg{width:100%;height:100%;display:block}
-@media(max-width:700px){#fit-btn{bottom:72px;right:110px}}
+.shaka-fit-btn{background:transparent!important;border:none!important;cursor:pointer!important;padding:0 10px!important;opacity:.85;display:flex;align-items:center;justify-content:center;height:100%;transition:opacity .15s}
+.shaka-fit-btn:hover{opacity:1}
+.shaka-fit-btn svg{width:18px;height:18px;display:block}
+.shaka-controls-container button{color:#fff!important}
 </style>
 </head>
 <body>
 
 <div class="shaka-video-container" data-shaka-player id="pc">
 <video id="v" autoplay playsinline preload="metadata"></video>
-<button id="fit-btn" title=" "></button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
 shaka.polyfill.installAll();
@@ -36,7 +34,6 @@ if(!shaka.Player.isBrowserSupported()) return;
 
 const video = document.getElementById('v');
 const container = document.getElementById('pc');
-const fitBtn = document.getElementById('fit-btn');
 
 const player = new shaka.Player();
 await player.attach(video);
@@ -58,88 +55,90 @@ overflowMenuButtons: [
 'captions'
 ],
 seekBarColors: {
-base: "#9c9a9a",
-buffered: "#c90000",
-played: "#00ab17"
+base: "rgba(255,255,255,0.2)",
+buffered: "rgba(255,255,255,0.45)",
+played: "#38bdf8"
 }
 });
 
-const STREAM_URL = "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/k9bsz8cflm/out/v1/ce4d6ba95ace46d6af61c04d617836a3/cenc.mpd?";
+const STREAM_URL = "https://abkyrm4aaaaaaaamfyfksth3wr44v.ta.bia-cf.live.pv-cdn.net/pdx-nitro/live/clients/dash/enc/w4ezdyyny6/out/v1/2c82c2bf6e3e4b89a30ece7adf11089c/cenc.mpd";
 
 const CLEAR_KEYS = {
-"e24d997a3d30c3a4cc98125302382c23": "45dea9acb0dcf1f56c86a3881bc3957d"
+"16ce164bd9025d4bebc09c4096938a95": "34e9d1984fdd50d0be65f9cc9bb82e93"
 };
 
 player.configure({
 drm: {
 clearKeys: CLEAR_KEYS
 },
+manifest: {
+defaultPresentationDelay: 4,
+ignoreTextStreamFailures: true
+},
 streaming: {
-lowLatencyMode: true
+lowLatencyMode: true,
+bufferingGoal: 5,
+rebufferingGoal: 1.5,
+safeSeekOffset: 4
+},
+abr: {
+enabled: true,
+defaultBandwidthEstimate: 1000000,
+restrictions: { maxHeight: 1080 }
 }
 });
 
 player.getNetworkingEngine().registerRequestFilter((type, request) => {
 request.headers["Referer"] = "https://www.cricbuzz.com/";
-request.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+request.headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36";
 });
 
 try {
 await player.load(STREAM_URL);
-} catch (error) {
-console.error('Load Failed:', error);
-}
+} catch (error) {}
 
-var _MODES=["contain","fill","cover"];
-var _ICONS={
-contain:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="18" height="12" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="6" y="9" width="12" height="6" rx=".5" fill="rgba(255,255,255,0.25)"/></svg>',
-fill:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="3" y="3" width="18" height="18" rx="1" fill="rgba(255,255,255,0.2)"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" stroke="rgba(255,255,255,0.35)" stroke-width="1"/></svg>',
-cover:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="1" stroke="rgba(255,255,255,0.85)" stroke-width="1.7"/><rect x="5" y="5" width="14" height="14" rx=".5" fill="rgba(255,255,255,0.25)"/><path d="M3 3l4 4M21 3l-4 4M3 21l4-4M21 21l-4-4" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round"/></svg>'
+var _MODES = ["contain", "fill", "cover"];
+var _ICONS = {
+contain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="21" x2="22" y2="21"/></svg>',
+fill:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+cover:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M6 7l3 3m0 0H7m2 0V8m9-1l-3 3m0 0h2m-2 0V8M6 13l3-3m0 0H7m2 0v2m9 1l-3-3m0 0h2m-2 0v2"/></svg>'
 };
 
-var _modeIdx=0;
+var _modeIdx = 0;
 
-function _isFs(){
-return !!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
+function injectFitButton(cnt, vid) {
+var panel = cnt.querySelector(".shaka-controls-button-panel");
+if (!panel) return;
+var btn = document.createElement("button");
+btn.className = "shaka-fit-btn";
+btn.innerHTML = _ICONS.contain;
+var anchor = panel.querySelector(".shaka-fullscreen-button");
+if (anchor) panel.insertBefore(btn, anchor);
+else panel.appendChild(btn);
+
+function applyMode(idx) {
+_modeIdx = idx;
+var m = _MODES[idx];
+vid.classList.remove("mode-fill", "mode-cover");
+if (m === "fill") vid.classList.add("mode-fill");
+if (m === "cover") vid.classList.add("mode-cover");
+btn.innerHTML = _ICONS[m];
 }
 
-function _applyMode(idx){
-_modeIdx=idx;
-var m=_MODES[idx];
-video.classList.remove("mode-fill","mode-cover");
-if(m==="fill")video.classList.add("mode-fill");
-else if(m==="cover")video.classList.add("mode-cover");
-fitBtn.innerHTML=_ICONS[m];
-fitBtn.title=m==="contain"?"Fit (click: Stretch)":m==="fill"?"Stretch (click: Zoom)":"Zoom (click: Fit)";
-}
-
-_applyMode(0);
-
-fitBtn.addEventListener("click",function(e){
+btn.addEventListener("click", function (e) {
 e.stopPropagation();
-if(!_isFs())return;
-_applyMode((_modeIdx+1)%_MODES.length);
+applyMode((_modeIdx + 1) % _MODES.length);
 });
 
-function _onFsChange(){if(!_isFs())_applyMode(0);}
-document.addEventListener("fullscreenchange",_onFsChange);
-document.addEventListener("webkitfullscreenchange",_onFsChange);
-document.addEventListener("mozfullscreenchange",_onFsChange);
-document.addEventListener("MSFullscreenChange",_onFsChange);
-
-var _hideTimer=null;
-function _showCtrl(){
-fitBtn.classList.add("visible");
-if(_hideTimer)clearTimeout(_hideTimer);
-_hideTimer=setTimeout(function(){
-fitBtn.classList.remove("visible");
-_hideTimer=null;
-},3000);
+["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) {
+document.addEventListener(ev, function () {
+var inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+if (!inFs) applyMode(0);
+});
+});
 }
 
-container.addEventListener("mousemove",_showCtrl);
-container.addEventListener("touchstart",_showCtrl,{passive:true});
-container.addEventListener("click",_showCtrl);
+setTimeout(function () { injectFitButton(container, video); }, 50);
 
 });
 </script>
