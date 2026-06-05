@@ -18,12 +18,17 @@ video.mode-cover{object-fit:cover}
 .shaka-fit-btn:hover{opacity:1}
 .shaka-fit-btn svg{width:18px;height:18px;display:block}
 .shaka-controls-container button{color:#fff!important}
+#custom-loader{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:5;opacity:0;pointer-events:none;transition:opacity 0.2s ease}
+#custom-loader.active{opacity:1;pointer-events:auto}
+.custom-spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,0.1);border-top:4px solid #38bdf8;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<div class="shaka-video-container" data-shaka-player id="pc">
+<div class="shaka-video-container" id="pc">
 <video id="v" autoplay playsinline preload="metadata"></video>
+<div id="custom-loader" class="active"><div class="custom-spinner"></div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
@@ -34,6 +39,7 @@ if(!shaka.Player.isBrowserSupported()) return;
 
 const video = document.getElementById('v');
 const container = document.getElementById('pc');
+const loader = document.getElementById('custom-loader');
 
 const player = new shaka.Player();
 await player.attach(video);
@@ -46,18 +52,19 @@ controlPanelElements: [
 'time_and_duration',
 'spacer',
 'quality',
-'picture_in_picture',
 'fullscreen',
 'overflow_menu'
 ],
 overflowMenuButtons: [
 'language',
-'captions'
+'captions',
+'playback_rate',
+'picture_in_picture'
 ],
 seekBarColors: {
-base: "rgba(255,255,255,0.2)",
-buffered: "rgba(255,255,255,0.45)",
-played: "#38bdf8"
+base: "rgba(209,213,219,0.3)",
+buffered: "rgba(139,0,0,0.5)",
+played: "#008000"
 }
 });
 
@@ -77,8 +84,8 @@ ignoreTextStreamFailures: true
 },
 streaming: {
 lowLatencyMode: true,
-bufferingGoal: 5,
-rebufferingGoal: 1.5,
+bufferingGoal: 12,
+rebufferingGoal: 3,
 safeSeekOffset: 4
 },
 abr: {
@@ -93,9 +100,32 @@ request.headers["Referer"] = "https://www.cricbuzz.com/";
 request.headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36";
 });
 
+function hideLoader() {
+loader.classList.remove('active');
+}
+function showLoader() {
+loader.classList.add('active');
+}
+
+video.addEventListener('waiting', showLoader);
+video.addEventListener('stalled', showLoader);
+video.addEventListener('loadstart', showLoader);
+video.addEventListener('seeking', showLoader);
+
+video.addEventListener('playing', hideLoader);
+video.addEventListener('canplay', hideLoader);
+video.addEventListener('canplaythrough', hideLoader);
+video.addEventListener('timeupdate', function() {
+if (!video.paused && video.currentTime > 0) {
+hideLoader();
+}
+});
+
 try {
 await player.load(STREAM_URL);
-} catch (error) {}
+} catch (error) {
+hideLoader();
+}
 
 var _MODES = ["contain", "fill", "cover"];
 var _ICONS = {
@@ -107,8 +137,10 @@ cover:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
 var _modeIdx = 0;
 
 function injectFitButton(cnt, vid) {
+var checkExist = setInterval(function () {
 var panel = cnt.querySelector(".shaka-controls-button-panel");
-if (!panel) return;
+if (panel) {
+clearInterval(checkExist);
 var btn = document.createElement("button");
 btn.className = "shaka-fit-btn";
 btn.innerHTML = _ICONS.contain;
@@ -137,8 +169,10 @@ if (!inFs) applyMode(0);
 });
 });
 }
+}, 50);
+}
 
-setTimeout(function () { injectFitButton(container, video); }, 50);
+injectFitButton(container, video);
 
 });
 </script>
