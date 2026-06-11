@@ -18,7 +18,7 @@ video.mode-cover{object-fit:cover}
 .shaka-fit-btn{background:transparent!important;border:none!important;cursor:pointer!important;padding:0 10px!important;opacity:.85;display:flex;align-items:center;justify-content:center;height:100%;transition:opacity .15s}
 .shaka-fit-btn:hover{opacity:1}
 .shaka-fit-btn svg{width:18px;height:18px;display:block}
-#loader{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9;opacity:0;pointer-events:none;transition:opacity .25s}
+#loader{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;opacity:0;pointer-events:none;transition:opacity .2s}
 #loader.on{opacity:1}
 .spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:#38bdf8;border-radius:50%;animation:sp .75s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -41,17 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('pc');
   const loader    = document.getElementById('loader');
 
-  let ready = false;
+  let playing = false;
+  const showLoader = () => { if (playing) loader.classList.add('on'); };
+  const hideLoader = () => { playing = true; loader.classList.remove('on'); };
 
-  function show() { if (ready) loader.classList.add('on'); }
-  function hide() { ready = true; loader.classList.remove('on'); }
-
-  video.addEventListener('waiting',  show);
-  video.addEventListener('stalled',  show);
-  video.addEventListener('seeking',  show);
-  video.addEventListener('playing',  hide);
-  video.addEventListener('canplay',  hide);
-  video.addEventListener('timeupdate', () => { if (!video.paused && video.currentTime > 0) hide(); });
+  video.addEventListener('waiting',    showLoader);
+  video.addEventListener('stalled',    showLoader);
+  video.addEventListener('seeking',    showLoader);
+  video.addEventListener('playing',    hideLoader);
+  video.addEventListener('canplay',    hideLoader);
+  video.addEventListener('timeupdate', () => { if (!video.paused && video.currentTime > 0) hideLoader(); });
 
   const player = new shaka.Player();
   await player.attach(video);
@@ -65,13 +64,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const STREAM_URL = 'https://otte.live.fly.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/ehfibbt64r/out/v1/242699d5a0484c3b8868d40d763d75cd/cenc.mpd';
-  const CLEAR_KEYS = { '5be21df3f18ef64aaaaa30cbdaf128ed': '7fac12f58b756a1a52d3150c7d3b0304' };
+  const RAW_KEYS = '5be21df3f18ef64aaaaa30cbdaf128ed:7fac12f58b756a1a52d3150c7d3b0304';
+  const clearKeys = Object.fromEntries(
+    RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
+  );
 
   player.configure({
-    drm: { clearKeys: CLEAR_KEYS },
-    manifest: { defaultPresentationDelay: 4, ignoreTextStreamFailures: true },
-    streaming: { lowLatencyMode: true, bufferingGoal: 12, rebufferingGoal: 3, safeSeekOffset: 4 },
-    abr: { enabled: true, defaultBandwidthEstimate: 1000000, restrictions: { maxHeight: 1080 } }
+    drm: { clearKeys },
+    manifest: {
+      defaultPresentationDelay: 4,
+      ignoreTextStreamFailures: true,
+      dash: { autoCorrectDrift: true, ignoreMinBufferTime: true }
+    },
+    abr: {
+      enabled: true,
+      defaultBandwidthEstimate: 2000000,
+      bandwidthUpgradeTarget: 0.85,
+      bandwidthDowngradeTarget: 0.95,
+      restrictions: { maxHeight: 1080 }
+    }
+  });
+  player.configurationForLowLatency({
+    streaming: {
+      inaccurateManifestTolerance: 0,
+      segmentPrefetchLimit: 2,
+      updateIntervalSeconds: 0.1,
+      maxDisabledTime: 1,
+      bufferingGoal: 10,
+      rebufferingGoal: 2,
+      bufferBehind: 30,
+      safeSeekOffset: 3,
+      retryParameters: { baseDelay: 100, maxAttempts: 5, backoffFactor: 1.5, fuzzFactor: 0.5 }
+    },
+    manifest: {
+      dash: { autoCorrectDrift: true },
+      retryParameters: { baseDelay: 100 }
+    },
+    drm: {
+      retryParameters: { baseDelay: 100 }
+    }
   });
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
@@ -87,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     fill:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
     cover:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M6 7l3 3m0 0H7m2 0V8m9-1l-3 3m0 0h2m-2 0V8M6 13l3-3m0 0H7m2 0v2m9 1l-3-3m0 0h2m-2 0v2"/></svg>'
   };
-
   let modeIdx = 0;
 
   function injectFitButton(cnt, vid) {
@@ -95,16 +125,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const panel = cnt.querySelector('.shaka-controls-button-panel');
       if (!panel) return;
       clearInterval(poll);
-
       const btn = document.createElement('button');
       btn.className = 'shaka-fit-btn';
       btn.title     = 'Toggle fit mode';
       btn.innerHTML = ICONS.contain;
-
       const anchor = panel.querySelector('.shaka-fullscreen-button');
-      if (anchor) panel.insertBefore(btn, anchor);
-      else panel.appendChild(btn);
-
+      if (anchor) panel.insertBefore(btn, anchor); else panel.appendChild(btn);
       function applyMode(idx) {
         modeIdx = idx;
         const m = MODES[idx];
@@ -113,9 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (m === 'cover') vid.classList.add('mode-cover');
         btn.innerHTML = ICONS[m];
       }
-
       btn.addEventListener('click', e => { e.stopPropagation(); applyMode((modeIdx + 1) % MODES.length); });
-
       ['fullscreenchange','webkitfullscreenchange'].forEach(ev => {
         document.addEventListener(ev, () => {
           if (!(document.fullscreenElement || document.webkitFullscreenElement)) applyMode(0);
