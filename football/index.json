@@ -1,0 +1,105 @@
+{
+  "author": "@Sayan_xyz",
+  "updatedAt": "12/6/2026, 8:47:45 am",
+  "entries": [
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/telemundo.html",
+      "channel": "TELEMUNDO - AQ",
+      "stream_url": "https://live-oneapp-prd-news.akamaized.net/Content/CMAF_OL2-CTR-4s-v2/Live/channel(kvea)/master.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/telemundo.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/telemundo.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/d-sports.html",
+      "channel": "D SPORTS - AQ",
+      "stream_url": "https://otte.live.fly.ww.aiv-cdn.net/gru-nitro/live/clients/dash/enc/ubehitlwzo/out/v1/8e09c381a51f4366a19e979418112e8f/cenc.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/d-sports.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/d-sports.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/canal-sports.html",
+      "channel": "CANAL SPORTS - AQ",
+      "stream_url": "https://nog-live-ott.izzigo.tv/out/u/dash/CDMX1/CANAL-5-RDF-HD/default.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/canal-sports.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/canal-sports.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/zdf-german-hd.html",
+      "channel": "ZDF GERMAN HD",
+      "stream_url": "https://simplitv-live.mdn.ors.at/live/eds/zdf_hd/dash4h/zdf_hd.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/zdf-german-hd.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/zdf-german-hd.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/orf-german-hd.html",
+      "channel": "ORF GERMAN HD",
+      "stream_url": "https://simplitv-live.mdn.ors.at/live/eds/orf_1_hd-1/dash4h/orf_1_hd-1.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/orf-german-hd.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/orf-german-hd.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/vrt-dutch.html",
+      "channel": "VRT DUTCH - AQ",
+      "stream_url": "https://live.vrtcdn.be/groupd/live/0761024f-37fe-4254-bc37-e95d7c62b2d1/live.isml/.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/vrt-dutch.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/vrt-dutch.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/zee5-hindi.html",
+      "channel": "ZEE5 HINDI - AQ",
+      "stream_url": "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeecinema/default/manifest.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/zee5-hindi.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/zee5-hindi.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/zee5-bangla.html",
+      "channel": "ZEE5 BANGLA - AQ",
+      "stream_url": "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Zeebanglacinema/default/manifest.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/zee5-bangla.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/zee5-bangla.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/tsn-sports.html",
+      "channel": "TSN SPORTS - AQ",
+      "stream_url": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/7janu55dwc/out/v1/69a2a7041395406b970598f61680e7cf/cenc.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/tsn-sports.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/tsn-sports.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/tsn-sports-3.html",
+      "channel": "TSN SPORTS 3 - AQ",
+      "stream_url": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/lzhmuzmjsl/out/v1/c171eeb214c749f2b351c79df317b21e/cenc.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/tsn-sports-3.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/tsn-sports-3.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    },
+    {
+      "match_slug": "canada-vs-bih",
+      "file": "football/tsn-sports-5.html",
+      "channel": "TSN SPORTS 5 - AQ",
+      "stream_url": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/jkcljgqbx8/out/v1/63bfa701559340f3a2a2cb1fccd24807/cenc.mpd",
+      "raw_url": "https://raw.githubusercontent.com/kajju027/CDN-Channel/main/football/tsn-sports-5.html",
+      "player_url": "https://cdn.jsdelivr.net/gh/kajju027/CDN-Channel@main/football/tsn-sports-5.html",
+      "updatedAt": "12/6/2026, 8:47:45 am"
+    }
+  ]
+}
