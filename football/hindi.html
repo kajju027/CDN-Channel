@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},
     fadeDelay:3
   });
-  const STREAM_URL='https://ngtv-live-cbj.gcdn.co/Content/DASH/Live/channel(fifa1)/master.mpd';
-  const RAW_KEYS='10e2114398744f3880cc96653568da55:d6d40441f9fbebea03ec64c4aea7211f';
+  const STREAM_URL='https://sundirectgo-live.pc.cdn.bitgravity.com/svchd18/dth.mpd';
+  const RAW_KEYS='b747068e2de9e8f23beba7222e101c9a:db11aac16c4f8c7dc5e8aaf19f25830d';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({
     drm:{clearKeys},
