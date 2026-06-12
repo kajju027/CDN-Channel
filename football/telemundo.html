@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>Sonu // Live Stream</title>
+<title>TELEMUNDO - AQ // Live Stream</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.1.8/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const STREAM_URL = 'https://live-oneapp-prd-news.akamaized.net/Content/CMAF_OL2-CTR-4s-v2/Live/channel(kvea)/master.mpd';
-  const RAW_KEYS = 'ce7ab3022e753307997f58afe001bac4:72d631a66e635c60829a0fe7705516c1';
-  const clearKeys = Object.fromEntries(
+  const RAW_KEYS   = 'ce7ab3022e753307997f58afe001bac4:72d631a66e635c60829a0fe7705516c1';
+  const clearKeys  = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
 
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
-    request.headers['Referer']    = 'https://live-oneapp-prd-news.akamaized.net/';
+    request.headers['Referer']    = 'https://vortextv.modsdone.com/';
     request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
   });
 
