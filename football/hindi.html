@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay:3
   });
   const STREAM_URL='https://sundirectgo-live.pc.cdn.bitgravity.com/svchd18/dth.mpd';
-  const RAW_KEYS='e2d998ab1361a95bdb70f10e75ff51a1:e680b004bd19c96f759c69dc4993603c';
+  const RAW_KEYS='c5fbe2d8a20791b8a67827fa7458d632:ec3ae47aa5345c042f5f536f380ae29d';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({
     drm:{clearKeys},
