@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const player=new shaka.Player();await player.attach(video);
   const ui=new shaka.ui.Overlay(player,container,video);
   ui.configure({controlPanelElements:['play_pause','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
-  const STREAM_URL='https://otte-tim.live.pv-cdn.net/gru-nitro/live/clients/dash/enc/iayg0kyrof/out/v1/91dc04907f56415b897faccfa9d252da/cenc.mpd',RAW_KEYS='1223d5105392cabf1bb9c2c1fdf6539a:340b409f4b8f78a343e0363a7938df38';
+  const STREAM_URL='https://a121aivottepl-a.akamaihd.net/gru-nitro/live/clients/dash/enc/a6bxtdgxts/out/v1/691e8c4b528d4e45b893a9e2e516211b/cenc.mpd',RAW_KEYS='9752ef72590ef441ffa3731e0486fbc0:db63ec7b9f11348b7cc6808a54c99457';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({drm:{clearKeys},manifest:{defaultPresentationDelay:4,ignoreTextStreamFailures:true,dash:{autoCorrectDrift:true,ignoreMinBufferTime:true}},abr:{enabled:true,defaultBandwidthEstimate:2000000,bandwidthUpgradeTarget:0.85,bandwidthDowngradeTarget:0.95,restrictions:{maxHeight:1080}}});
   player.configurationForLowLatency({streaming:{inaccurateManifestTolerance:0,segmentPrefetchLimit:2,updateIntervalSeconds:0.1,maxDisabledTime:1,bufferingGoal:10,rebufferingGoal:2,bufferBehind:30,safeSeekOffset:3,retryParameters:{baseDelay:100,maxAttempts:5,backoffFactor:1.5,fuzzFactor:0.5}},manifest:{dash:{autoCorrectDrift:true},retryParameters:{baseDelay:100}},drm:{retryParameters:{baseDelay:100}}});
