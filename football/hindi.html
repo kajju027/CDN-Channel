@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},
     fadeDelay:3
   });
-  const STREAM_URL='https://sundirectgo-live.pc.cdn.bitgravity.com/svchd18/dth.mpd';
-  const RAW_KEYS='c5fbe2d8a20791b8a67827fa7458d632:ec3ae47aa5345c042f5f536f380ae29d';
+  const STREAM_URL='https://iptv.jio.com/livetv/data/Star_Utsav.mpd';
+  const RAW_KEYS=':';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({
     drm:{clearKeys},
@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     drm:{retryParameters:{baseDelay:100}}
   });
   player.getNetworkingEngine().registerRequestFilter((type,request)=>{
-    request.headers['Referer']='https://vortextv.modsdone.com/';
-    request.headers['User-Agent']='Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+    request.headers['Referer']='https://iptv.jio.com/';
+    request.headers['User-Agent']='Dalvik (Linux; U; Android 13; JHSC200 Build/11.2.94)';
   });
   try{await player.load(STREAM_URL);}catch(_){}
   const MODES=['contain','fill','cover'];
