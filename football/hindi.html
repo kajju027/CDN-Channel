@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     drm:{retryParameters:{baseDelay:100}}
   });
   player.getNetworkingEngine().registerRequestFilter((type,request)=>{
-    request.headers['Referer']='https://iptv.jio.com/';
-    request.headers['User-Agent']='Dalvik (Linux; U; Android 13; JHSC200 Build/11.2.94)';
+    request.headers['Referer']='https://sundirectgo-live.pc.cdn.bitgravity.com/';
+    request.headers['User-Agent']='User Agent: Mozilla/5.0 (Android 16; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0';
   });
   try{await player.load(STREAM_URL);}catch(_){}
   const MODES=['contain','fill','cover'];
