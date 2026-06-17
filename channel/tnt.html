@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://a57live-pv-ta-amazon.akamaized.net/iad-nitro/live/clients/dash/enc/ldgnvordfu/out/v1/430b37000b9148379747ac5cfb2ada46/cenc.mpd';
-  const RAW_KEYS = '3aa6f9df41c299f659aaee15d0067900:0434703fb407fb12980f51944271a1f8';
+  const STREAM_URL = 'https://live-pv-ta.amazon.fastly-edge.com/sin-nitro/live/clients/dash/enc/h2wngvadsp/out/v1/2f0a0df306dc417789487320edc53f99/cenc.mpd';
+  const RAW_KEYS = 'ee0c99be51120d109657df5229b48b01:6f0cc18e09de8ec73414bb2209d6c63b';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
