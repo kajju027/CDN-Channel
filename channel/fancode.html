@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const ui = new shaka.ui.Overlay(player, container, video);
   ui.configure({
-    controlPanelElements: ['play_pause','time_and_duration','spacer','quality','fullscreen','overflow_menu'],
+    controlPanelElements: ['play_pause','mute','time_and_duration','spacer','quality','fullscreen','overflow_menu'],
     overflowMenuButtons:  ['language','captions','playback_rate','picture_in_picture'],
     seekBarColors: { base:'rgba(209,213,219,.25)', buffered:'rgba(139,0,0,.45)', played:'#22c55e' },
     fadeDelay: 3
