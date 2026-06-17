@@ -46,13 +46,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   await player.attach(video);
   const ui=new shaka.ui.Overlay(player,container,video);
   ui.configure({
-    controlPanelElements:['play_pause','time_and_duration','spacer','quality','fullscreen','overflow_menu'],
+    controlPanelElements:['play_pause','mute','time_and_duration','spacer','quality','fullscreen','overflow_menu'],
     overflowMenuButtons:['language','captions','playback_rate','picture_in_picture'],
     seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},
     fadeDelay:3
   });
-  const STREAM_URL='https://live.vrtcdn.be/groupd/live/0761024f-37fe-4254-bc37-e95d7c62b2d1/live.isml/.mpd';
-  const RAW_KEYS='893bc63340876605f52886a42e0ccce5:d6c46d2d691056fbd091bf1f01b21a91';
+  const STREAM_URL='https://sundirectgo-live.pc.cdn.bitgravity.com/svchd14/dth.mpd';
+  const RAW_KEYS='e02436b29fbc154b3208a3f424c0cae8:882a1ba03809292d0d7df4cac26bb9c5';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({
     drm:{clearKeys},
