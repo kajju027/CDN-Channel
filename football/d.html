@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>D SPORTS ES - AQ // Live</title>
+<title>D SPORTS ES - AQ Live</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.1.8/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -41,12 +41,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
   video.addEventListener('timeupdate',()=>{if(!video.paused&&video.currentTime>0)hideLoader();});
   const player=new shaka.Player();await player.attach(video);
   const ui=new shaka.ui.Overlay(player,container,video);
-  ui.configure({controlPanelElements:['play_pause','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
+  ui.configure({controlPanelElements:['play_pause','mute','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','cast','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
   const STREAM_URL='https://otte.live.fly.ww.aiv-cdn.net/gru-nitro/live/clients/dash/enc/3gg2jnixjn/out/v1/e1840e01f3f14563b66bbb944d5cc54c/cenc.mpd',RAW_KEYS='f8b207c10f3f76aeba32a360ec52b9e4:afad49d20eb39670e93e371c1d669921';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({drm:{clearKeys},manifest:{defaultPresentationDelay:4,ignoreTextStreamFailures:true,dash:{autoCorrectDrift:true,ignoreMinBufferTime:true}},abr:{enabled:true,defaultBandwidthEstimate:2000000,bandwidthUpgradeTarget:0.85,bandwidthDowngradeTarget:0.95,restrictions:{maxHeight:1080}}});
   player.configurationForLowLatency({streaming:{inaccurateManifestTolerance:0,segmentPrefetchLimit:2,updateIntervalSeconds:0.1,maxDisabledTime:1,bufferingGoal:10,rebufferingGoal:2,bufferBehind:30,safeSeekOffset:3,retryParameters:{baseDelay:100,maxAttempts:5,backoffFactor:1.5,fuzzFactor:0.5}},manifest:{dash:{autoCorrectDrift:true},retryParameters:{baseDelay:100}},drm:{retryParameters:{baseDelay:100}}});
-  player.getNetworkingEngine().registerRequestFilter((type,req)=>{req.headers['Referer']='https://vortextv.modsdone.com/';req.headers['User-Agent']='Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36';});
+  player.getNetworkingEngine().registerRequestFilter((type,req)=>{req.headers['Referer']='https://livedakho.pages.dev/';req.headers['User-Agent']='Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36';});
   try{await player.load(STREAM_URL);}catch(_){}
   const MODES=['contain','fill','cover'],ICONS={contain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="21" x2="22" y2="21"/></svg>',fill:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',cover:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M6 7l3 3m0 0H7m2 0V8m9-1l-3 3m0 0h2m-2 0V8M6 13l3-3m0 0H7m2 0v2m9 1l-3-3m0 0h2m-2 0v2"/></svg>'};
   let modeIdx=0;

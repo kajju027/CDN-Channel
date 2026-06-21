@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>FOX SPORTS 4K // Live</title>
+<title>FOX SPORTS 4K Live</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.1.8/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -41,12 +41,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
   video.addEventListener('timeupdate',()=>{if(!video.paused&&video.currentTime>0)hideLoader();});
   const player=new shaka.Player();await player.attach(video);
   const ui=new shaka.ui.Overlay(player,container,video);
-  ui.configure({controlPanelElements:['play_pause','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
-  const STREAM_URL='https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/enc/ykzl8x62g5/out/v1/e8f0a2204c5c4490b338a9c2165dd92a/cenc.mpd',RAW_KEYS='996d39be9ee1c8e65d94d7bb973bdf0f:5306cdc1e410bc6ddb2530608c42b11b';
+  ui.configure({controlPanelElements:['play_pause','mute','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','cast','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
+  const STREAM_URL='https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/hsshvitvwa/out/v1/fc40f22f10374517a2784e1d97cb23f4/cenc.mpd',RAW_KEYS='1f68713028d439ec03be07f56c1d6213:20093db6455160fffed4c394def3193d';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({drm:{clearKeys},manifest:{defaultPresentationDelay:4,ignoreTextStreamFailures:true,dash:{autoCorrectDrift:true,ignoreMinBufferTime:true}},abr:{enabled:true,defaultBandwidthEstimate:2000000,bandwidthUpgradeTarget:0.85,bandwidthDowngradeTarget:0.95,restrictions:{maxHeight:1080}}});
   player.configurationForLowLatency({streaming:{inaccurateManifestTolerance:0,segmentPrefetchLimit:2,updateIntervalSeconds:0.1,maxDisabledTime:1,bufferingGoal:10,rebufferingGoal:2,bufferBehind:30,safeSeekOffset:3,retryParameters:{baseDelay:100,maxAttempts:5,backoffFactor:1.5,fuzzFactor:0.5}},manifest:{dash:{autoCorrectDrift:true},retryParameters:{baseDelay:100}},drm:{retryParameters:{baseDelay:100}}});
-  player.getNetworkingEngine().registerRequestFilter((type,req)=>{req.headers['Referer']='https://vortextv.modsdone.com/';req.headers['User-Agent']='Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36';});
+  player.getNetworkingEngine().registerRequestFilter((type,req)=>{req.headers['Referer']='https://livedakho.pages.dev/';req.headers['User-Agent']='Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36';});
   try{await player.load(STREAM_URL);}catch(_){}
   const MODES=['contain','fill','cover'],ICONS={contain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="21" x2="22" y2="21"/></svg>',fill:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',cover:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M6 7l3 3m0 0H7m2 0V8m9-1l-3 3m0 0h2m-2 0V8M6 13l3-3m0 0H7m2 0v2m9 1l-3-3m0 0h2m-2 0v2"/></svg>'};
   let modeIdx=0;
