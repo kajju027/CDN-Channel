@@ -57,14 +57,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const ui = new shaka.ui.Overlay(player, container, video);
   ui.configure({
-    controlPanelElements: ['play_pause','time_and_duration','spacer','quality','fullscreen','overflow_menu'],
+    controlPanelElements: ['play_pause','mute','time_and_duration','spacer','quality','fullscreen','cast','overflow_menu'],
     overflowMenuButtons:  ['language','captions','playback_rate','picture_in_picture'],
     seekBarColors: { base:'rgba(209,213,219,.25)', buffered:'rgba(139,0,0,.45)', played:'#22c55e' },
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://a57live-pv-ta-amazon.akamaized.net/iad-nitro/live/clients/dash/enc/zpnqiahxef/out/v1/f5a57dc142584558a8669a44e3b6aa11/cenc.mpd';
-  const RAW_KEYS = '1e5d713e767c1a6cffd1881387b207cd:1f97487e54111023d37c80d74cb3bb4c';
+  const STREAM_URL = 'https://ABGURYQAAAAAAAAMDWLAPGWRF4XPJ.bia-cf.live.pv-cdn.net/sin-nitro/live/clients/dash/enc/87d0tehlad/out/v1/403835568f5b4e3ca2d201cc88b594ee/cenc.mpd';
+  const RAW_KEYS = 'ee0c99be51120d109657df5229b48b01:6f0cc18e09de8ec73414bb2209d6c63b';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
