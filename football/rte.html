@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>RTE SPORTS - AQ Live</title>
+<title>RTE PLAYER - AQ Live</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.1.8/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const player=new shaka.Player();await player.attach(video);
   const ui=new shaka.ui.Overlay(player,container,video);
   ui.configure({controlPanelElements:['play_pause','mute','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','cast','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
-  const STREAM_URL='https://dai.google.com/linear/dash/event/antwa0EiQm2PoHtx4rBtVw/manifest.mpd',RAW_KEYS='d816287e21496989eae1312925a423c5:00da00f13180e7e6cd5ce87d1c974e8d';
+  const STREAM_URL='https://live.rte.ie/live/tc-1/vc3/vc3.isml/.mpd?dvr_window_length=90&available=1782167100&expiry=1782212400&ip=89.184.62.154&filter=systemBitrate%3C%3D7000000&token1=ce87effc9e6c15479dc5ec7ca26dbd855db5ce04e71caf87c96de9bb34ca433d',RAW_KEYS='49c1810e4a14d689128b68d136bee8ab:a19757b5653bcd3d93c1b7710339386a';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({drm:{clearKeys},manifest:{defaultPresentationDelay:4,ignoreTextStreamFailures:true,dash:{autoCorrectDrift:true,ignoreMinBufferTime:true}},abr:{enabled:true,defaultBandwidthEstimate:2000000,bandwidthUpgradeTarget:0.85,bandwidthDowngradeTarget:0.95,restrictions:{maxHeight:1080}}});
   player.configurationForLowLatency({streaming:{inaccurateManifestTolerance:0,segmentPrefetchLimit:2,updateIntervalSeconds:0.1,maxDisabledTime:1,bufferingGoal:10,rebufferingGoal:2,bufferBehind:30,safeSeekOffset:3,retryParameters:{baseDelay:100,maxAttempts:5,backoffFactor:1.5,fuzzFactor:0.5}},manifest:{dash:{autoCorrectDrift:true},retryParameters:{baseDelay:100}},drm:{retryParameters:{baseDelay:100}}});
