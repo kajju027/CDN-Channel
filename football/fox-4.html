@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<title>FOX ONE 4K - ALT Live</title>
+<title>FOX SPORTS [ALT] Live</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.1.8/dist/controls.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const player=new shaka.Player();await player.attach(video);
   const ui=new shaka.ui.Overlay(player,container,video);
   ui.configure({controlPanelElements:['play_pause','mute','time_and_duration','spacer','quality','fullscreen','overflow_menu'],overflowMenuButtons:['language','captions','playback_rate','cast','picture_in_picture'],seekBarColors:{base:'rgba(209,213,219,.25)',buffered:'rgba(139,0,0,.45)',played:'#22c55e'},fadeDelay:3});
-  const STREAM_URL='https://abgh3fbaaaaaaaambylpff72g6up6.ta.bia-cf.live.pv-cdn.net/iad-nitro/live/dash/enc/g17oisjirj/out/v1/31d30c91fc65458789b84209d3fa22e4/cenc.mpd',RAW_KEYS='1f68713028d439ec03be07f56c1d6213:20093db6455160fffed4c394def3193d';
+  const STREAM_URL='https://abgh3fbaaaaaaaambylpff72g6up6.ta.bia-cf.live.pv-cdn.net/iad-nitro/live/dash/enc/ajfoeddkbz/out/v1/b78800b9b2304879b15843f455836829/cenc.mpd',RAW_KEYS='f6564ec2aee819046328a0e153be574d:ff46a8a1031eb27ef22576a077c98ab7';
   const clearKeys=Object.fromEntries(RAW_KEYS.split(',').map(p=>p.trim().split(':')));
   player.configure({drm:{clearKeys},manifest:{defaultPresentationDelay:4,ignoreTextStreamFailures:true,dash:{autoCorrectDrift:true,ignoreMinBufferTime:true}},abr:{enabled:true,defaultBandwidthEstimate:2000000,bandwidthUpgradeTarget:0.85,bandwidthDowngradeTarget:0.95,restrictions:{maxHeight:1080}}});
   player.configurationForLowLatency({streaming:{inaccurateManifestTolerance:0,segmentPrefetchLimit:2,updateIntervalSeconds:0.1,maxDisabledTime:1,bufferingGoal:10,rebufferingGoal:2,bufferBehind:30,safeSeekOffset:3,retryParameters:{baseDelay:100,maxAttempts:5,backoffFactor:1.5,fuzzFactor:0.5}},manifest:{dash:{autoCorrectDrift:true},retryParameters:{baseDelay:100}},drm:{retryParameters:{baseDelay:100}}});
