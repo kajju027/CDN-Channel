@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://a57live-pv-ta-amazon.akamaized.net/iad-nitro/live/clients/dash/enc/vvdiu7zexg/out/v1/d32dba602fbc4f748445f7fc26fd7b29/cenc.mpd';
-  const RAW_KEYS = '2f930e839e54bcf012e1ea679ab3305e:e967ef6bb2f4f0bc815976d60f489d97';
+  const STREAM_URL = 'https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/enc/cwcqfq4vsw/out/v1/fc40f22f10374517a2784e1d97cb23f4/cenc.mpd';
+  const RAW_KEYS = '1f68713028d439ec03be07f56c1d6213:20093db6455160fffed4c394def3193d';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
-    request.headers['Referer']    = 'https://www.cricbuzz.com/';
+    request.headers['Referer']    = 'https://otte.cache.aiv-cdn.net/';
     request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
   });
 
