@@ -7,6 +7,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://sonujson-v3.vercel.app/">
+<link rel="dns-prefetch" href="https://sonujson-v3.vercel.app/">
+<link rel="preconnect" href="https://www.jiotv.com/">
+<link rel="dns-prefetch" href="https://www.jiotv.com/">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.2.4/dist/controls.css">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -363,9 +367,9 @@ async function startPlayer(ch){
       "quality","picture_in_picture","fullscreen"
     ],
     seekBarColors:{
-      base:    "rgba(255,255,255,.15)",
-      buffered:"#46e0e8",
-      played:  "#00a86b"
+      base:    "#828282",
+      buffered:"#ffc336",
+      played:  "#1fc7ff"
     }
   });
 
