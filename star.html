@@ -77,8 +77,8 @@ video.mode-cover{object-fit:cover}
 #status{
   position:fixed;
   top:max(14px,env(safe-area-inset-top));
-  left:50%;
-  transform:translateX(-50%) translateY(-10px);
+  right:12%;
+  transform:translateY(-10px);
   z-index:9997;
   display:flex;align-items:center;gap:7px;
   padding:6px 15px 6px 11px;
@@ -91,7 +91,7 @@ video.mode-cover{object-fit:cover}
   white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;
   box-shadow:0 2px 14px rgba(0,0,0,.45)
 }
-#status.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#status.show{opacity:1;transform:translateY(0)}
 .st-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
 #status.ok   {color:#c0c0c0} #status.ok   .st-dot{background:#60a5fa}
 #status.live {color:#c8c8c8} #status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
@@ -298,6 +298,7 @@ function injectControls(container, vid){
   if(anchor) panel.insertBefore(fitBtn, anchor);
   else       panel.appendChild(fitBtn);
 
+  var currentRatio = "—";
   function applyFit(i){
     fitIdx = i;
     var m = FITS[i];
@@ -307,6 +308,8 @@ function injectControls(container, vid){
     fitBtn.classList.remove("mode-fill","mode-cover");
     if(m !== "contain") fitBtn.classList.add("mode-" + m);
     fitBtn.title = "Video Fit: " + FIT_LABELS[m];
+    var pill = fitBtn.querySelector(".fit-pill");
+    if(pill) pill.textContent = (m === "contain") ? currentRatio : FIT_LABELS[m];
   }
 
   fitBtn.addEventListener("click", function(e){
@@ -325,7 +328,8 @@ function injectControls(container, vid){
     var pill = fitBtn.querySelector(".fit-pill");
     if(!pill) return;
     if(vid.videoWidth > 0){
-      pill.textContent = ratioLabel(vid.videoWidth, vid.videoHeight);
+      currentRatio = ratioLabel(vid.videoWidth, vid.videoHeight);
+      if(FITS[fitIdx] === "contain") pill.textContent = currentRatio;
       _ratioTries = 0;
     } else if(_ratioTries < 15){
       _ratioTries++;
