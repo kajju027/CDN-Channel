@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@5.2.4/dist/controls.css">
 <style>
-/* ── Reset ─────────────────────────────────────────────────── */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{
   width:100%;height:100%;background:#0a0a0a;overflow:hidden;
@@ -17,7 +16,6 @@ html,body{
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none
 }
 
-/* ── Loading overlay ────────────────────────────────────────── */
 #overlay{
   position:fixed;inset:0;background:#0a0a0a;z-index:9999;
   display:flex;align-items:center;justify-content:center;
@@ -30,15 +28,12 @@ html,body{
   text-align:center;padding:0 24px;font-weight:500
 }
 
-/* ── Channel list ───────────────────────────────────────────── */
 #channel-list{
   position:fixed;inset:0;background:#0a0a0a;z-index:9998;
   display:none;flex-direction:column;overflow-y:auto;
   padding:max(20px,env(safe-area-inset-top)) 16px
            max(20px,env(safe-area-inset-bottom)) 16px
 }
-
-/* Brand header with live-dot accent */
 #ch-header{
   display:flex;align-items:center;justify-content:center;
   gap:10px;margin-bottom:20px;padding-bottom:14px;
@@ -51,12 +46,9 @@ html,body{
 }
 @keyframes brand-pulse{
   0%,100%{opacity:1;box-shadow:0 0 8px rgba(56,189,248,.55)}
-  50%     {opacity:.65;box-shadow:0 0 16px rgba(56,189,248,.85)}
+  50%{opacity:.65;box-shadow:0 0 16px rgba(56,189,248,.85)}
 }
-#ch-header h1{
-  color:#e0e0e0;font-size:15px;font-weight:600;letter-spacing:.8px
-}
-
+#ch-header h1{color:#e0e0e0;font-size:15px;font-weight:600;letter-spacing:.8px}
 #ch-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
@@ -69,23 +61,19 @@ html,body{
   transition:background .18s,border-color .18s,transform .12s;
   -webkit-tap-highlight-color:transparent
 }
-.ch-card:hover {background:#161616;border-color:#282828}
+.ch-card:hover{background:#161616;border-color:#282828}
 .ch-card:active{transform:scale(.95);background:#1c1c1c}
 .ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
 .ch-card span{color:#d8d8d8;font-size:13px;font-weight:500;line-height:1.4}
 
-/* ── Player container ───────────────────────────────────────── */
 #pc{
   position:fixed;inset:0;background:#000;display:none;
-  align-items:center;justify-content:center;
-  touch-action:manipulation
+  align-items:center;justify-content:center;touch-action:manipulation
 }
 video{width:100%;height:100%;object-fit:contain;background:#000}
-video.mode-fill {object-fit:fill}
+video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
 
-/* ── Status toast — centered top, slide-in ─────────────────── */
-/* Types: ok (blue dot) | live (green pulsing) | warn (orange pulsing) | err (red) */
 #status{
   position:fixed;
   top:max(14px,env(safe-area-inset-top));
@@ -97,36 +85,23 @@ video.mode-cover{object-fit:cover}
   background:rgba(10,10,10,.92);
   border:1px solid rgba(255,255,255,.07);
   font-size:11.5px;font-weight:500;letter-spacing:.2px;
-  border-radius:24px;
-  pointer-events:none;
-  opacity:0;
+  border-radius:24px;pointer-events:none;opacity:0;
   transition:opacity .25s ease,transform .25s ease;
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  white-space:nowrap;max-width:calc(100vw - 32px);
-  overflow:hidden;
+  white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;
   box-shadow:0 2px 14px rgba(0,0,0,.45)
 }
 #status.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* Dot indicator */
-.st-dot{
-  width:7px;height:7px;border-radius:50%;
-  flex-shrink:0;display:inline-block
-}
-#status.ok   {color:#c0c0c0}
-#status.ok   .st-dot{background:#60a5fa}
-#status.live {color:#c8c8c8}
-#status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
-#status.warn {color:#fcd34d}
-#status.warn .st-dot{background:#fb923c;animation:dot-pulse 1s ease-in-out infinite}
-#status.err  {color:#fca5a5}
-#status.err  .st-dot{background:#f87171}
+.st-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+#status.ok   {color:#c0c0c0} #status.ok   .st-dot{background:#60a5fa}
+#status.live {color:#c8c8c8} #status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
+#status.warn {color:#fcd34d} #status.warn .st-dot{background:#fb923c;animation:dot-pulse 1s ease-in-out infinite}
+#status.err  {color:#fca5a5} #status.err  .st-dot{background:#f87171}
 @keyframes dot-pulse{
   0%,100%{opacity:1;transform:scale(1)}
-  50%    {opacity:.35;transform:scale(.55)}
+  50%{opacity:.35;transform:scale(.55)}
 }
 
-/* ── Custom control buttons (PiP, Fit) ─────────────────────── */
 .sp-btn{
   background:transparent!important;border:none!important;
   cursor:pointer!important;padding:0 8px!important;
@@ -135,14 +110,11 @@ video.mode-cover{object-fit:cover}
   transition:opacity .15s,color .15s;
   color:#fff!important;-webkit-tap-highlight-color:transparent
 }
-.sp-btn:hover {opacity:1}
+.sp-btn:hover{opacity:1}
 .sp-btn:active{opacity:1;transform:scale(.9)}
 .sp-btn:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;border-radius:6px}
-.sp-btn svg{width:17px;height:17px;display:block;pointer-events:none;flex-shrink:0}
 .sp-btn.active{opacity:1;color:#38bdf8!important}
 
-/* Fit button — compact pill showing the stream's aspect ratio.
-   White border = contain (default), blue = fill, purple = zoom/cover. */
 .sp-fit-btn{padding:0 7px!important;min-width:auto!important}
 .fit-pill{
   font-size:10px;font-weight:700;letter-spacing:.4px;
@@ -152,24 +124,21 @@ video.mode-cover{object-fit:cover}
   pointer-events:none;white-space:nowrap;
   transition:border-color .2s,color .2s
 }
-.sp-fit-btn:hover         .fit-pill{border-color:rgba(255,255,255,.55);color:#fff}
-.sp-fit-btn.mode-fill     .fit-pill{border-color:#38bdf8;color:#38bdf8}
-.sp-fit-btn.mode-cover    .fit-pill{border-color:#a78bfa;color:#a78bfa}
+.sp-fit-btn:hover      .fit-pill{border-color:rgba(255,255,255,.55);color:#fff}
+.sp-fit-btn.mode-fill  .fit-pill{border-color:#38bdf8;color:#38bdf8}
+.sp-fit-btn.mode-cover .fit-pill{border-color:#a78bfa;color:#a78bfa}
 
-/* Keep Shaka's own buttons white */
 .shaka-controls-container button{color:#fff!important}
 .shaka-video-container{background-color:#000!important}
 
-/* ── Responsive tweaks ──────────────────────────────────────── */
 @media(max-width:380px){
   .fit-pill{font-size:9px;padding:2px 5px}
-  .sp-btn  {padding:0 5px!important}
+  .sp-btn{padding:0 5px!important}
 }
 </style>
 </head>
 <body>
 
-<!-- Loading overlay -->
 <div id="overlay">
   <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
     <circle cx="20" cy="20" r="16" stroke="#1a1a1a" stroke-width="4"/>
@@ -178,10 +147,8 @@ video.mode-cover{object-fit:cover}
   <p id="loadMsg">Loading…</p>
 </div>
 
-<!-- Status toast -->
 <div id="status"></div>
 
-<!-- Channel list -->
 <div id="channel-list">
   <div id="ch-header">
     <span class="brand-dot"></span>
@@ -190,7 +157,6 @@ video.mode-cover{object-fit:cover}
   <div id="ch-grid"></div>
 </div>
 
-<!-- Player container -->
 <div id="pc">
   <video id="v" playsinline webkit-playsinline
     preload="none"
@@ -204,10 +170,8 @@ video.mode-cover{object-fit:cover}
 (function(){
 "use strict";
 
-// ── API endpoint — channel list + stream credentials ──────────
-var API = "https://sonujson-v3.vercel.app/Data/sports.json";
+var API = "https://sonujson-v2.pages.dev/Data/sports.json";
 
-// ── DOM refs ──────────────────────────────────────────────────
 var $overlay = document.getElementById("overlay");
 var $loadMsg = document.getElementById("loadMsg");
 var $status  = document.getElementById("status");
@@ -215,250 +179,184 @@ var $list    = document.getElementById("channel-list");
 var $grid    = document.getElementById("ch-grid");
 var $pc      = document.getElementById("pc");
 var $vid     = document.getElementById("v");
+var _stTmr   = null;
 
-var _stTmr = null; // active toast dismiss timer
-
-// ── PiP button SVG ────────────────────────────────────────────
-var PIP_ICON =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"'+
-  ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
-  '<rect x="3" y="5" width="18" height="14" rx="2"/>'+
-  '<rect x="12" y="12" width="7" height="5" rx="1"'+
-  ' fill="currentColor" stroke="none"/></svg>';
-
-// ── Device tier — low / mid / high ───────────────────────────
-// Drives buffer sizes and quality caps to suit device capability.
 function getTier(){
   var mem   = navigator.deviceMemory || 4;
   var cores = navigator.hardwareConcurrency || 4;
   var mob   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var conn  = navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-  var net   = conn?(conn.effectiveType||"4g"):"4g";
+  var conn  = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  var net   = conn ? (conn.effectiveType || "4g") : "4g";
   if(!mob) return "high";
-  if(mem<=1.5||cores<=2||net==="slow-2g"||net==="2g") return "low";
-  if(mem<=3  ||cores<=4) return "mid";
+  if(mem <= 1.5 || cores <= 2 || net === "slow-2g" || net === "2g") return "low";
+  if(mem <= 3   || cores <= 4) return "mid";
   return "high";
 }
-var TIER = getTier();
 
-// Slightly reduced bufferBehind vs original to ease RAM pressure
-// on long sessions (matches thermal guard applied after 60 min).
+var TIER = getTier();
 var PROF = {
   low:  {buf:4,  reBuf:1.5, behind:10, maxH:480,  maxBw:1000000, bwEst:400000 },
   mid:  {buf:7,  reBuf:1.5, behind:20, maxH:720,  maxBw:3000000, bwEst:1000000},
   high: {buf:10, reBuf:1.5, behind:25, maxH:1080, maxBw:0,       bwEst:2000000}
 }[TIER];
 
-// ── Fit-mode cycle — contain → fill → cover ───────────────────
 var FITS       = ["contain","fill","cover"];
-var FIT_LABELS = {contain:"Fit",fill:"Fill",cover:"Zoom"};
+var FIT_LABELS = {contain:"Fit", fill:"Fill", cover:"Zoom"};
 
-// ── Toast notification ────────────────────────────────────────
-// type: "ok" | "live" | "warn" | "err"   dur=0 = persistent
-function toast(msg,type,dur){
-  $status.innerHTML=
-    '<span class="st-dot"></span><span>'+msg+'</span>';
-  $status.className="show "+(type||"ok");
-  if(_stTmr){clearTimeout(_stTmr);_stTmr=null;}
-  if(dur!==0){
-    _stTmr=setTimeout(function(){
-      $status.className=$status.className.replace("show","").trim();
-      _stTmr=null;
-    },dur||4000);
+function toast(msg, type, dur){
+  $status.innerHTML = '<span class="st-dot"></span><span>' + msg + '</span>';
+  $status.className = "show " + (type || "ok");
+  if(_stTmr){ clearTimeout(_stTmr); _stTmr = null; }
+  if(dur !== 0){
+    _stTmr = setTimeout(function(){
+      $status.className = $status.className.replace("show","").trim();
+      _stTmr = null;
+    }, dur || 4000);
   }
 }
 
-function setMsg(m)    {if($loadMsg) $loadMsg.textContent=m;}
-function hideOverlay(){if($overlay) $overlay.style.display="none";}
-function getChId()   {return new URLSearchParams(location.search).get("id")||"";}
+function setMsg(m)    { if($loadMsg) $loadMsg.textContent = m; }
+function hideOverlay(){ if($overlay) $overlay.style.display = "none"; }
+function getChId()    { return new URLSearchParams(location.search).get("id") || ""; }
 
-// ── Cookie helpers ────────────────────────────────────────────
 function rawCookie(c){
-  return c&&c.startsWith("__hdnea__=")?c.slice(10):(c||"");
+  return c && c.startsWith("__hdnea__=") ? c.slice(10) : (c || "");
 }
-function withCookie(u,r){
-  if(!u||!r) return u;
-  if(u.indexOf("__hdnea__")!==-1) return u;
-  return u+(u.indexOf("?")!==-1?"&":"?")+"__hdnea__="+r;
+function withCookie(u, r){
+  if(!u || !r) return u;
+  if(u.indexOf("__hdnea__") !== -1) return u;
+  return u + (u.indexOf("?") !== -1 ? "&" : "?") + "__hdnea__=" + r;
 }
 
-// ── Fetch channel JSON ────────────────────────────────────────
 async function loadData(){
-  var r=await fetch(API,{cache:"no-store",headers:{Accept:"application/json"}});
-  if(!r.ok) throw new Error("HTTP "+r.status);
-  var d=await r.json();
-  if(!d||!Array.isArray(d.channels)||!d.channels.length) throw new Error("empty");
+  var r = await fetch(API, {cache:"no-store", headers:{Accept:"application/json"}});
+  if(!r.ok) throw new Error("HTTP " + r.status);
+  var d = await r.json();
+  if(!d || !Array.isArray(d.channels) || !d.channels.length) throw new Error("empty");
   return d;
 }
 
-// ── Channel list renderer ─────────────────────────────────────
 function renderList(channels){
   hideOverlay();
-  var f=document.createDocumentFragment();
+  var f = document.createDocumentFragment();
   channels.forEach(function(ch){
-    var a=document.createElement("a");
-    a.className="ch-card";
-    a.href="?id="+encodeURIComponent(ch.id);
-    a.innerHTML="<span>"+ch.name+"</span>";
+    var a = document.createElement("a");
+    a.className = "ch-card";
+    a.href = "?id=" + encodeURIComponent(ch.id);
+    a.innerHTML = "<span>" + ch.name + "</span>";
     f.appendChild(a);
   });
   $grid.appendChild(f);
-  $list.style.display="flex";
+  $list.style.display = "flex";
 }
 
-// ── Full-screen error (overlay + toast) ──────────────────────
 function errMsg(msg){
   setMsg(msg);
-  $overlay.style.display="flex";
-  toast(msg,"err",0);
+  $overlay.style.display = "flex";
+  toast(msg, "err", 0);
 }
 
-// ── Human-readable Shaka error label ─────────────────────────
 function shakaErrStr(e){
-  if(!e) return "Playback error";
-  var cat={1:"Network",2:"Text",3:"Media",4:"Manifest",5:"Stream",6:"DRM",7:"Player"};
-  var s=(cat[e.category]||"Error")+" "+e.category+":"+e.code;
-  if(e.data&&e.data[0]&&typeof e.data[0]==="string")
-    s+=" — "+e.data[0].slice(0,72);
+  if(!e) return "Playback Error";
+  var cat = {1:"Network",2:"Text",3:"Media",4:"Manifest",5:"Stream",6:"DRM",7:"Player"};
+  var s = (cat[e.category] || "Error") + " " + e.category + ":" + e.code;
+  if(e.data && e.data[0] && typeof e.data[0] === "string")
+    s += " — " + e.data[0].slice(0, 72);
   return s;
 }
 
-// ── Aspect-ratio label from pixel dimensions ──────────────────
-// Returns e.g. "16:9", "4:3", "21:9" or a reduced fraction.
-function ratioLabel(w,h){
-  if(!w||!h) return "—";
-  function gcd(a,b){return b?gcd(b,a%b):a;}
-  var g=gcd(w,h)||1, rw=w/g, rh=h/g;
-  var named={
-    "16:9":16/9,"4:3":4/3,"21:9":21/9,"1:1":1,
-    "9:16":9/16,"3:2":3/2,"5:4":5/4,"2:1":2
+function ratioLabel(w, h){
+  if(!w || !h) return "—";
+  function gcd(a, b){ return b ? gcd(b, a % b) : a; }
+  var g = gcd(w, h) || 1, rw = w/g, rh = h/g;
+  var named = {
+    "16:9":16/9, "4:3":4/3, "21:9":21/9, "1:1":1,
+    "9:16":9/16, "3:2":3/2, "5:4":5/4, "2:1":2
   };
-  var real=w/h, best=null, bestD=0.02;
+  var real = w/h, best = null, bestD = 0.02;
   Object.keys(named).forEach(function(k){
-    var d=Math.abs(named[k]-real);
-    if(d<bestD){bestD=d;best=k;}
+    var d = Math.abs(named[k] - real);
+    if(d < bestD){ bestD = d; best = k; }
   });
   if(best) return best;
-  if(rw<=40&&rh<=40) return rw+":"+rh;
-  return real.toFixed(2)+":1";
+  if(rw <= 40 && rh <= 40) return rw + ":" + rh;
+  return real.toFixed(2) + ":1";
 }
 
-// ── Inject custom buttons into Shaka's control panel ─────────
-// Returns true on success; caller retries when false (panel not ready yet).
-function injectControls(container,vid){
-  var panel=container.querySelector(".shaka-controls-button-panel");
-  if(!panel) return false; // Shaka UI not rendered yet
+function injectControls(container, vid){
+  var panel = container.querySelector(".shaka-controls-button-panel");
+  if(!panel) return false;
 
-  var anchor=panel.querySelector(".shaka-fullscreen-button");
+  var anchor = panel.querySelector(".shaka-fullscreen-button");
+  var fitIdx  = 0;
+  var fitBtn  = document.createElement("button");
+  fitBtn.className = "sp-btn sp-fit-btn";
+  fitBtn.title     = "Video Fit: " + FIT_LABELS.contain;
+  fitBtn.setAttribute("aria-label", "Cycle Video Fit Mode");
+  fitBtn.innerHTML = '<span class="fit-pill">—</span>';
 
-  // ── Fit-mode button ─────────────────────────────────────
-  // Cycles contain → fill → cover.
-  // Pill border color shows current mode:
-  //   white = contain, blue = fill, purple = cover.
-  var fitIdx=0;
-  var fitBtn=document.createElement("button");
-  fitBtn.className="sp-btn sp-fit-btn";
-  fitBtn.title="Video fit: "+FIT_LABELS.contain;
-  fitBtn.setAttribute("aria-label","Cycle video fit mode");
-  fitBtn.innerHTML='<span class="fit-pill">—</span>';
-
-  if(anchor) panel.insertBefore(fitBtn,anchor);
+  if(anchor) panel.insertBefore(fitBtn, anchor);
   else       panel.appendChild(fitBtn);
 
   function applyFit(i){
-    fitIdx=i;
-    var m=FITS[i];
+    fitIdx = i;
+    var m = FITS[i];
     vid.classList.remove("mode-fill","mode-cover");
-    if(m==="fill")  vid.classList.add("mode-fill");
-    if(m==="cover") vid.classList.add("mode-cover");
+    if(m === "fill")  vid.classList.add("mode-fill");
+    if(m === "cover") vid.classList.add("mode-cover");
     fitBtn.classList.remove("mode-fill","mode-cover");
-    if(m!=="contain") fitBtn.classList.add("mode-"+m);
-    fitBtn.title="Video fit: "+FIT_LABELS[m];
+    if(m !== "contain") fitBtn.classList.add("mode-" + m);
+    fitBtn.title = "Video Fit: " + FIT_LABELS[m];
   }
-  fitBtn.addEventListener("click",function(e){
+
+  fitBtn.addEventListener("click", function(e){
     e.stopPropagation();
-    applyFit((fitIdx+1)%FITS.length);
+    applyFit((fitIdx + 1) % FITS.length);
   });
 
-  // Reset to "contain" when the user exits fullscreen
   ["fullscreenchange","webkitfullscreenchange"].forEach(function(ev){
-    document.addEventListener(ev,function(){
-      if(!(document.fullscreenElement||document.webkitFullscreenElement))
-        applyFit(0);
+    document.addEventListener(ev, function(){
+      if(!(document.fullscreenElement || document.webkitFullscreenElement)) applyFit(0);
     });
   });
 
-  // Keep pill label in sync with actual video dimensions
+  var _ratioTries = 0;
   function updateRatio(){
-    var pill=fitBtn.querySelector(".fit-pill");
-    if(pill) pill.textContent=ratioLabel(vid.videoWidth,vid.videoHeight);
+    var pill = fitBtn.querySelector(".fit-pill");
+    if(!pill) return;
+    if(vid.videoWidth > 0){
+      pill.textContent = ratioLabel(vid.videoWidth, vid.videoHeight);
+      _ratioTries = 0;
+    } else if(_ratioTries < 15){
+      _ratioTries++;
+      setTimeout(updateRatio, 700);
+    }
   }
-  vid.addEventListener("loadedmetadata",updateRatio);
-  vid.addEventListener("resize",updateRatio);
+
+  vid.addEventListener("loadedmetadata", function(){ _ratioTries = 0; updateRatio(); });
+  vid.addEventListener("resize", updateRatio);
+  vid.addEventListener("timeupdate", function onFirstFrame(){
+    vid.removeEventListener("timeupdate", onFirstFrame);
+    updateRatio();
+  });
   updateRatio();
 
-  // ── PiP button ──────────────────────────────────────────
-  var pipOk=!!(
-    document.pictureInPictureEnabled||
-    (vid.webkitSupportsPresentationMode&&
-     typeof vid.webkitSetPresentationMode==="function")
-  );
-  if(pipOk){
-    var pipBtn=document.createElement("button");
-    pipBtn.className="sp-btn sp-pip-btn";
-    pipBtn.title="Picture in Picture";
-    pipBtn.setAttribute("aria-label","Picture in Picture");
-    pipBtn.innerHTML=PIP_ICON;
-    panel.insertBefore(pipBtn,fitBtn);
-
-    function setPipState(on){
-      pipBtn.classList.toggle("active",on);
-      pipBtn.title=on?"Exit Picture in Picture":"Picture in Picture";
-    }
-    pipBtn.addEventListener("click",async function(e){
-      e.stopPropagation();
-      try{
-        if(document.pictureInPictureEnabled){
-          if(document.pictureInPictureElement)
-            await document.exitPictureInPicture();
-          else
-            await vid.requestPictureInPicture();
-        } else if(vid.webkitSupportsPresentationMode){
-          vid.webkitSetPresentationMode(
-            vid.webkitPresentationMode==="picture-in-picture"
-              ?"inline":"picture-in-picture"
-          );
-        }
-      } catch(_){toast("PiP not available on this device","warn",2500);}
-    });
-    vid.addEventListener("enterpictureinpicture", function(){setPipState(true);});
-    vid.addEventListener("leavepictureinpicture",  function(){setPipState(false);});
-    if(vid.webkitPresentationMode!==undefined){
-      vid.addEventListener("webkitpresentationmodechanged",function(){
-        setPipState(vid.webkitPresentationMode==="picture-in-picture");
-      });
-    }
-  }
-
-  return true; // injection succeeded
+  return true;
 }
 
-// ── Player startup ────────────────────────────────────────────
 async function startPlayer(ch){
-  $pc.style.display="flex";
-
+  $pc.style.display = "flex";
   shaka.polyfill.installAll();
-  if(!shaka.Player.isBrowserSupported()){errMsg("Browser not supported.");return;}
+  if(!shaka.Player.isBrowserSupported()){ errMsg("Browser Not Supported."); return; }
 
-  var player=new shaka.Player();
+  var player = new shaka.Player();
   await player.attach($vid);
 
-  // Shaka built-in UI
-  new shaka.ui.Overlay(player,$pc,$vid).configure({
+  new shaka.ui.Overlay(player, $pc, $vid).configure({
     controlPanelElements:[
       "play_pause","mute","volume",
       "time_and_duration","spacer",
-      "quality","fullscreen"
+      "quality","picture_in_picture","fullscreen"
     ],
     seekBarColors:{
       base:    "rgba(255,255,255,.15)",
@@ -467,79 +365,60 @@ async function startPlayer(ch){
     }
   });
 
-  // Inject custom buttons once Shaka's DOM is ready.
-  // Retries up to 5× with 150 ms spacing (no arbitrary 100 ms guess).
-  var _injectCount=0;
+  var _injectCount = 0;
   (function tryInject(){
-    if(injectControls($pc,$vid)) return;
-    if(++_injectCount<5) setTimeout(tryInject,150);
+    if(injectControls($pc, $vid)) return;
+    if(++_injectCount < 5) setTimeout(tryInject, 150);
   })();
 
-  // ── Stream credentials ──────────────────────────────────
-  var cookie=ch.cookie;
-  var raw   =rawCookie(cookie);
-  var keyId =ch.key_id;
-  var key   =ch.key;
-  var url   =ch.stream_url;
-  var restrictionsRelaxed=false;
+  var cookie = ch.cookie;
+  var raw    = rawCookie(cookie);
+  var keyId  = ch.key_id;
+  var key    = ch.key;
+  var url    = ch.stream_url;
+  var restrictionsRelaxed = false;
+  var thermalApplied      = false;
+  var sessionStart        = Date.now();
 
-  // ── Thermal / memory guard ──────────────────────────────
-  // After 60 min of playback, quietly tighten buffers to reduce
-  // memory growth and lower GPU/CPU decode pressure on mobile.
-  var thermalApplied=false;
-  var sessionStart  =Date.now();
-  var thermalTimer  =setInterval(function(){
-    if(Date.now()-sessionStart < 60*60*1000) return; // wait 60 min
+  var thermalTimer = setInterval(function(){
+    if(Date.now() - sessionStart < 60*60*1000) return;
     clearInterval(thermalTimer);
     if(thermalApplied) return;
-    thermalApplied=true;
+    thermalApplied = true;
     try{
-      // Trim the behind-buffer to free accumulated RAM
-      player.configure("streaming.bufferBehind",8);
-      // Cap resolution on mobile to ease GPU decode load
+      player.configure("streaming.bufferBehind", 8);
       if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
-        player.configure("abr.restrictions.maxHeight",Math.min(PROF.maxH,720));
+        player.configure("abr.restrictions.maxHeight", Math.min(PROF.maxH, 720));
       }
-    }catch(_){/* non-critical */}
-  },60000);
+    }catch(_){}
+  }, 60000);
 
-  // ── Config builder ──────────────────────────────────────
-  // Called on startup and again after each reconnect so thermal
-  // adjustments and restriction relaxations are always reflected.
   function buildCfg(){
-    // Apply thermal height cap when guard has fired
-    var effMaxH=(thermalApplied&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-      ?Math.min(PROF.maxH,720):PROF.maxH;
-
-    var restr={};
+    var effMaxH = (thermalApplied && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
+      ? Math.min(PROF.maxH, 720) : PROF.maxH;
+    var restr = {};
     if(!restrictionsRelaxed){
-      if(effMaxH<1080)  restr.maxHeight   =effMaxH;
-      if(PROF.maxBw>0) restr.maxBandwidth=PROF.maxBw;
+      if(effMaxH < 1080) restr.maxHeight    = effMaxH;
+      if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
     }
     return {
-      drm:{clearKeys:{[keyId]:key}},
+      drm:{ clearKeys:{ [keyId]:key } },
       manifest:{
         defaultPresentationDelay:4,
         ignoreTextStreamFailures:true,
-        retryParameters:{
-          maxAttempts:5,baseDelay:500,
-          backoffFactor:2,fuzzFactor:.5,timeout:30000
-        }
+        retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}
       },
       streaming:{
-        lowLatencyMode: false,
-        bufferingGoal:  PROF.buf,
+        lowLatencyMode:false,
+        bufferingGoal:PROF.buf,
         rebufferingGoal:PROF.reBuf,
-        bufferBehind:   PROF.behind,
-        safeSeekOffset: 4,
-        stallEnabled:   true,
-        stallThreshold: 1,
-        stallSkip:      .3,
+        bufferBehind:PROF.behind,
+        safeSeekOffset:4,
+        stallEnabled:true,
+        stallThreshold:1,
+        stallSkip:.3,
         inaccurateManifestTolerance:0,
-        retryParameters:{
-          maxAttempts:5,baseDelay:500,
-          backoffFactor:2,fuzzFactor:.5,timeout:30000
-        }
+        retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}
       },
       abr:{
         enabled:true,
@@ -549,176 +428,162 @@ async function startPlayer(ch){
       }
     };
   }
+
   player.configure(buildCfg());
 
-  // ── Request filter — attach JioTV auth headers ──────────
-  var T=shaka.net.NetworkingEngine.RequestType;
-  player.getNetworkingEngine().registerRequestFilter(function(type,req){
-    req.headers["Referer"]   ="https://www.jiotv.com/";
-    req.headers["User-Agent"]="Mozilla/5.0 (Linux; Android 11; SM-G991B)"+
-      " AppleWebKit/537.36 (KHTML, like Gecko)"+
-      " Chrome/124.0.0.0 Mobile Safari/537.36";
-    req.headers["Cookie"]=cookie;
-    if(type===T.MANIFEST||type===T.SEGMENT)
-      req.uris=req.uris.map(function(u){return withCookie(u,raw);});
+  var T = shaka.net.NetworkingEngine.RequestType;
+  player.getNetworkingEngine().registerRequestFilter(function(type, req){
+    req.headers["Referer"]    = "https://www.jiotv.com/";
+    req.headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
+    req.headers["Cookie"]     = cookie;
+    if(type === T.MANIFEST || type === T.SEGMENT)
+      req.uris = req.uris.map(function(u){ return withCookie(u, raw); });
   });
 
-  // ── Playback state ──────────────────────────────────────
-  var refreshing=false;
-  var retries   =0;
-  var edgeTried =false;
-  var lastTry   =0;
-  var started   =false;
+  var refreshing = false;
+  var retries    = 0;
+  var edgeTried  = false;
+  var lastTry    = 0;
+  var started    = false;
+  var stallTmr   = null;
 
-  // ── Mute policy — unmute on first user interaction ──────
-  // Browsers block autoplay with audio; we unmute the moment the
-  // user touches or clicks the player. DO NOT modify this block.
-  function unmuteOnce(){$vid.muted=false;}
-  $pc.addEventListener("pointerdown",unmuteOnce,{capture:true,once:true});
-  $pc.addEventListener("click",      unmuteOnce,{capture:true,once:true});
-  $pc.addEventListener("keydown",    unmuteOnce,{capture:true,once:true});
+  function unmuteOnce(){ $vid.muted = false; }
+  $pc.addEventListener("pointerdown", unmuteOnce, {capture:true,once:true});
+  $pc.addEventListener("click",       unmuteOnce, {capture:true,once:true});
+  $pc.addEventListener("keydown",     unmuteOnce, {capture:true,once:true});
 
-  // ── Live-edge sync ──────────────────────────────────────
   function goLiveEdge(){
     if(refreshing) return;
     try{
       player.goToLive();
-      edgeTried=true;
-      toast("Syncing to live edge…","warn",2000);
-    }catch(_){reload();}
+      edgeTried = true;
+      toast("Syncing To Live Edge…","warn",2000);
+    }catch(_){ reload(); }
   }
 
-  // ── Full reconnect — fetches fresh credentials, reloads ─
   async function reload(){
-    var now=Date.now();
-    if(refreshing||now-lastTry<1500) return;
-    if(retries>=5){
-      toast("Stream unavailable. Please try again later.","err",0);
-      return;
-    }
-    refreshing=true;lastTry=now;retries++;
-    toast("Reconnecting… ("+retries+" / 5)","warn",0);
+    var now = Date.now();
+    if(refreshing || now - lastTry < 1500) return;
+    if(retries >= 5){ toast("Stream Unavailable. Please Try Again Later.","err",0); return; }
+    refreshing = true; lastTry = now; retries++;
+    toast("Reconnecting… (" + retries + " / 5)","warn",0);
     try{
-      var d    =await loadData();
-      var fresh=d.channels.find(function(c){return c.id===ch.id;});
-      if(!fresh) throw new Error("Channel missing from feed");
-      cookie=fresh.cookie; raw  =rawCookie(cookie);
-      keyId =fresh.key_id; key  =fresh.key; url=fresh.stream_url;
+      var d     = await loadData();
+      var fresh = d.channels.find(function(c){ return c.id === ch.id; });
+      if(!fresh) throw new Error("missing");
+      cookie = fresh.cookie; raw   = rawCookie(cookie);
+      keyId  = fresh.key_id; key   = fresh.key; url = fresh.stream_url;
       player.configure(buildCfg());
       await player.load(url);
       $vid.play().catch(function(){});
-      retries=0;edgeTried=false;
+      retries = 0; edgeTried = false;
       toast("Live","live",4000);
     }catch(_){
-      setTimeout(reload,Math.min(1000*Math.pow(2,retries-1),8000));
-    }finally{refreshing=false;}
+      setTimeout(reload, Math.min(1000 * Math.pow(2, retries - 1), 8000));
+    }finally{ refreshing = false; }
   }
 
-  // Shaka error codes that are safe to recover from via reload
-  var RECOVERABLE=[1001,1002,1003,4012,6006,6007,7000,7001,7002];
+  var RECOVERABLE = [1001,1002,1003,4012,6006,6007,7000,7001,7002];
 
-  // ── Shaka error handler ─────────────────────────────────
-  player.addEventListener("error",function(ev){
-    var err =ev.detail;
-    var code=err&&err.code;
-
-    // 4014 = no streams satisfy current restrictions — relax and retry
-    if(code===4014&&!restrictionsRelaxed){
-      restrictionsRelaxed=true;
-      refreshing=true;
+  player.addEventListener("error", function(ev){
+    var err  = ev.detail;
+    var code = err && err.code;
+    if(code === 4014 && !restrictionsRelaxed){
+      restrictionsRelaxed = true;
+      refreshing = true;
       player.configure(buildCfg());
-      toast("Adjusting quality…","warn",2000);
+      toast("Adjusting Quality…","warn",2000);
       player.load(url)
-        .then(function(){
-          $vid.play().catch(function(){});
-          toast("Live","live",4000);
-        })
-        .catch(function(){reload();})
-        .finally(function(){refreshing=false;});
+        .then(function(){ $vid.play().catch(function(){}); toast("Live","live",4000); })
+        .catch(function(){ reload(); })
+        .finally(function(){ refreshing = false; });
       return;
     }
-
-    if(RECOVERABLE.indexOf(code)!==-1) reload();
-    else toast(shakaErrStr(err),"err",6000);
+    if(RECOVERABLE.indexOf(code) !== -1){
+      toast("Buffering…","warn",0);
+      setTimeout(function(){ if(!refreshing) reload(); }, 700);
+    } else {
+      toast(shakaErrStr(err),"err",6000);
+    }
   });
 
-  // ── Initial stream load ─────────────────────────────────
   try{
-    setMsg("Loading stream…");
-    toast("Loading stream…","warn",0);
+    setMsg("Loading Stream…");
+    toast("Loading Stream…","warn",0);
     await player.load(url);
     hideOverlay();
-    toast("Ready — tap ▶ to play","ok",5000);
+    toast("Ready — Tap ▶ To Play","ok",5000);
   }catch(_){
     hideOverlay();
-    toast("Connection error — retrying…","warn",0);
-    setTimeout(reload,1500);
+    toast("Connection Error — Retrying…","warn",0);
+    setTimeout(reload, 1500);
     return;
   }
 
-  // ── Stall detector ──────────────────────────────────────
-  // Waits 5 s before acting; avoids noise from normal segment gaps.
-  var stallTmr=null;
   function onStall(){
-    if(!started||stallTmr||refreshing) return;
+    if(stallTmr) return;
     toast("Buffering…","warn",0);
-    stallTmr=setTimeout(function(){
-      stallTmr=null;
+    if(!started || refreshing) return;
+    stallTmr = setTimeout(function(){
+      stallTmr = null;
       if(!edgeTried) goLiveEdge(); else reload();
-    },5000);
+    }, 5000);
   }
+
   function onPlaying(){
-    started=true;
-    if(stallTmr){clearTimeout(stallTmr);stallTmr=null;}
-    edgeTried=false;
+    started = true;
+    if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
+    edgeTried = false;
     if(!refreshing) toast("Live","live",3000);
   }
-  $vid.addEventListener("waiting",onStall);
-  $vid.addEventListener("stalled",onStall);
-  $vid.addEventListener("playing",onPlaying);
-  $vid.addEventListener("error",  function(){if(!refreshing)reload();});
 
-  // ── Tab visibility — auto-resume when user returns ──────
-  document.addEventListener("visibilitychange",function(){
-    if(!document.hidden){
-      setTimeout(function(){
-        if(started&&$vid.paused&&!refreshing)
-          $vid.play().catch(function(){});
-      },400);
+  $vid.addEventListener("waiting", onStall);
+  $vid.addEventListener("stalled", onStall);
+  $vid.addEventListener("playing", onPlaying);
+  $vid.addEventListener("error",   function(){
+    if(!refreshing){
+      toast("Buffering…","warn",0);
+      setTimeout(function(){ if(!refreshing) reload(); }, 700);
     }
   });
 
-  // ── Network quality change — dynamic resolution cap ─────
-  var netConn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden){
+      setTimeout(function(){
+        if(started && $vid.paused && !refreshing) $vid.play().catch(function(){});
+      }, 400);
+    }
+  });
+
+  var netConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   if(netConn){
-    netConn.addEventListener("change",function(){
-      if(!player||restrictionsRelaxed) return;
-      var t=netConn.effectiveType||"4g";
-      var h=t==="slow-2g"||t==="2g"?240:t==="3g"?480:PROF.maxH;
-      try{player.configure("abr.restrictions.maxHeight",h);}catch(_){}
-      if(h<PROF.maxH) toast("Slow network — reducing quality","warn",3000);
+    netConn.addEventListener("change", function(){
+      if(!player || restrictionsRelaxed) return;
+      var t = netConn.effectiveType || "4g";
+      var h = t === "slow-2g" || t === "2g" ? 240 : t === "3g" ? 480 : PROF.maxH;
+      try{ player.configure("abr.restrictions.maxHeight", h); }catch(_){}
+      if(h < PROF.maxH) toast("Slow Network — Reducing Quality","warn",3000);
     });
   }
 }
 
-// ── App entry point ───────────────────────────────────────────
 async function main(){
-  var id=getChId(), data;
+  var id = getChId(), data;
   try{
-    setMsg("Fetching channels…");
-    data=await loadData();
+    setMsg("Fetching Channels…");
+    data = await loadData();
   }catch(_){
-    errMsg("Connection error. Please check your internet.");
+    errMsg("Connection Error. Please Check Your Internet.");
     return;
   }
-  if(!id){renderList(data.channels);return;}
-  var ch=data.channels.find(function(c){return c.id===id;});
-  if(!ch){errMsg("Channel not found.");return;}
-  document.title=ch.name;
+  if(!id){ renderList(data.channels); return; }
+  var ch = data.channels.find(function(c){ return c.id === id; });
+  if(!ch){ errMsg("Channel Not Found."); return; }
+  document.title = ch.name;
   await startPlayer(ch);
 }
 
-document.addEventListener("DOMContentLoaded",main);
+document.addEventListener("DOMContentLoaded", main);
 })();
 </script>
 </body>
