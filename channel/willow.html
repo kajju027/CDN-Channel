@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://a133aivottevtad-a.akamaihd.net/PDX/493aab54a5da41ffac795b299584616a/v1/dash/746463508834/willowtvus_live_amzn1_dv_live_csid_524eb2d8-c8f5-41c1-a0d0-5b2f319a25b6_us-west-2_pdx_dash_h264_none_stereo/live/clients/dash/enc/gwki82s2bi/out/v1/dae92d65465c4a8da6354123c9ae1b85/cenc.mpd?aws.sessionId=6d1c3e56-8cfa-414b-8ba8-5876862ea004';
-  const RAW_KEYS = '073f49c98b014fac6bdc28613f2db606:cd379c5766086df20eb674d073e1d4cd';
+  const STREAM_URL = 'https://a96aivottlinear-a.akamaihd.net/OTTB/pdx-nitro/live/clients/dash/enc/mpk9tjbvih/out/v1/6e9b46389891440b856e60332a2b432f/cenc.mpd';
+  const RAW_KEYS = '6bba14af87d4c612d2374935291b33bd:6ac0fef8b7181dac3862a82bc491cc1a';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
-    request.headers['Referer']    = 'https://www.cricbuzz.com/';
+    request.headers['Referer']    = 'https://www.amazon.com/gp/';
     request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
   });
 
