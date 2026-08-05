@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://mh-bks400-08.starhubgo.com/bpk-token/1ac@gsef5iwpsu2djxt51p2t3jk4r2rejzhsgq3y23da/bpk-tv/Cbuzz/output/manifest.mpd?';
-  const RAW_KEYS = '9cd9d8d4bed24a20b03ac0c3f5a80cee:bb27c858444345b5d0703d2faef51b73';
+  const STREAM_URL = 'https://a96aivottlinear-a.akamaihd.net/OTTB/pdx-nitro/live/clients/dash/enc/h1kfxvwp9c/out/v1/2899320e61bb4d218ccb5bf704c27cc2/cenc.mpd?';
+  const RAW_KEYS = '595932d92efbd8423ac32fbffcc78dca:adea3202c6154d11faad1d54b363763c';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
-    request.headers['Referer']    = 'https://www.cricbuzz.com/';
+    request.headers['Referer']    = 'https://www.amazon.com/gp/';
     request.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
   });
 
