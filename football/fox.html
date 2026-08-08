@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/5qz8wmdome/out/v1/b9323e853dce427eac214b77bd48a204/cenc.mpd';
+  const STREAM_URL = 'https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/5qz8wmdome/out/v1/b9323e853dce427eac214b77bd48a204/cenc.mpd?';
   const RAW_KEYS = 'd9623774ac5c8c351aafe97c5fe70267:5164e6d05164a2d65fa8fcc962aa4861';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
     request.headers['Referer']    = 'https://www.amazon.com/gp/';
-    request.headers['User-Agent'] = 'ReactNativeVideo/9.7.0 (Linux;Android 10) AndroidXMedia3/1.6.1';
+    request.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
   });
 
   try { await player.load(STREAM_URL); } catch (_) {}
