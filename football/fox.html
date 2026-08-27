@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fadeDelay: 3
   });
 
-  const STREAM_URL = 'https://cdn.stmify.com/peacock/stream/PREMIER_LEAGUE_TV/master.mpd';
-  const RAW_KEYS = '002046c9a49b9ab1cdb6616bec5d26c3:d2f92f6b7edc9a1a05d393ba0c20ef9e';
+  const STREAM_URL = 'https://in-mc-flive.fancode.com/mumbai/4247569_english_dash_52541_1drmta-di_h264/index.mpd';
+  const RAW_KEYS = '2879ec64a64e44bd8f566b40f089e74b:d7bec90525c68790864baf9b76e347fa';
   const clearKeys = Object.fromEntries(
     RAW_KEYS.split(',').map(pair => pair.trim().split(':'))
   );
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   player.getNetworkingEngine().registerRequestFilter((type, request) => {
-    request.headers['Referer']    = 'https://www.amazon.com/gp/';
+    request.headers['Referer']    = 'https://in-mc-flive.fancode.com/';
     request.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
   });
 
