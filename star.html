@@ -7,21 +7,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!--
-  EMBED:
-  <iframe src="URL?id=CHANNEL_ID"
-    allow="autoplay; fullscreen; picture-in-picture"
-    allowfullscreen
-    style="width:100%;height:100%;border:none">
-  </iframe>
-
-  NOTE ON SHAKA VERSION:
-  cdnjs only publishes select releases. 5.2.0 is the latest confirmed build.
-  Changing to 5.2.12 (which does not exist on cdnjs) causes a 404 → Shaka
-  never loads → everything breaks. To use a newer version, swap to:
-  https://cdn.jsdelivr.net/npm/shaka-player@X.Y.Z/dist/shaka-player.ui.min.js
-  and update the CSS link accordingly.
--->
 <link rel="preconnect" href="https://sonujson-v5.pages.dev">
 <link rel="dns-prefetch" href="https://sonujson-v5.pages.dev">
 <link rel="preconnect" href="https://www.jiotv.com">
@@ -36,8 +21,6 @@ html,body{
   font-family:system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
-
-/* ── Loader: sweep-bar (Kick-style) ─────────────── */
 #loader{
   position:fixed;inset:0;background:#0a0a0a;z-index:9999;
   transition:opacity .28s ease;
@@ -63,8 +46,6 @@ html,body{
   font-weight:700;text-transform:uppercase;
 }
 #ld-msg.err{color:#5a2020}
-
-/* ── Status toast: small centered bubble ────────── */
 #status{
   position:fixed;
   top:calc(max(10px,env(safe-area-inset-top,0px)) + 10px);
@@ -91,8 +72,6 @@ html,body{
 #status.err  {color:#f09090} #status.err  .st-dot{background:#f87171}
 
 @keyframes dp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.45)}}
-
-/* ── Channel list ────────────────────────────────── */
 #channel-list{
   position:fixed;inset:0;background:#0a0a0a;z-index:9997;
   display:none;flex-direction:column;
@@ -138,7 +117,6 @@ html,body{
 .ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
 .ch-card span{color:#d0d0d0;font-size:13px;font-weight:500;line-height:1.4}
 
-/* ── Player ──────────────────────────────────────── */
 #pc{
   position:fixed;inset:0;background:#000;
   display:none;align-items:center;justify-content:center;
@@ -149,8 +127,6 @@ html,body{
 video{width:100%;height:100%;object-fit:contain;background:#000}
 video.mode-fill {object-fit:fill}
 video.mode-cover{object-fit:cover}
-
-/* ── Fit button ──────────────────────────────────── */
 .sp-btn{
   background:transparent!important;border:none!important;
   cursor:pointer!important;padding:0 8px!important;
@@ -227,8 +203,6 @@ var $vid    = document.getElementById("v");
 var _stTmr  = null;
 var _ldTmr  = null;
 var isMob   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-/* ── Device tier ────────────────────────────────── */
 function getTier(){
   var mem  = navigator.deviceMemory || 4;
   var cores= navigator.hardwareConcurrency || 4;
@@ -248,7 +222,6 @@ var PROF = {
 var FITS       = ["contain","fill","cover"];
 var FIT_LABELS = {contain:"Fit",fill:"Fill",cover:"Zoom"};
 
-/* ── Loader helpers ─────────────────────────────── */
 function ldMsg(m, err){
   if($ldMsg){ $ldMsg.textContent = m || ""; $ldMsg.className = err ? "err" : ""; }
 }
@@ -269,8 +242,6 @@ function ldError(m){
   if($ldBar) $ldBar.classList.add("off");
   ldMsg(m, true);
 }
-
-/* ── Toast ──────────────────────────────────────── */
 function toast(msg, type, dur){
   $status.innerHTML = '<span class="st-dot"></span><span>' + msg + '</span>';
   $status.className = "show " + (type || "ok");
@@ -282,8 +253,6 @@ function toast(msg, type, dur){
     }, dur || 4000);
   }
 }
-
-/* ── Utilities ──────────────────────────────────── */
 function escHtml(s){
   return String(s)
     .replace(/&/g,"&amp;").replace(/</g,"&lt;")
@@ -301,8 +270,6 @@ function withCookie(u, r){
   if(u.indexOf("__hdnea__") !== -1) return u;
   return u + (u.indexOf("?") !== -1 ? "&" : "?") + "__hdnea__=" + r;
 }
-
-/* ── Data ───────────────────────────────────────── */
 async function loadData(){
   var r = await fetch(API, {cache:"no-store", headers:{Accept:"application/json"}});
   if(!r.ok) throw new Error("HTTP " + r.status);
@@ -311,7 +278,6 @@ async function loadData(){
   return d;
 }
 
-/* ── Channel list ────────────────────────────────── */
 function renderList(channels){
   ldHide();
   var f = document.createDocumentFragment();
@@ -325,8 +291,6 @@ function renderList(channels){
   $grid.appendChild(f);
   $list.classList.add("vis");
 }
-
-/* ── Aspect ratio label ─────────────────────────── */
 function ratioLabel(w, h){
   if(!w || !h) return "—";
   function gcd(a,b){ return b ? gcd(b,a%b) : a; }
@@ -342,7 +306,6 @@ function ratioLabel(w, h){
   return (rw<=40&&rh<=40) ? rw+":"+rh : real.toFixed(2)+":1";
 }
 
-/* ── Fit button ─────────────────────────────────── */
 function injectControls(container, vid){
   var panel = container.querySelector(".shaka-controls-button-panel");
   if(!panel) return false;
@@ -402,9 +365,7 @@ function injectControls(container, vid){
   return true;
 }
 
-/* ── Player ──────────────────────────────────────── */
 async function startPlayer(ch){
-  // Guard: Shaka must be present (wrong CDN version = 404 = undefined)
   if(typeof shaka === "undefined" || !shaka.Player){
     ldError("Player library failed to load — check CDN version.");
     return;
@@ -420,8 +381,6 @@ async function startPlayer(ch){
 
   var player = new shaka.Player();
   await player.attach($vid);
-
-  /* UI — PiP added only if browser supports it */
   var panelEls = ["play_pause","mute","volume","time_and_duration","spacer","quality","fullscreen"];
   if(document.pictureInPictureEnabled) panelEls.splice(-1, 0, "picture_in_picture");
 
@@ -431,7 +390,6 @@ async function startPlayer(ch){
       seekBarColors:{base:"#808080",buffered:"#7d0000",played:"#00e81b"}
     });
   } catch(_) {
-    /* Retry without PiP if Overlay threw */
     panelEls = ["play_pause","mute","volume","time_and_duration","spacer","quality","fullscreen"];
     try{
       new shaka.ui.Overlay(player, $pc, $vid).configure({
@@ -440,15 +398,11 @@ async function startPlayer(ch){
       });
     } catch(_2){}
   }
-
-  /* Fit button injection */
   var _injN = 0;
   (function tryInj(){
     if(injectControls($pc, $vid)) return;
     if(++_injN < 6) setTimeout(tryInj, 150);
   })();
-
-  /* ── State ── */
   var cookie  = ch.cookie     || "";
   var raw     = rawCookie(cookie);
   var keyId   = ch.key_id     || "";
@@ -467,7 +421,6 @@ async function startPlayer(ch){
   var thermalTmr          = null;
   var destroyed           = false;
 
-  /* Thermal: after 1hr, ease off buffering on mobile */
   thermalTmr = setInterval(function(){
     if(destroyed || thermalApplied){ clearInterval(thermalTmr); thermalTmr=null; return; }
     if(Date.now()-sessionStart < 3600000) return;
@@ -476,8 +429,6 @@ async function startPlayer(ch){
     try{ player.configure("streaming.bufferBehind", 8); } catch(_){}
     if(isMob) try{ player.configure("abr.restrictions.maxHeight", Math.min(PROF.maxH, 720)); } catch(_){}
   }, 60000);
-
-  /* Config — DRM only when keys are present */
   function buildCfg(){
     var effMaxH = (thermalApplied && isMob) ? Math.min(PROF.maxH,720) : PROF.maxH;
     var abrRestr = {};
@@ -510,15 +461,13 @@ async function startPlayer(ch){
         restrictions:             abrRestr
       }
     };
-    /* BUG FIX: only add DRM when keys are actually present */
+  
     if(keyId && key) cfg.drm = {clearKeys:{[keyId]:key}};
     return cfg;
   }
 
   function applyCfg(){ try{ player.configure(buildCfg()); } catch(_){} }
   applyCfg();
-
-  /* Network filter */
   var T = shaka.net.NetworkingEngine.RequestType;
   player.getNetworkingEngine().registerRequestFilter(function(type, req){
     req.headers["Referer"]    = "https://www.jiotv.com/";
@@ -527,8 +476,6 @@ async function startPlayer(ch){
     if(type===T.MANIFEST || type===T.SEGMENT)
       req.uris = req.uris.map(function(u){ return withCookie(u, raw); });
   });
-
-  /* BUG FIX: goToLive() removed — use seekRange() directly (safe in Shaka 5.x) */
   function seekLiveEdge(){
     try{
       var sr = player.seekRange();
