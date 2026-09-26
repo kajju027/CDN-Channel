@@ -7,114 +7,159 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!--
+  EMBED:
+  <iframe src="URL?id=CHANNEL_ID"
+    allow="autoplay; fullscreen; picture-in-picture"
+    allowfullscreen
+    style="width:100%;height:100%;border:none">
+  </iframe>
+
+  NOTE ON SHAKA VERSION:
+  cdnjs only publishes select releases. 5.2.0 is the latest confirmed build.
+  Changing to 5.2.12 (which does not exist on cdnjs) causes a 404 → Shaka
+  never loads → everything breaks. To use a newer version, swap to:
+  https://cdn.jsdelivr.net/npm/shaka-player@X.Y.Z/dist/shaka-player.ui.min.js
+  and update the CSS link accordingly.
+-->
 <link rel="preconnect" href="https://sonujson-v5.pages.dev">
 <link rel="dns-prefetch" href="https://sonujson-v5.pages.dev">
-<link rel="preconnect" href="https://www.jiotv.com/">
-<link rel="dns-prefetch" href="https://www.jiotv.com/">
+<link rel="preconnect" href="https://www.jiotv.com">
+<link rel="dns-prefetch" href="https://www.jiotv.com">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/controls.min.css">
+<title>CnpTV</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
 html,body{
   width:100%;height:100%;background:#0a0a0a;overflow:hidden;
-  font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none
+  font-family:system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
 
-#overlay{
+/* ── Loader: sweep-bar (Kick-style) ─────────────── */
+#loader{
   position:fixed;inset:0;background:#0a0a0a;z-index:9999;
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:16px
+  transition:opacity .28s ease;
 }
-#overlay svg{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#overlay p{
-  color:#505050;font-size:12px;letter-spacing:.5px;
-  text-align:center;padding:0 24px;font-weight:500
-}
+#loader.out{opacity:0;pointer-events:none}
 
-#channel-list{
-  position:fixed;inset:0;background:#0a0a0a;z-index:9998;
-  display:none;flex-direction:column;overflow-y:auto;
-  padding:max(20px,env(safe-area-inset-top)) 16px
-           max(20px,env(safe-area-inset-bottom)) 16px
+#ld-bar{
+  position:absolute;top:0;left:0;right:0;height:2px;overflow:hidden;
 }
+#ld-bar::after{
+  content:'';position:absolute;top:0;left:-60%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,#38bdf8 40%,#818cf8 75%,transparent);
+  animation:ldS 1.8s ease-in-out infinite;
+}
+@keyframes ldS{from{left:-60%}to{left:110%}}
+#ld-bar.off{display:none}
+
+#ld-msg{
+  position:absolute;
+  bottom:max(28px,env(safe-area-inset-bottom,28px));
+  left:0;right:0;text-align:center;
+  color:#242424;font-size:9px;letter-spacing:2.5px;
+  font-weight:700;text-transform:uppercase;
+}
+#ld-msg.err{color:#5a2020}
+
+/* ── Status toast: small centered bubble ────────── */
+#status{
+  position:fixed;
+  top:calc(max(10px,env(safe-area-inset-top,0px)) + 10px);
+  left:50%;transform:translateX(-50%) translateY(-10px);
+  z-index:9998;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 13px 5px 8px;
+  background:rgba(0,0,0,.9);
+  border:1px solid rgba(255,255,255,.07);border-radius:100px;
+  font-size:10.5px;font-weight:500;letter-spacing:.25px;
+  pointer-events:none;opacity:0;
+  transition:opacity .22s,transform .22s;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.7);
+}
+#status.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.st-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+
+#status.ok   {color:#a0a0a0} #status.ok   .st-dot{background:#60a5fa}
+#status.live {color:#c8c8c8} #status.live .st-dot{background:#22d3a0;animation:dp 2s ease-in-out infinite}
+#status.warn {color:#e8c54a} #status.warn .st-dot{background:#f59e0b;animation:dp .9s ease-in-out infinite}
+#status.err  {color:#f09090} #status.err  .st-dot{background:#f87171}
+
+@keyframes dp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.45)}}
+
+/* ── Channel list ────────────────────────────────── */
+#channel-list{
+  position:fixed;inset:0;background:#0a0a0a;z-index:9997;
+  display:none;flex-direction:column;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:
+    calc(max(20px,env(safe-area-inset-top,0px)) + 16px)
+    16px
+    max(20px,env(safe-area-inset-bottom,0px))
+    16px;
+}
+#channel-list.vis{display:flex}
+
 #ch-header{
   display:flex;align-items:center;justify-content:center;
   gap:10px;margin-bottom:20px;padding-bottom:14px;
-  border-bottom:1px solid #181818
+  border-bottom:1px solid #181818;flex-shrink:0;
 }
 .brand-dot{
-  width:8px;height:8px;border-radius:50%;background:#38bdf8;
-  flex-shrink:0;box-shadow:0 0 8px rgba(56,189,248,.55);
-  animation:brand-pulse 2.2s ease-in-out infinite
+  width:8px;height:8px;border-radius:50%;background:#38bdf8;flex-shrink:0;
+  box-shadow:0 0 8px rgba(56,189,248,.5);
+  animation:bP 2.2s ease-in-out infinite;
 }
-@keyframes brand-pulse{
-  0%,100%{opacity:1;box-shadow:0 0 8px rgba(56,189,248,.55)}
-  50%{opacity:.65;box-shadow:0 0 16px rgba(56,189,248,.85)}
+@keyframes bP{
+  0%,100%{opacity:1;box-shadow:0 0 8px rgba(56,189,248,.5)}
+  50%{opacity:.6;box-shadow:0 0 16px rgba(56,189,248,.8)}
 }
-#ch-header h1{color:#e0e0e0;font-size:15px;font-weight:600;letter-spacing:.8px}
+#ch-header h1{color:#d8d8d8;font-size:15px;font-weight:600;letter-spacing:.8px}
+
 #ch-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:10px
+  gap:10px;
 }
 .ch-card{
   background:#111;border:1px solid #1c1c1c;border-radius:10px;
   padding:16px 12px;cursor:pointer;text-decoration:none;
   display:flex;align-items:center;justify-content:center;text-align:center;
   transition:background .18s,border-color .18s,transform .12s;
-  -webkit-tap-highlight-color:transparent
+  -webkit-tap-highlight-color:transparent;
 }
-.ch-card:hover{background:#161616;border-color:#282828}
-.ch-card:active{transform:scale(.95);background:#1c1c1c}
+.ch-card:hover {background:#161616;border-color:#2a2a2a}
+.ch-card:active{transform:scale(.94);background:#1c1c1c}
 .ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
-.ch-card span{color:#d8d8d8;font-size:13px;font-weight:500;line-height:1.4}
+.ch-card span{color:#d0d0d0;font-size:13px;font-weight:500;line-height:1.4}
 
+/* ── Player ──────────────────────────────────────── */
 #pc{
-  position:fixed;inset:0;background:#000;display:none;
-  align-items:center;justify-content:center;touch-action:manipulation
+  position:fixed;inset:0;background:#000;
+  display:none;align-items:center;justify-content:center;
+  touch-action:manipulation;
 }
+#pc.vis{display:flex}
+
 video{width:100%;height:100%;object-fit:contain;background:#000}
-video.mode-fill{object-fit:fill}
+video.mode-fill {object-fit:fill}
 video.mode-cover{object-fit:cover}
 
-#status{
-  position:fixed;
-  top:max(14px,env(safe-area-inset-top));
-  right:12%;
-  transform:translateY(-10px);
-  z-index:9997;
-  display:flex;align-items:center;gap:7px;
-  padding:6px 15px 6px 11px;
-  background:rgba(10,10,10,.92);
-  border:1px solid rgba(255,255,255,.07);
-  font-size:11.5px;font-weight:500;letter-spacing:.2px;
-  border-radius:24px;pointer-events:none;opacity:0;
-  transition:opacity .25s ease,transform .25s ease;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;
-  box-shadow:0 2px 14px rgba(0,0,0,.45)
-}
-#status.show{opacity:1;transform:translateY(0)}
-.st-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
-#status.ok   {color:#c0c0c0} #status.ok   .st-dot{background:#60a5fa}
-#status.live {color:#c8c8c8} #status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
-#status.warn {color:#fcd34d} #status.warn .st-dot{background:#fb923c;animation:dot-pulse 1s ease-in-out infinite}
-#status.err  {color:#fca5a5} #status.err  .st-dot{background:#f87171}
-@keyframes dot-pulse{
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:.35;transform:scale(.55)}
-}
-
+/* ── Fit button ──────────────────────────────────── */
 .sp-btn{
   background:transparent!important;border:none!important;
   cursor:pointer!important;padding:0 8px!important;
   opacity:.75;display:flex;align-items:center;justify-content:center;
   height:100%;min-width:36px;
-  transition:opacity .15s,color .15s;
-  color:#fff!important;-webkit-tap-highlight-color:transparent
+  transition:opacity .15s;color:#fff!important;
+  -webkit-tap-highlight-color:transparent;
 }
-.sp-btn:hover{opacity:1}
+.sp-btn:hover {opacity:1}
 .sp-btn:active{opacity:1;transform:scale(.9)}
 .sp-btn:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;border-radius:6px}
 .sp-btn.active{opacity:1;color:#38bdf8!important}
@@ -123,10 +168,8 @@ video.mode-cover{object-fit:cover}
 .fit-pill{
   font-size:10px;font-weight:700;letter-spacing:.4px;
   padding:3px 7px;border-radius:4px;line-height:1;
-  border:1.5px solid rgba(255,255,255,.28);
-  color:rgba(255,255,255,.8);
-  pointer-events:none;white-space:nowrap;
-  transition:border-color .2s,color .2s
+  border:1.5px solid rgba(255,255,255,.28);color:rgba(255,255,255,.8);
+  pointer-events:none;white-space:nowrap;transition:border-color .2s,color .2s;
 }
 .sp-fit-btn:hover      .fit-pill{border-color:rgba(255,255,255,.55);color:#fff}
 .sp-fit-btn.mode-fill  .fit-pill{border-color:#38bdf8;color:#38bdf8}
@@ -140,16 +183,12 @@ video.mode-cover{object-fit:cover}
   .sp-btn{padding:0 5px!important}
 }
 </style>
-
 </head>
 <body>
 
-<div id="overlay">
-  <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
-    <circle cx="20" cy="20" r="16" stroke="#1a1a1a" stroke-width="4"/>
-    <path d="M20 4a16 16 0 0 1 16 16" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
-  </svg>
-  <p id="loadMsg">Loading.....</p>
+<div id="loader">
+  <div id="ld-bar"></div>
+  <p id="ld-msg">LOADING</p>
 </div>
 
 <div id="status"></div>
@@ -175,39 +214,63 @@ video.mode-cover{object-fit:cover}
 (function(){
 "use strict";
 
-var API = "https://sonujson-v5.pages.dev/Data/sports.json";
+var API     = "https://sonujson-v5.pages.dev/Data/sports.json";
+var $loader = document.getElementById("loader");
+var $ldBar  = document.getElementById("ld-bar");
+var $ldMsg  = document.getElementById("ld-msg");
+var $status = document.getElementById("status");
+var $list   = document.getElementById("channel-list");
+var $grid   = document.getElementById("ch-grid");
+var $pc     = document.getElementById("pc");
+var $vid    = document.getElementById("v");
 
-var $overlay = document.getElementById("overlay");
-var $loadMsg = document.getElementById("loadMsg");
-var $status  = document.getElementById("status");
-var $list    = document.getElementById("channel-list");
-var $grid    = document.getElementById("ch-grid");
-var $pc      = document.getElementById("pc");
-var $vid     = document.getElementById("v");
-var _stTmr   = null;
+var _stTmr  = null;
+var _ldTmr  = null;
+var isMob   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+/* ── Device tier ────────────────────────────────── */
 function getTier(){
-  var mem   = navigator.deviceMemory || 4;
-  var cores = navigator.hardwareConcurrency || 4;
-  var mob   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var conn  = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  var net   = conn ? (conn.effectiveType || "4g") : "4g";
-  if(!mob) return "high";
-  if(mem <= 1.5 || cores <= 2 || net === "slow-2g" || net === "2g") return "low";
-  if(mem <= 3   || cores <= 4) return "mid";
+  var mem  = navigator.deviceMemory || 4;
+  var cores= navigator.hardwareConcurrency || 4;
+  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  var net  = conn ? (conn.effectiveType || "4g") : "4g";
+  if(!isMob) return "high";
+  if(mem<=1.5 || cores<=2 || net==="slow-2g" || net==="2g") return "low";
+  if(mem<=3   || cores<=4)                                   return "mid";
   return "high";
 }
-
-var TIER = getTier();
 var PROF = {
-  low:  {buf:4,  reBuf:1.5, behind:10, maxH:480,  maxBw:1000000, bwEst:400000 },
-  mid:  {buf:7,  reBuf:1.5, behind:20, maxH:720,  maxBw:3000000, bwEst:1000000},
+  low : {buf:4,  reBuf:1.5, behind:10, maxH:480,  maxBw:1000000, bwEst:400000 },
+  mid : {buf:7,  reBuf:1.5, behind:20, maxH:720,  maxBw:3000000, bwEst:1000000},
   high: {buf:10, reBuf:1.5, behind:25, maxH:1080, maxBw:0,       bwEst:2000000}
-}[TIER];
+}[getTier()];
 
 var FITS       = ["contain","fill","cover"];
-var FIT_LABELS = {contain:"Fit", fill:"Fill", cover:"Zoom"};
+var FIT_LABELS = {contain:"Fit",fill:"Fill",cover:"Zoom"};
 
+/* ── Loader helpers ─────────────────────────────── */
+function ldMsg(m, err){
+  if($ldMsg){ $ldMsg.textContent = m || ""; $ldMsg.className = err ? "err" : ""; }
+}
+function ldHide(){
+  if(!$loader) return;
+  $loader.classList.add("out");
+  if(_ldTmr) clearTimeout(_ldTmr);
+  _ldTmr = setTimeout(function(){
+    if($loader) $loader.style.display = "none";
+    _ldTmr = null;
+  }, 300);
+}
+function ldError(m){
+  if(!$loader) return;
+  if(_ldTmr){ clearTimeout(_ldTmr); _ldTmr = null; }
+  $loader.style.display = "";
+  $loader.classList.remove("out");
+  if($ldBar) $ldBar.classList.add("off");
+  ldMsg(m, true);
+}
+
+/* ── Toast ──────────────────────────────────────── */
 function toast(msg, type, dur){
   $status.innerHTML = '<span class="st-dot"></span><span>' + msg + '</span>';
   $status.className = "show " + (type || "ok");
@@ -220,12 +283,18 @@ function toast(msg, type, dur){
   }
 }
 
-function setMsg(m)    { if($loadMsg) $loadMsg.textContent = m; }
-function hideOverlay(){ if($overlay) $overlay.style.display = "none"; }
-function getChId()    { return new URLSearchParams(location.search).get("id") || ""; }
-
+/* ── Utilities ──────────────────────────────────── */
+function escHtml(s){
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function getChId(){
+  return new URLSearchParams(location.search).get("id") || "";
+}
 function rawCookie(c){
-  return c && c.startsWith("__hdnea__=") ? c.slice(10) : (c || "");
+  if(!c) return "";
+  return c.startsWith("__hdnea__=") ? c.slice(10) : c;
 }
 function withCookie(u, r){
   if(!u || !r) return u;
@@ -233,6 +302,7 @@ function withCookie(u, r){
   return u + (u.indexOf("?") !== -1 ? "&" : "?") + "__hdnea__=" + r;
 }
 
+/* ── Data ───────────────────────────────────────── */
 async function loadData(){
   var r = await fetch(API, {cache:"no-store", headers:{Accept:"application/json"}});
   if(!r.ok) throw new Error("HTTP " + r.status);
@@ -241,343 +311,374 @@ async function loadData(){
   return d;
 }
 
+/* ── Channel list ────────────────────────────────── */
 function renderList(channels){
-  hideOverlay();
+  ldHide();
   var f = document.createDocumentFragment();
   channels.forEach(function(ch){
     var a = document.createElement("a");
     a.className = "ch-card";
     a.href = "?id=" + encodeURIComponent(ch.id);
-    a.innerHTML = "<span>" + ch.name + "</span>";
+    a.innerHTML = "<span>" + escHtml(ch.name) + "</span>";
     f.appendChild(a);
   });
   $grid.appendChild(f);
-  $list.style.display = "flex";
+  $list.classList.add("vis");
 }
 
-function errMsg(msg){
-  setMsg(msg);
-  $overlay.style.display = "flex";
-  toast(msg, "err", 0);
-}
-
-function shakaErrStr(e){
-  if(!e) return "Playback Error";
-  var cat = {1:"Network",2:"Text",3:"Media",4:"Manifest",5:"Stream",6:"DRM",7:"Player"};
-  var s = (cat[e.category] || "Error") + " " + e.category + ":" + e.code;
-  if(e.data && e.data[0] && typeof e.data[0] === "string")
-    s += " — " + e.data[0].slice(0, 72);
-  return s;
-}
-
+/* ── Aspect ratio label ─────────────────────────── */
 function ratioLabel(w, h){
   if(!w || !h) return "—";
-  function gcd(a, b){ return b ? gcd(b, a % b) : a; }
-  var g = gcd(w, h) || 1, rw = w/g, rh = h/g;
-  var named = {
-    "16:9":16/9, "4:3":4/3, "21:9":21/9, "1:1":1,
-    "9:16":9/16, "3:2":3/2, "5:4":5/4, "2:1":2
-  };
-  var real = w/h, best = null, bestD = 0.02;
+  function gcd(a,b){ return b ? gcd(b,a%b) : a; }
+  var g = gcd(w,h) || 1, real = w/h;
+  var named = {"16:9":16/9,"4:3":4/3,"21:9":21/9,"1:1":1,"9:16":9/16,"3:2":3/2};
+  var best = null, bestD = 0.025;
   Object.keys(named).forEach(function(k){
-    var d = Math.abs(named[k] - real);
+    var d = Math.abs(named[k]-real);
     if(d < bestD){ bestD = d; best = k; }
   });
   if(best) return best;
-  if(rw <= 40 && rh <= 40) return rw + ":" + rh;
-  return real.toFixed(2) + ":1";
+  var rw=w/g, rh=h/g;
+  return (rw<=40&&rh<=40) ? rw+":"+rh : real.toFixed(2)+":1";
 }
 
+/* ── Fit button ─────────────────────────────────── */
 function injectControls(container, vid){
   var panel = container.querySelector(".shaka-controls-button-panel");
   if(!panel) return false;
-
   var anchor = panel.querySelector(".shaka-fullscreen-button");
-  var fitIdx  = 0;
-  var fitBtn  = document.createElement("button");
+  var fitIdx = 0;
+  var fitBtn = document.createElement("button");
   fitBtn.className = "sp-btn sp-fit-btn";
   fitBtn.title     = "Video Fit: " + FIT_LABELS.contain;
-  fitBtn.setAttribute("aria-label", "Cycle Video Fit Mode");
+  fitBtn.setAttribute("aria-label","Cycle Video Fit Mode");
   fitBtn.innerHTML = '<span class="fit-pill">—</span>';
-
   if(anchor) panel.insertBefore(fitBtn, anchor);
   else       panel.appendChild(fitBtn);
 
-  var currentRatio = "—";
+  var curRatio = "—";
   function applyFit(i){
     fitIdx = i;
     var m = FITS[i];
     vid.classList.remove("mode-fill","mode-cover");
-    if(m === "fill")  vid.classList.add("mode-fill");
-    if(m === "cover") vid.classList.add("mode-cover");
+    if(m==="fill")  vid.classList.add("mode-fill");
+    if(m==="cover") vid.classList.add("mode-cover");
     fitBtn.classList.remove("mode-fill","mode-cover");
-    if(m !== "contain") fitBtn.classList.add("mode-" + m);
+    if(m!=="contain") fitBtn.classList.add("mode-"+m);
     fitBtn.title = "Video Fit: " + FIT_LABELS[m];
     var pill = fitBtn.querySelector(".fit-pill");
-    if(pill) pill.textContent = (m === "contain") ? currentRatio : FIT_LABELS[m];
+    if(pill) pill.textContent = (m==="contain") ? curRatio : FIT_LABELS[m];
   }
-
   fitBtn.addEventListener("click", function(e){
     e.stopPropagation();
-    applyFit((fitIdx + 1) % FITS.length);
+    applyFit((fitIdx+1) % FITS.length);
   });
-
   ["fullscreenchange","webkitfullscreenchange"].forEach(function(ev){
     document.addEventListener(ev, function(){
-      if(!(document.fullscreenElement || document.webkitFullscreenElement)) applyFit(0);
+      if(!(document.fullscreenElement||document.webkitFullscreenElement)) applyFit(0);
     });
   });
 
-  var _ratioTries = 0;
+  var _tries = 0;
   function updateRatio(){
     var pill = fitBtn.querySelector(".fit-pill");
     if(!pill) return;
     if(vid.videoWidth > 0){
-      currentRatio = ratioLabel(vid.videoWidth, vid.videoHeight);
-      if(FITS[fitIdx] === "contain") pill.textContent = currentRatio;
-      _ratioTries = 0;
-    } else if(_ratioTries < 15){
-      _ratioTries++;
-      setTimeout(updateRatio, 700);
+      curRatio = ratioLabel(vid.videoWidth, vid.videoHeight);
+      if(FITS[fitIdx]==="contain") pill.textContent = curRatio;
+      _tries = 0;
+    } else if(_tries < 20){
+      _tries++;
+      setTimeout(updateRatio, 600);
     }
   }
-
-  vid.addEventListener("loadedmetadata", function(){ _ratioTries = 0; updateRatio(); });
+  vid.addEventListener("loadedmetadata", function(){ _tries=0; updateRatio(); });
   vid.addEventListener("resize", updateRatio);
-  vid.addEventListener("timeupdate", function onFirstFrame(){
-    vid.removeEventListener("timeupdate", onFirstFrame);
+  vid.addEventListener("timeupdate", function onFirst(){
+    vid.removeEventListener("timeupdate", onFirst);
     updateRatio();
   });
   updateRatio();
-
   return true;
 }
 
+/* ── Player ──────────────────────────────────────── */
 async function startPlayer(ch){
-  $pc.style.display = "flex";
+  // Guard: Shaka must be present (wrong CDN version = 404 = undefined)
+  if(typeof shaka === "undefined" || !shaka.Player){
+    ldError("Player library failed to load — check CDN version.");
+    return;
+  }
+
+  $pc.classList.add("vis");
   shaka.polyfill.installAll();
-  if(!shaka.Player.isBrowserSupported()){ errMsg("Browser Not Supported."); return; }
+
+  if(!shaka.Player.isBrowserSupported()){
+    ldError("Browser not supported.");
+    return;
+  }
 
   var player = new shaka.Player();
   await player.attach($vid);
 
-  new shaka.ui.Overlay(player, $pc, $vid).configure({
-    controlPanelElements:[
-      "play_pause","mute","volume",
-      "time_and_duration","spacer",
-      "quality","picture_in_picture","fullscreen"
-    ],
-    seekBarColors:{
-      base:    "#808080",
-      buffered:"#7d0000",
-      played:  "#00e81b"
-    }
-  });
+  /* UI — PiP added only if browser supports it */
+  var panelEls = ["play_pause","mute","volume","time_and_duration","spacer","quality","fullscreen"];
+  if(document.pictureInPictureEnabled) panelEls.splice(-1, 0, "picture_in_picture");
 
-  var _injectCount = 0;
-  (function tryInject(){
+  try{
+    new shaka.ui.Overlay(player, $pc, $vid).configure({
+      controlPanelElements: panelEls,
+      seekBarColors:{base:"#808080",buffered:"#7d0000",played:"#00e81b"}
+    });
+  } catch(_) {
+    /* Retry without PiP if Overlay threw */
+    panelEls = ["play_pause","mute","volume","time_and_duration","spacer","quality","fullscreen"];
+    try{
+      new shaka.ui.Overlay(player, $pc, $vid).configure({
+        controlPanelElements: panelEls,
+        seekBarColors:{base:"#808080",buffered:"#7d0000",played:"#00e81b"}
+      });
+    } catch(_2){}
+  }
+
+  /* Fit button injection */
+  var _injN = 0;
+  (function tryInj(){
     if(injectControls($pc, $vid)) return;
-    if(++_injectCount < 5) setTimeout(tryInject, 150);
+    if(++_injN < 6) setTimeout(tryInj, 150);
   })();
 
-  var cookie = ch.cookie;
-  var raw    = rawCookie(cookie);
-  var keyId  = ch.key_id;
-  var key    = ch.key;
-  var url    = ch.stream_url;
+  /* ── State ── */
+  var cookie  = ch.cookie     || "";
+  var raw     = rawCookie(cookie);
+  var keyId   = ch.key_id     || "";
+  var key     = ch.key        || "";
+  var url     = ch.stream_url || "";
+
   var restrictionsRelaxed = false;
   var thermalApplied      = false;
   var sessionStart        = Date.now();
+  var refreshing          = false;
+  var retries             = 0;
+  var edgeTried           = false;
+  var lastTry             = 0;
+  var started             = false;
+  var stallTmr            = null;
+  var thermalTmr          = null;
+  var destroyed           = false;
 
-  var thermalTimer = setInterval(function(){
-    if(Date.now() - sessionStart < 60*60*1000) return;
-    clearInterval(thermalTimer);
-    if(thermalApplied) return;
+  /* Thermal: after 1hr, ease off buffering on mobile */
+  thermalTmr = setInterval(function(){
+    if(destroyed || thermalApplied){ clearInterval(thermalTmr); thermalTmr=null; return; }
+    if(Date.now()-sessionStart < 3600000) return;
+    clearInterval(thermalTmr); thermalTmr = null;
     thermalApplied = true;
-    try{
-      player.configure("streaming.bufferBehind", 8);
-      if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
-        player.configure("abr.restrictions.maxHeight", Math.min(PROF.maxH, 720));
-      }
-    }catch(_){}
+    try{ player.configure("streaming.bufferBehind", 8); } catch(_){}
+    if(isMob) try{ player.configure("abr.restrictions.maxHeight", Math.min(PROF.maxH, 720)); } catch(_){}
   }, 60000);
 
+  /* Config — DRM only when keys are present */
   function buildCfg(){
-    var effMaxH = (thermalApplied && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-      ? Math.min(PROF.maxH, 720) : PROF.maxH;
-    var restr = {};
+    var effMaxH = (thermalApplied && isMob) ? Math.min(PROF.maxH,720) : PROF.maxH;
+    var abrRestr = {};
     if(!restrictionsRelaxed){
-      if(effMaxH < 1080) restr.maxHeight    = effMaxH;
-      if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
+      if(effMaxH < 1080)  abrRestr.maxHeight    = effMaxH;
+      if(PROF.maxBw > 0)  abrRestr.maxBandwidth = PROF.maxBw;
     }
-    return {
-      drm:{ clearKeys:{ [keyId]:key } },
+    var retryP = {maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000};
+    var cfg = {
       manifest:{
-        defaultPresentationDelay:4,
-        ignoreTextStreamFailures:true,
-        retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}
+        defaultPresentationDelay: 4,
+        ignoreTextStreamFailures: true,
+        retryParameters: retryP
       },
       streaming:{
-        lowLatencyMode:false,
-        bufferingGoal:PROF.buf,
+        lowLatencyMode: false,
+        bufferingGoal:  PROF.buf,
         rebufferingGoal:PROF.reBuf,
-        bufferBehind:PROF.behind,
-        safeSeekOffset:4,
-        stallEnabled:true,
-        stallThreshold:1,
-        stallSkip:.3,
-        inaccurateManifestTolerance:0,
-        retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}
+        bufferBehind:   PROF.behind,
+        safeSeekOffset: 4,
+        stallEnabled:   true,
+        stallThreshold: 1,
+        stallSkip:      .3,
+        retryParameters:retryP
       },
       abr:{
-        enabled:true,
-        defaultBandwidthEstimate:PROF.bwEst,
-        switchInterval:4,
-        restrictions:restr
+        enabled:                  true,
+        defaultBandwidthEstimate: PROF.bwEst,
+        switchInterval:           4,
+        restrictions:             abrRestr
       }
     };
+    /* BUG FIX: only add DRM when keys are actually present */
+    if(keyId && key) cfg.drm = {clearKeys:{[keyId]:key}};
+    return cfg;
   }
 
-  player.configure(buildCfg());
+  function applyCfg(){ try{ player.configure(buildCfg()); } catch(_){} }
+  applyCfg();
 
+  /* Network filter */
   var T = shaka.net.NetworkingEngine.RequestType;
   player.getNetworkingEngine().registerRequestFilter(function(type, req){
     req.headers["Referer"]    = "https://www.jiotv.com/";
     req.headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36";
-    req.headers["Cookie"]     = cookie;
-    if(type === T.MANIFEST || type === T.SEGMENT)
+    if(cookie) req.headers["Cookie"] = cookie;
+    if(type===T.MANIFEST || type===T.SEGMENT)
       req.uris = req.uris.map(function(u){ return withCookie(u, raw); });
   });
 
-  var refreshing = false;
-  var retries    = 0;
-  var edgeTried  = false;
-  var lastTry    = 0;
-  var started    = false;
-  var stallTmr   = null;
-
-  function unmuteOnce(){ $vid.muted = false; }
-  $pc.addEventListener("pointerdown", unmuteOnce, {capture:true,once:true});
-  $pc.addEventListener("click",       unmuteOnce, {capture:true,once:true});
-  $pc.addEventListener("keydown",     unmuteOnce, {capture:true,once:true});
-
-  function goLiveEdge(){
-    if(refreshing) return;
+  /* BUG FIX: goToLive() removed — use seekRange() directly (safe in Shaka 5.x) */
+  function seekLiveEdge(){
     try{
-      player.goToLive();
-      edgeTried = true;
-      toast("Syncing To Live Edge…","warn",2000);
-    }catch(_){ reload(); }
+      var sr = player.seekRange();
+      if(sr && isFinite(sr.end) && sr.end > 0)
+        $vid.currentTime = Math.max(sr.end - 2, 0);
+    } catch(_){}
+  }
+  function goLiveEdge(){
+    if(refreshing || destroyed) return;
+    edgeTried = true;
+    seekLiveEdge();
+    toast("Syncing to live edge…","warn",2500);
+    setTimeout(function(){
+      if(!refreshing && !destroyed && $vid.paused)
+        $vid.play().catch(function(){ if(!destroyed) reload(); });
+    }, 1500);
   }
 
+  /* Reload */
   async function reload(){
+    if(destroyed) return;
     var now = Date.now();
-    if(refreshing || now - lastTry < 1500) return;
-    if(retries >= 5){ toast("Stream Unavailable. Please Try Again Later.","err",0); return; }
-    refreshing = true; lastTry = now; retries++;
-    toast("Reconnecting… (" + retries + " / 5)","warn",0);
+    if(refreshing || now-lastTry < 1500) return;
+    if(retries >= 5){ toast("Stream unavailable. Try again later.","err",0); return; }
+    refreshing=true; lastTry=now; retries++;
+    toast("Reconnecting… ("+retries+"/5)","warn",0);
     try{
       var d     = await loadData();
-      var fresh = d.channels.find(function(c){ return c.id === ch.id; });
+      var fresh = d.channels.find(function(c){ return c.id===ch.id; });
       if(!fresh) throw new Error("missing");
-      cookie = fresh.cookie; raw   = rawCookie(cookie);
-      keyId  = fresh.key_id; key   = fresh.key; url = fresh.stream_url;
-      player.configure(buildCfg());
+      cookie = fresh.cookie    || ""; raw  = rawCookie(cookie);
+      keyId  = fresh.key_id   || ""; key  = fresh.key    || "";
+      url    = fresh.stream_url|| "";
+      applyCfg();
       await player.load(url);
       $vid.play().catch(function(){});
-      retries = 0; edgeTried = false;
+      retries=0; edgeTried=false;
       toast("Live","live",4000);
-    }catch(_){
-      setTimeout(reload, Math.min(1000 * Math.pow(2, retries - 1), 8000));
-    }finally{ refreshing = false; }
+    } catch(_){
+      var delay = Math.min(1000 * Math.pow(2, retries-1), 10000);
+      setTimeout(function(){ if(!destroyed) reload(); }, delay);
+    } finally{ refreshing=false; }
   }
 
+  /* Error handler */
   var RECOVERABLE = [1001,1002,1003,4012,6006,6007,7000,7001,7002];
+  function errStr(e){
+    if(!e) return "Playback error";
+    var cat={1:"Network",2:"Text",3:"Media",4:"Manifest",5:"Stream",6:"DRM",7:"Player"};
+    return (cat[e.category]||"Error")+" "+e.category+"·"+e.code;
+  }
 
   player.addEventListener("error", function(ev){
-    var err  = ev.detail;
-    var code = err && err.code;
-    if(code === 4014 && !restrictionsRelaxed){
-      restrictionsRelaxed = true;
-      refreshing = true;
-      player.configure(buildCfg());
-      toast("Adjusting Quality…","warn",2000);
+    if(destroyed) return;
+    var err = ev.detail, code = err && err.code;
+    if(code===4014 && !restrictionsRelaxed){
+      restrictionsRelaxed=true; refreshing=true;
+      applyCfg();
+      toast("Adjusting quality…","warn",2000);
       player.load(url)
         .then(function(){ $vid.play().catch(function(){}); toast("Live","live",4000); })
-        .catch(function(){ reload(); })
-        .finally(function(){ refreshing = false; });
+        .catch(reload)
+        .finally(function(){ refreshing=false; });
       return;
     }
     if(RECOVERABLE.indexOf(code) !== -1){
       toast("Buffering…","warn",0);
-      setTimeout(function(){ if(!refreshing) reload(); }, 700);
+      setTimeout(function(){ if(!refreshing && !destroyed) reload(); }, 700);
     } else {
-      toast(shakaErrStr(err),"err",6000);
+      toast(errStr(err),"err",7000);
     }
   });
 
-  try{
-    setMsg("Loading Stream…");
-    toast("Loading Stream…","warn",0);
-    await player.load(url);
-    hideOverlay();
-    toast("Ready — Tap To Play","ok",5000);
-  }catch(_){
-    hideOverlay();
-    toast("Connection Error — Retrying…","warn",0);
-    setTimeout(reload, 1500);
-    return;
-  }
+  /* Unmute on first tap */
+  $pc.addEventListener("pointerdown", function(){
+    if($vid.muted) $vid.muted = false;
+  }, {capture:true, once:true});
 
+  /* Stall detection */
+  function clearStall(){ if(stallTmr){ clearTimeout(stallTmr); stallTmr=null; } }
   function onStall(){
-    if(stallTmr) return;
+    if(destroyed || !started || refreshing || stallTmr) return;
     toast("Buffering…","warn",0);
-    if(!started || refreshing) return;
     stallTmr = setTimeout(function(){
       stallTmr = null;
+      if(destroyed || refreshing) return;
       if(!edgeTried) goLiveEdge(); else reload();
     }, 5000);
   }
-
   function onPlaying(){
-    started = true;
-    if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
-    edgeTried = false;
-    if(!refreshing) toast("Live","live",3000);
+    started=true; edgeTried=false; clearStall();
+    if(!refreshing) toast("Live","live",3500);
   }
 
   $vid.addEventListener("waiting", onStall);
   $vid.addEventListener("stalled", onStall);
   $vid.addEventListener("playing", onPlaying);
   $vid.addEventListener("error",   function(){
-    if(!refreshing){
+    if(!refreshing && !destroyed){
       toast("Buffering…","warn",0);
-      setTimeout(function(){ if(!refreshing) reload(); }, 700);
+      setTimeout(function(){ if(!refreshing && !destroyed) reload(); }, 700);
     }
   });
 
+  /* Resume after tab switch */
   document.addEventListener("visibilitychange", function(){
-    if(!document.hidden){
-      setTimeout(function(){
-        if(started && $vid.paused && !refreshing) $vid.play().catch(function(){});
-      }, 400);
-    }
+    if(destroyed || document.hidden) return;
+    setTimeout(function(){
+      if(!destroyed && started && $vid.paused && !refreshing)
+        $vid.play().catch(function(){});
+    }, 400);
   });
+
+  /* Initial load */
+  try{
+    ldMsg("Loading stream…");
+    toast("Connecting…","warn",0);
+    await player.load(url);
+    ldHide();
+    toast("Ready — tap to play","ok",5000);
+  } catch(_){
+    ldHide();
+    toast("Connection error — retrying…","warn",0);
+    setTimeout(function(){ if(!destroyed) reload(); }, 1500);
+  }
+
+  /* Cleanup on page unload */
+  window.addEventListener("beforeunload", function(){
+    destroyed = true;
+    clearStall();
+    if(thermalTmr){ clearInterval(thermalTmr); thermalTmr=null; }
+    if(_stTmr){ clearTimeout(_stTmr); _stTmr=null; }
+    try{ player.destroy(); } catch(_){}
+  }, {once:true});
 }
 
+/* ── Main ────────────────────────────────────────── */
 async function main(){
   var id = getChId(), data;
   try{
-    setMsg("Fetching Channels…");
+    ldMsg("FETCHING CHANNELS");
     data = await loadData();
-  }catch(_){
-    errMsg("Connection Error. Please Check Your Internet.");
+  } catch(_){
+    ldError("Connection error. Check your internet.");
     return;
   }
   if(!id){ renderList(data.channels); return; }
-  var ch = data.channels.find(function(c){ return c.id === id; });
-  if(!ch){ errMsg("Channel Not Found."); return; }
-  document.title = ch.name;
+  var ch = data.channels.find(function(c){ return c.id===id; });
+  if(!ch){ ldError("Channel not found."); return; }
+  document.title = ch.name + " — CnpTV";
   await startPlayer(ch);
 }
 
