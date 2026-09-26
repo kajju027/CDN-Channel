@@ -1,0 +1,6 @@
+/*
+  Content-Security-Policy: frame-ancestors *;
+  Permissions-Policy: fullscreen=*, autoplay=*, encrypted-media=*, picture-in-picture=*
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
