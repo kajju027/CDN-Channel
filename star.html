@@ -11,7 +11,7 @@
 <link rel="dns-prefetch" href="https://sonujson-v5.pages.dev">
 <link rel="preconnect" href="https://www.jiotv.com/">
 <link rel="dns-prefetch" href="https://www.jiotv.com/">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/controls.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.12/controls.min.css">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{
@@ -170,7 +170,7 @@ video.mode-cover{object-fit:cover}
   </video>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/shaka-player.ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.12/shaka-player.ui.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -368,9 +368,9 @@ async function startPlayer(ch){
       "quality","picture_in_picture","fullscreen"
     ],
     seekBarColors:{
-      base:    "#828282",
-      buffered:"#ffc336",
-      played:  "#1fc7ff"
+      base:    "#808080",
+      buffered:"#7d0000",
+      played:  "#00e81b"
     }
   });
 
@@ -521,7 +521,7 @@ async function startPlayer(ch){
     toast("Loading Stream…","warn",0);
     await player.load(url);
     hideOverlay();
-    toast("Ready — Tap ▶ To Play","ok",5000);
+    toast("Ready — Tap To Play","ok",5000);
   }catch(_){
     hideOverlay();
     toast("Connection Error — Retrying…","warn",0);
@@ -563,17 +563,6 @@ async function startPlayer(ch){
       }, 400);
     }
   });
-
-  var netConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if(netConn){
-    netConn.addEventListener("change", function(){
-      if(!player || restrictionsRelaxed) return;
-      var t = netConn.effectiveType || "4g";
-      var h = t === "slow-2g" || t === "2g" ? 240 : t === "3g" ? 480 : PROF.maxH;
-      try{ player.configure("abr.restrictions.maxHeight", h); }catch(_){}
-      if(h < PROF.maxH) toast("Slow Network — Reducing Quality","warn",3000);
-    });
-  }
 }
 
 async function main(){
