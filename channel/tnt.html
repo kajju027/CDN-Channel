@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClearKey Player</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.8.4/plyr.css" />
   <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.6.18/dist/shaka-player.compiled.js"></script>
   <script src="https://cdn.plyr.io/3.8.4/plyr.polyfilled.js"></script>
@@ -25,6 +26,18 @@
       var MANIFEST_URL = 'https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/dev1hjwzh9/out/v1/a5f0ee7ad7b24906b14f43bebbbe4678/cenc.mpd';
       var CLEAR_KEY = 'cc91508324ce9dcaf425a43d58f1d9d4:643e5474d9edd87c7d9091c8c97994ca';
 
+      function hexToBase64Url(hex) {
+        var bytes = [];
+        for (var i = 0; i < hex.length; i += 2) {
+          bytes.push(parseInt(hex.substr(i, 2), 16));
+        }
+        var binary = '';
+        for (var j = 0; j < bytes.length; j++) {
+          binary += String.fromCharCode(bytes[j]);
+        }
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+
       var video = document.getElementById('player');
       var player = new Plyr(video, {
         controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
@@ -34,8 +47,11 @@
       });
 
       var parts = CLEAR_KEY.split(':');
-      var keyId = parts[0].trim().toLowerCase();
-      var keyValue = parts[1].trim().toLowerCase();
+      var keyIdHex = parts[0].trim().toLowerCase();
+      var keyValueHex = parts[1].trim().toLowerCase();
+
+      var keyId = hexToBase64Url(keyIdHex);
+      var keyValue = hexToBase64Url(keyValueHex);
 
       var clearKeys = {};
       clearKeys[keyId] = keyValue;
