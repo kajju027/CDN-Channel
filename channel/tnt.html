@@ -48,12 +48,22 @@
         },
         manifest: {
           dash: {
-            clockSyncUri: 'https://time.akamai.com/'
+            clockSyncUri: 'https://time.akamai.com/',
+            ignoreMinBufferTime: true
           }
         },
         streaming: {
-          rebufferingGoal: 1,
-          startAtSegmentBoundary: true
+          rebufferingGoal: 2,
+          bufferingGoal: 30,
+          bufferBehind: 30,
+          startAtSegmentBoundary: true,
+          retryParameters: {
+            maxAttempts: 5,
+            baseDelay: 1000,
+            backoffFactor: 2,
+            fuzzFactor: 0.5,
+            timeout: 30000
+          }
         }
       });
 
