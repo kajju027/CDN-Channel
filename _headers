@@ -1,6 +1,13 @@
+# Global CORS headers for all files
 /*
-  Content-Security-Policy: frame-ancestors *;
-  Permissions-Policy: fullscreen=*, autoplay=*, encrypted-media=*, picture-in-picture=*
   Access-Control-Allow-Origin: *
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: no-referrer
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Allow-Headers: *
+
+# Correct MIME type for m3u8 files
+/*.m3u8
+  Content-Type: application/vnd.apple.mpegurl
+
+# Optional: Ensure .ts segment files have the correct MIME type
+/*.ts
+  Content-Type: video/mp2t
