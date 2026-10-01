@@ -1,13 +1,13 @@
-# Global CORS headers for all files
+# CORS হেডার - সব ফাইলের জন্য
 /*
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, HEAD, OPTIONS
   Access-Control-Allow-Headers: *
 
-# Correct MIME type for m3u8 files
+# .m3u8 ফাইলের জন্য সঠিক MIME টাইপ
 /*.m3u8
   Content-Type: application/vnd.apple.mpegurl
 
-# Optional: Ensure .ts segment files have the correct MIME type
+# .ts সেগমেন্ট ফাইলের জন্য সঠিক MIME টাইপ
 /*.ts
   Content-Type: video/mp2t
