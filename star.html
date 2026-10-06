@@ -19,7 +19,6 @@ html,body{
   font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none
 }
-
 #overlay{
   position:fixed;inset:0;background:#0a0a0a;z-index:9999;
   display:flex;align-items:center;justify-content:center;
@@ -31,7 +30,6 @@ html,body{
   color:#505050;font-size:12px;letter-spacing:.5px;
   text-align:center;padding:0 24px;font-weight:500
 }
-
 #channel-list{
   position:fixed;inset:0;background:#0a0a0a;z-index:9998;
   display:none;flex-direction:column;overflow-y:auto;
@@ -69,7 +67,6 @@ html,body{
 .ch-card:active{transform:scale(.95);background:#1c1c1c}
 .ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
 .ch-card span{color:#d8d8d8;font-size:13px;font-weight:500;line-height:1.4}
-
 #pc{
   position:fixed;inset:0;background:#000;display:none;
   align-items:center;justify-content:center;touch-action:manipulation
@@ -77,7 +74,6 @@ html,body{
 video{width:100%;height:100%;object-fit:contain;background:#000}
 video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
-
 #status{
   position:fixed;
   top:max(14px,env(safe-area-inset-top));
@@ -105,7 +101,6 @@ video.mode-cover{object-fit:cover}
   0%,100%{opacity:1;transform:scale(1)}
   50%{opacity:.35;transform:scale(.55)}
 }
-
 .sp-btn{
   background:transparent!important;border:none!important;
   cursor:pointer!important;padding:0 8px!important;
@@ -118,7 +113,6 @@ video.mode-cover{object-fit:cover}
 .sp-btn:active{opacity:1;transform:scale(.9)}
 .sp-btn:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;border-radius:6px}
 .sp-btn.active{opacity:1;color:#38bdf8!important}
-
 .sp-fit-btn{padding:0 7px!important;min-width:auto!important}
 .fit-pill{
   font-size:10px;font-weight:700;letter-spacing:.4px;
@@ -131,16 +125,13 @@ video.mode-cover{object-fit:cover}
 .sp-fit-btn:hover      .fit-pill{border-color:rgba(255,255,255,.55);color:#fff}
 .sp-fit-btn.mode-fill  .fit-pill{border-color:#38bdf8;color:#38bdf8}
 .sp-fit-btn.mode-cover .fit-pill{border-color:#a78bfa;color:#a78bfa}
-
 .shaka-controls-container button{color:#fff!important}
 .shaka-video-container{background-color:#000!important}
-
 @media(max-width:380px){
   .fit-pill{font-size:9px;padding:2px 5px}
   .sp-btn{padding:0 5px!important}
 }
 </style>
-<!--<script src="https://pl31276431.profitableratecpmnetwork.com/ee/66/a8/ee66a8d4d10b40d2ecdb4a0f9abb24e4.js"></script>-->
 </head>
 <body>
 
@@ -231,6 +222,47 @@ function withCookie(u, r){
   if(!u || !r) return u;
   if(u.indexOf("__hdnea__") !== -1) return u;
   return u + (u.indexOf("?") !== -1 ? "&" : "?") + "__hdnea__=" + r;
+}
+
+function isNonEmpty(v){
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+function normalizeKidKey(kid, key){
+  if(!isNonEmpty(kid) || !isNonEmpty(key)) return null;
+  return {
+    kid: kid.trim().toLowerCase(),
+    key: key.trim().toLowerCase()
+  };
+}
+
+function buildClearKeys(ch){
+  var out = {};
+
+  if(Array.isArray(ch.sonuxs) && ch.sonuxs.length > 0){
+    ch.sonuxs.forEach(function(entry){
+      if(typeof entry !== "string") return;
+      var parts = entry.split(":");
+      if(parts.length < 2) return;
+      var pair = normalizeKidKey(parts[0], parts[1]);
+      if(pair) out[pair.kid] = pair.key;
+    });
+    if(Object.keys(out).length > 0) return out;
+  }
+
+  var single = normalizeKidKey(ch.key_id, ch.key);
+  if(single) out[single.kid] = single.key;
+
+  return out;
+}
+
+function keyModeOf(ch){
+  var hasMulti  = Array.isArray(ch.sonuxs) && ch.sonuxs.length > 0;
+  var hasSingle = isNonEmpty(ch.key_id) && isNonEmpty(ch.key);
+  if(hasMulti && hasSingle) return "mixed";
+  if(hasMulti)              return "multi";
+  if(hasSingle)             return "single";
+  return "none";
 }
 
 async function loadData(){
@@ -382,12 +414,18 @@ async function startPlayer(ch){
 
   var cookie = ch.cookie;
   var raw    = rawCookie(cookie);
-  var keyId  = ch.key_id;
-  var key    = ch.key;
   var url    = ch.stream_url;
+  var drmKeys = buildClearKeys(ch);
+  var keyMode = keyModeOf(ch);
+
   var restrictionsRelaxed = false;
   var thermalApplied      = false;
   var sessionStart        = Date.now();
+
+  if(Object.keys(drmKeys).length === 0){
+    toast("No DRM Keys Available","err",0);
+    return;
+  }
 
   var thermalTimer = setInterval(function(){
     if(Date.now() - sessionStart < 60*60*1000) return;
@@ -411,7 +449,7 @@ async function startPlayer(ch){
       if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
     }
     return {
-      drm:{ clearKeys:{ [keyId]:key } },
+      drm:{ clearKeys: drmKeys },
       manifest:{
         defaultPresentationDelay:4,
         ignoreTextStreamFailures:true,
@@ -480,8 +518,13 @@ async function startPlayer(ch){
       var d     = await loadData();
       var fresh = d.channels.find(function(c){ return c.id === ch.id; });
       if(!fresh) throw new Error("missing");
-      cookie = fresh.cookie; raw   = rawCookie(cookie);
-      keyId  = fresh.key_id; key   = fresh.key; url = fresh.stream_url;
+      var freshKeys = buildClearKeys(fresh);
+      if(Object.keys(freshKeys).length === 0) throw new Error("no_keys");
+      cookie  = fresh.cookie;
+      raw     = rawCookie(cookie);
+      drmKeys = freshKeys;
+      keyMode = keyModeOf(fresh);
+      url     = fresh.stream_url;
       player.configure(buildCfg());
       await player.load(url);
       $vid.play().catch(function(){});
