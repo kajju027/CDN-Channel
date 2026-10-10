@@ -37,9 +37,6 @@
   Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: cross-origin
 
-/*.mp4
-  Cache-Control: public, max-age=300
-
 /*.ts
   Cache-Control: public, max-age=60
 
@@ -51,3 +48,6 @@
 
 /*.aac
   Cache-Control: public, max-age=60
+
+/*.mp4
+  Cache-Control: public, max-age=300
