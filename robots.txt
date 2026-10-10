@@ -1,5 +1,5 @@
 # ============================================
-# CnpTV API - Fully Open Access
+# CnpTV Player - Fully Open Access
 # Everyone, everywhere, any device, any player
 # ============================================
 
@@ -137,7 +137,7 @@ User-agent: DotBot
 Allow: /
 
 # Sitemaps (remove if not used)
-Sitemap: https://sonujson-v5.pages.dev/sitemap.xml
+Sitemap: https://sonucdn-v4.pages.dev/sitemap.xml
 
 # Content Signal - AI training off, everything else on
 Content-Signal: ai-train=no, search=yes, ai-input=yes
