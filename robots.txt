@@ -1,4 +1,143 @@
+# ============================================
+# CnpTV API - Fully Open Access
+# Everyone, everywhere, any device, any player
+# ============================================
+
+# All crawlers, bots, AI - full permission
 User-agent: *
 Allow: /
+Disallow:
 
+# Google
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+# Bing
+User-agent: Bingbot
+Allow: /
+
+User-agent: msnbot
+Allow: /
+
+User-agent: BingPreview
+Allow: /
+
+# Yahoo
+User-agent: Slurp
+Allow: /
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Yandex
+User-agent: YandexBot
+Allow: /
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+
+# Facebook / Meta
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+# Twitter / X
+User-agent: Twitterbot
+Allow: /
+
+# WhatsApp
+User-agent: WhatsApp
+Allow: /
+
+# Telegram
+User-agent: TelegramBot
+Allow: /
+
+# LinkedIn
+User-agent: LinkedInBot
+Allow: /
+
+# Discord
+User-agent: Discordbot
+Allow: /
+
+# Slack
+User-agent: Slackbot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+
+# AI Crawlers - all allowed (you can block if desired)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# General bots
+User-agent: AhrefsBot
+Allow: /
+
+User-agent: SemrushBot
+Allow: /
+
+User-agent: MJ12bot
+Allow: /
+
+User-agent: DotBot
+Allow: /
+
+# Sitemaps (remove if not used)
+Sitemap: https://sonujson-v5.pages.dev/sitemap.xml
+
+# Content Signal - AI training off, everything else on
 Content-Signal: ai-train=no, search=yes, ai-input=yes
