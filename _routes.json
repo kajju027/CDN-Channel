@@ -2,10 +2,21 @@
   "version": 1,
   "include": ["/*"],
   "exclude": [
-    "/assets/*",
     "/*.js",
     "/*.css",
     "/*.html",
-    "/favicon.ico"
+    "/*.svg",
+    "/*.png",
+    "/*.jpg",
+    "/*.ico",
+    "/*.mpd",
+    "/*.m3u8",
+    "/*.ts",
+    "/*.m4s",
+    "/*.m4v",
+    "/*.aac",
+    "/*.mp4",
+    "/favicon.ico",
+    "/robots.txt"
   ]
 }
