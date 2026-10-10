@@ -6,6 +6,7 @@
   <meta name="referrer" content="no-referrer">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="author" content="sayan">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -40,224 +41,258 @@
   </style>
 </head>
 <body>
+  <div id="player-container">
+    <video id="video" autoplay muted playsinline preload="metadata"></video>
+  </div>
+  <div id="status"><span class="st-dot"></span><span id="statusText">Live</span></div>
+  <div id="sf-sign" style="position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none" aria-hidden="true">sayan</div>
 
-<div id="player-container">
-  <video id="video" autoplay muted playsinline preload="metadata"></video>
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+  <script>
+  (function() {
+    "use strict";
 
-<div id="status"><span class="st-dot"></span><span id="statusText">Live</span></div>
+    var SF_AUTHOR = "sayan";
 
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
-<script>
-(function() {
-  "use strict";
+    var CONFIG = {
+      streamUrl: "https://jiotvpllive.cdn.jio.com/bpk-tv/SonySportsTen2HDSTB_BTS/WDVLive/index.mpd",
+      cookie: "__hdnea__=st=1791628802~exp=1791650402~acl=/bpk-tv/SonySportsTen2HDSTB_BTS/WDVLive/*~hmac=f3157fdddf402f6c0fb8bb8c33a609cbf65a665dadc691d6e2a108a1d1fa970b",
+      keys: [
+        "91fce77f2f8056f084ed961c7ebe86ed:8214bd5eb6c21444e8ea644824affd79",
+        "7eb23fdb3765a427e5c0b0a1dcd7c7a6:fe44ecddba1ab9df11c5522d85c39127",
+        "060242b563d188a97ac529066c4dcdc3:d4a4920bb65a879b937a6cf9eb4c1592",
+        "aa0992cc96a0815c05619dd5ac448b15:24a1c23da2922264f06b2be0f24a3894",
+        "996b070e24d7d4670d4e39acdc426edd:429fd3f762e31db48cc8132ba0be525a",
+        "9eb13a589c9454e2be1f123b98ebbd09:dd503e53bc323a51d67c349f3be1993b"
+      ]
+    };
 
-  const CONFIG = {
-    streamUrl: "https://jiotvpllive.cdn.jio.com/bpk-tv/SonySportsTen2HDSTB_BTS/WDVLive/index.mpd",
-    keyId: "9eb13a589c9454e2be1f123b98ebbd09",
-    key: "dd503e53bc323a51d67c349f3be1993b",
-    cookie: "__hdnea__=st=1791288032~exp=1791309632~acl=/bpk-tv/SonySportsTen2HDSTB_BTS/WDVLive/*~hmac=9d160d89829b45f02c25f63e4ee84d75c92e947ec1c8f81d06ac69bbde0a28a4"
-  };
+    var video      = document.getElementById("video");
+    var container  = document.getElementById("player-container");
+    var statusEl   = document.getElementById("status");
+    var statusText = document.getElementById("statusText");
 
-  const video = document.getElementById("video");
-  const container = document.getElementById("player-container");
-  const statusEl = document.getElementById("status");
-  const statusText = document.getElementById("statusText");
+    var statusTimer = null;
 
-  let statusTimer = null;
-
-  function setStatus(msg, type, dur) {
-    if (!statusEl) return;
-    statusText.textContent = msg || "Live";
-    statusEl.className = "show " + (type || "live");
-    if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
-    if (dur !== 0) {
-      statusTimer = setTimeout(function() {
-        statusEl.className = statusEl.className.replace("show", "").trim();
-        statusTimer = null;
-      }, dur || 4000);
-    }
-  }
-
-  function injectFitButton(containerEl, videoEl) {
-    const panel = containerEl.querySelector(".shaka-controls-button-panel");
-    if (!panel) return false;
-
-    const anchor = panel.querySelector(".shaka-fullscreen-button");
-    const FITS = ["contain", "fill", "cover"];
-    const FIT_LABELS = { contain: "Fit", fill: "Fill", cover: "Zoom" };
-    let fitIdx = 0;
-
-    const fitBtn = document.createElement("button");
-    fitBtn.className = "sp-fit-btn";
-    fitBtn.title = "Video Fit: " + FIT_LABELS.contain;
-    fitBtn.setAttribute("aria-label", "Cycle Video Fit Mode");
-    fitBtn.innerHTML = '<span class="fit-pill">—</span>';
-
-    if (anchor) panel.insertBefore(fitBtn, anchor);
-    else panel.appendChild(fitBtn);
-
-    let currentRatio = "—";
-
-    function applyFit(i) {
-      fitIdx = i;
-      const m = FITS[i];
-      videoEl.classList.remove("mode-fill", "mode-cover");
-      if (m === "fill") videoEl.classList.add("mode-fill");
-      if (m === "cover") videoEl.classList.add("mode-cover");
-      fitBtn.classList.remove("mode-fill", "mode-cover");
-      if (m !== "contain") fitBtn.classList.add("mode-" + m);
-      fitBtn.title = "Video Fit: " + FIT_LABELS[m];
-      const pill = fitBtn.querySelector(".fit-pill");
-      if (pill) pill.textContent = (m === "contain") ? currentRatio : FIT_LABELS[m];
-    }
-
-    fitBtn.addEventListener("click", function(e) {
-      e.stopPropagation();
-      applyFit((fitIdx + 1) % FITS.length);
-    });
-
-    ["fullscreenchange", "webkitfullscreenchange"].forEach(function(ev) {
-      document.addEventListener(ev, function() {
-        if (!(document.fullscreenElement || document.webkitFullscreenElement)) applyFit(0);
-      });
-    });
-
-    function ratioLabel(w, h) {
-      if (!w || !h) return "—";
-      function gcd(a, b) { return b ? gcd(b, a % b) : a; }
-      const g = gcd(w, h) || 1, rw = w/g, rh = h/g;
-      const named = { "16:9": 16/9, "4:3": 4/3, "21:9": 21/9, "1:1": 1, "9:16": 9/16, "3:2": 3/2, "5:4": 5/4, "2:1": 2 };
-      const real = w/h;
-      let best = null, bestD = 0.02;
-      Object.keys(named).forEach(function(k) {
-        const d = Math.abs(named[k] - real);
-        if (d < bestD) { bestD = d; best = k; }
-      });
-      if (best) return best;
-      if (rw <= 40 && rh <= 40) return rw + ":" + rh;
-      return real.toFixed(2) + ":1";
-    }
-
-    let ratioTries = 0;
-    function updateRatio() {
-      const pill = fitBtn.querySelector(".fit-pill");
-      if (!pill) return;
-      if (videoEl.videoWidth > 0) {
-        currentRatio = ratioLabel(videoEl.videoWidth, videoEl.videoHeight);
-        if (FITS[fitIdx] === "contain") pill.textContent = currentRatio;
-        ratioTries = 0;
-      } else if (ratioTries < 15) {
-        ratioTries++;
-        setTimeout(updateRatio, 700);
+    function setStatus(msg, type, dur) {
+      if (!statusEl) return;
+      statusText.textContent = msg || "Live";
+      statusEl.className = "show " + (type || "live");
+      if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
+      if (dur !== 0) {
+        statusTimer = setTimeout(function() {
+          statusEl.className = statusEl.className.replace("show", "").trim();
+          statusTimer = null;
+        }, dur || 4000);
       }
     }
 
-    videoEl.addEventListener("loadedmetadata", function() { ratioTries = 0; updateRatio(); });
-    videoEl.addEventListener("resize", updateRatio);
-    videoEl.addEventListener("timeupdate", function onFirstFrame() {
-      videoEl.removeEventListener("timeupdate", onFirstFrame);
+    function buildClearKeys(list) {
+      var out = {};
+      (list || []).forEach(function(entry) {
+        var kid, key;
+        if (typeof entry === "string") {
+          var p = entry.split(":");
+          kid = p[0]; key = p[1];
+        } else if (entry && typeof entry === "object") {
+          kid = entry.kid || entry.keyId;
+          key = entry.key;
+        }
+        if (kid && key) {
+          out[String(kid).trim().toLowerCase()] = String(key).trim().toLowerCase();
+        }
+      });
+      return out;
+    }
+
+    function injectFitButton(containerEl, videoEl) {
+      var panel = containerEl.querySelector(".shaka-controls-button-panel");
+      if (!panel) return false;
+
+      var anchor = panel.querySelector(".shaka-fullscreen-button");
+      var FITS = ["contain", "fill", "cover"];
+      var FIT_LABELS = { contain: "Fit", fill: "Fill", cover: "Zoom" };
+      var fitIdx = 0;
+
+      var fitBtn = document.createElement("button");
+      fitBtn.className = "sp-fit-btn";
+      fitBtn.title = "Video Fit: " + FIT_LABELS.contain;
+      fitBtn.setAttribute("aria-label", "Cycle Video Fit Mode");
+      fitBtn.innerHTML = '<span class="fit-pill">—</span>';
+
+      if (anchor) panel.insertBefore(fitBtn, anchor);
+      else panel.appendChild(fitBtn);
+
+      var currentRatio = "—";
+
+      function applyFit(i) {
+        fitIdx = i;
+        var m = FITS[i];
+        videoEl.classList.remove("mode-fill", "mode-cover");
+        if (m === "fill") videoEl.classList.add("mode-fill");
+        if (m === "cover") videoEl.classList.add("mode-cover");
+        fitBtn.classList.remove("mode-fill", "mode-cover");
+        if (m !== "contain") fitBtn.classList.add("mode-" + m);
+        fitBtn.title = "Video Fit: " + FIT_LABELS[m];
+        var pill = fitBtn.querySelector(".fit-pill");
+        if (pill) pill.textContent = (m === "contain") ? currentRatio : FIT_LABELS[m];
+      }
+
+      fitBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        applyFit((fitIdx + 1) % FITS.length);
+      });
+
+      ["fullscreenchange", "webkitfullscreenchange"].forEach(function(ev) {
+        document.addEventListener(ev, function() {
+          if (!(document.fullscreenElement || document.webkitFullscreenElement)) applyFit(0);
+        });
+      });
+
+      function ratioLabel(w, h) {
+        if (!w || !h) return "—";
+        function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+        var g = gcd(w, h) || 1, rw = w/g, rh = h/g;
+        var named = { "16:9": 16/9, "4:3": 4/3, "21:9": 21/9, "1:1": 1, "9:16": 9/16, "3:2": 3/2, "5:4": 5/4, "2:1": 2 };
+        var real = w/h;
+        var best = null, bestD = 0.02;
+        Object.keys(named).forEach(function(k) {
+          var d = Math.abs(named[k] - real);
+          if (d < bestD) { bestD = d; best = k; }
+        });
+        if (best) return best;
+        if (rw <= 40 && rh <= 40) return rw + ":" + rh;
+        return real.toFixed(2) + ":1";
+      }
+
+      var ratioTries = 0;
+      function updateRatio() {
+        var pill = fitBtn.querySelector(".fit-pill");
+        if (!pill) return;
+        if (videoEl.videoWidth > 0) {
+          currentRatio = ratioLabel(videoEl.videoWidth, videoEl.videoHeight);
+          if (FITS[fitIdx] === "contain") pill.textContent = currentRatio;
+          ratioTries = 0;
+        } else if (ratioTries < 15) {
+          ratioTries++;
+          setTimeout(updateRatio, 700);
+        }
+      }
+
+      videoEl.addEventListener("loadedmetadata", function() { ratioTries = 0; updateRatio(); });
+      videoEl.addEventListener("resize", updateRatio);
+      videoEl.addEventListener("timeupdate", function onFirstFrame() {
+        videoEl.removeEventListener("timeupdate", onFirstFrame);
+        updateRatio();
+      });
       updateRatio();
-    });
-    updateRatio();
 
-    return true;
-  }
-
-  async function initPlayer() {
-    shaka.polyfill.installAll();
-    if (!shaka.Player.isBrowserSupported()) {
-      setStatus("Browser Not Supported", "err", 0);
-      return;
+      return true;
     }
 
-    const player = new shaka.Player();
-    await player.attach(video);
-
-    const ui = new shaka.ui.Overlay(player, container, video);
-    ui.configure({
-      addBigPlayButton: true,
-      controlPanelElements: [
-        "play_pause",
-        "mute",
-        "time_and_duration",
-        "spacer",
-        "quality",
-        "picture_in_picture",
-        "fullscreen"
-      ],
-      seekBarColors: {
-        base: "#828282",
-        buffered: "#ffc336",
-        played: "#1fc7ff"
+    async function initPlayer() {
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) {
+        setStatus("Browser Not Supported", "err", 0);
+        return;
       }
-    });
 
-    let injectCount = 0;
-    (function tryInject() {
-      if (injectFitButton(container, video)) return;
-      if (++injectCount < 5) setTimeout(tryInject, 150);
-    })();
+      var player = new shaka.Player();
+      await player.attach(video);
 
-    player.configure({
-      drm: { clearKeys: { [CONFIG.keyId]: CONFIG.key } },
-      manifest: { defaultPresentationDelay: 5 },
-      streaming: {
-        lowLatencyMode: true,
-        bufferingGoal: 10,
-        rebufferingGoal: 2,
-        safeSeekOffset: 5
+      var ui = new shaka.ui.Overlay(player, container, video);
+      ui.configure({
+        addBigPlayButton: true,
+        controlPanelElements: [
+          "play_pause",
+          "mute",
+          "time_and_duration",
+          "spacer",
+          "quality",
+          "picture_in_picture",
+          "fullscreen"
+        ],
+        seekBarColors: {
+          base: "#828282",
+          buffered: "#ffc336",
+          played: "#1fc7ff"
+        }
+      });
+
+      var injectCount = 0;
+      (function tryInject() {
+        if (injectFitButton(container, video)) return;
+        if (++injectCount < 5) setTimeout(tryInject, 150);
+      })();
+
+      var clearKeys = buildClearKeys(CONFIG.keys);
+      var keyCount = Object.keys(clearKeys).length;
+
+      if (keyCount === 0) {
+        setStatus("No DRM keys configured", "err", 0);
+        return;
       }
-    });
 
-    const cookieValue = (CONFIG.cookie || "").trim();
+      player.configure({
+        drm: { clearKeys: clearKeys },
+        manifest: { defaultPresentationDelay: 5 },
+        streaming: {
+          lowLatencyMode: true,
+          bufferingGoal: 10,
+          rebufferingGoal: 2,
+          safeSeekOffset: 5
+        }
+      });
 
-    if (!cookieValue) {
-      setStatus("Cookie Required", "err", 0);
-      console.warn("Please paste your cookie value into CONFIG.cookie");
-      return;
+      var cookieValue = (CONFIG.cookie || "").trim();
+
+      if (!cookieValue) {
+        setStatus("Cookie Required", "err", 0);
+        return;
+      }
+
+      player.getNetworkingEngine().registerRequestFilter(function(type, request) {
+        request.headers["Referer"]    = "https://www.jiotv.com/";
+        request.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+        request.headers["Cookie"]     = cookieValue;
+
+        var urlCookie = cookieValue.indexOf("__hdnea__=") === 0 ? cookieValue.slice(10) : cookieValue;
+        if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+            request.uris[0].indexOf("__hdnea__") === -1) {
+          var sep = request.uris[0].indexOf("?") === -1 ? "?" : "&";
+          request.uris[0] += sep + "__hdnea__=" + urlCookie;
+        }
+      });
+
+      try {
+        setStatus("Loading…", "warn", 0);
+        await player.load(CONFIG.streamUrl);
+        setStatus("Live", "live", 4000);
+        video.play().catch(function() {});
+      } catch (e) {
+        setStatus("Error loading stream", "err", 0);
+      }
+
+      video.addEventListener("play", function() {
+        video.muted = false;
+      });
+
+      function unmuteOnce() { video.muted = false; }
+      container.addEventListener("pointerdown", unmuteOnce, { capture: true, once: true });
+      container.addEventListener("click",       unmuteOnce, { capture: true, once: true });
+
+      player.addEventListener("error", function(ev) {
+        var err = ev.detail;
+        setStatus("Stream error: " + (err && err.code ? err.code : ""), "err", 5000);
+      });
+
+      try { video.dataset.sf = SF_AUTHOR; } catch (e) {}
     }
 
-    player.getNetworkingEngine().registerRequestFilter(function(type, request) {
-      request.headers["Referer"] = "https://www.jiotv.com/";
-      request.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
-      request.headers["Cookie"] = cookieValue;
-
-      const urlCookie = cookieValue.startsWith("__hdnea__=") ? cookieValue.slice(10) : cookieValue;
-      if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-           type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
-          !request.uris[0].includes("__hdnea__")) {
-        const sep = request.uris[0].includes("?") ? "&" : "?";
-        request.uris[0] += sep + "__hdnea__=" + urlCookie;
-      }
-    });
-
-    try {
-      setStatus("Loading…", "warn", 0);
-      await player.load(CONFIG.streamUrl);
-      setStatus("Live", "live", 4000);
-      video.play().catch(function() {});
-    } catch(e) {
-      console.error("Player load error:", e);
-      setStatus("Error loading stream", "err", 0);
-    }
-
-    video.addEventListener("play", function() {
-      video.muted = false;
-    });
-
-    function unmuteOnce() { video.muted = false; }
-    container.addEventListener("pointerdown", unmuteOnce, { capture: true, once: true });
-    container.addEventListener("click", unmuteOnce, { capture: true, once: true });
-
-    player.addEventListener("error", function(ev) {
-      const err = ev.detail;
-      setStatus("Stream error: " + (err.code || ""), "err", 5000);
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", initPlayer);
-})();
-</script>
+    document.addEventListener("DOMContentLoaded", initPlayer);
+    try { window.__sf_author__ = SF_AUTHOR; } catch (e) {}
+  })();
+  </script>
 </body>
 </html>
