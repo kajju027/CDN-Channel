@@ -102,6 +102,16 @@ html,body{
 .ch-num::before{content:"CHANNEL ";font-size:11px}
 .ch-name{max-width:calc(100% - 30px);overflow:hidden;color:#f4f4f5;font-size:20px;font-weight:600;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
 #ch-empty{margin:0;padding:28px 0;color:#b3b5bc;font-size:16px;font-weight:400;text-align:center}
+.project-notice{margin-top:54px;padding:28px 24px;background:rgba(32,32,32,.96);border:1px solid #3a3a3a;color:#d7d8dc}
+.project-notice-label{color:#afb2ba;font-size:12px;font-weight:500;line-height:1.2;text-transform:uppercase;letter-spacing:.08em}
+.project-notice h2{margin:15px 0 14px;color:#f5f5f5;font-size:clamp(23px,5.5vw,31px);font-weight:650;letter-spacing:-.035em;line-height:1.12}
+.project-notice p{margin:0;color:#afb1b8;font-size:15px;font-weight:400;line-height:1.6}
+.project-notice a{color:#f2f2ef;text-decoration:underline;text-decoration-color:#747474;text-underline-offset:3px}
+.project-notice details{margin-top:23px;border-top:1px solid #414141}
+.project-notice summary{padding:17px 0 2px;color:#ededed;cursor:pointer;font-size:15px;font-weight:600;line-height:1.4;list-style-position:inside}
+.project-notice summary::marker{color:#b8bbc2}
+.project-notice details div{padding-top:14px}
+.project-notice details p + p{margin-top:14px}
 #pc{
   position:fixed;inset:0;background:#000;display:none;
   align-items:center;justify-content:center;touch-action:manipulation
@@ -210,6 +220,19 @@ video.mode-cover{object-fit:cover}
     </label>
     <div id="ch-grid" role="list" aria-label="Available channels"></div>
     <p id="ch-empty" hidden>No channels match your search.</p>
+    <footer class="project-notice" aria-labelledby="project-notice-title">
+      <p class="project-notice-label">Open-source client interface</p>
+      <h2 id="project-notice-title">Built for self-hosting and embedding.</h2>
+      <p>The source code for this interface is available under the <a href="LICENSE" target="_blank" rel="noopener">MIT License</a>. You may use, copy, modify, distribute, sublicense, and embed the code in your own projects, provided that the license notice is retained.</p>
+      <details>
+        <summary>Embedding and content notice</summary>
+        <div>
+          <p>This page is a client-side interface. It does not store or host video or audio files on the server that delivers the interface. When a channel is selected, the visitor's browser connects directly to the remote source configured for that channel.</p>
+          <p>Remote streams, metadata, trademarks, and third-party services remain the responsibility of their respective owners. Their availability online does not grant a right to reproduce, distribute, or embed them.</p>
+          <p>Anyone deploying this interface is responsible for using only sources they are authorized to access and embed, following provider terms, respecting regional restrictions, and complying with applicable law.</p>
+        </div>
+      </details>
+    </footer>
   </main>
 </div>
 
