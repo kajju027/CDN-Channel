@@ -48,49 +48,31 @@ html,body{
   text-transform:uppercase
 }
 #channel-list{
-  position:fixed;inset:0;background:#0a0a0a;z-index:9998;
-  display:none;flex-direction:column;overflow-y:auto
+  position:fixed;inset:0;z-index:9998;display:none;overflow-y:auto;
+  background:radial-gradient(circle at top,#141b29 0,#0a0a0a 42%);color:#f5f7fb
 }
-#ch-header{
-  position:sticky;top:0;background:#0a0a0a;z-index:1;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:max(20px,env(safe-area-inset-top,0px)) 20px 14px;
-  border-bottom:1px solid #111
+.channel-shell{
+  width:min(100%,760px);min-height:100%;margin:0 auto;
+  padding:max(32px,env(safe-area-inset-top,0px)) 20px max(28px,env(safe-area-inset-bottom,0px))
 }
-#ch-title{
-  color:#b8b8b8;font-size:11px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase
-}
-#ch-count{
-  color:#2e2e2e;font-size:10px;font-weight:600;
-  letter-spacing:.5px;font-variant-numeric:tabular-nums
-}
-#ch-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:8px;
-  padding:16px 16px max(16px,env(safe-area-inset-bottom,0px))
-}
-.ch-card{
-  background:#0d0d0d;border:1px solid #181818;border-radius:8px;
-  padding:14px 12px;cursor:pointer;text-decoration:none;
-  display:flex;align-items:center;gap:9px;
-  transition:background .15s,border-color .15s,transform .1s;
-  -webkit-tap-highlight-color:transparent;
-  border-left:2px solid transparent
-}
-.ch-card:hover{background:#131313;border-color:#202020;border-left-color:#38bdf8}
-.ch-card:active{transform:scale(.96);background:#171717}
-.ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;border-radius:8px}
-.ch-num{
-  color:#282828;font-size:9px;font-weight:700;
-  letter-spacing:.4px;min-width:18px;flex-shrink:0;
-  font-variant-numeric:tabular-nums
-}
-.ch-name{
-  color:#b8b8b8;font-size:12px;font-weight:500;
-  line-height:1.35;flex:1
-}
+.channel-header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}
+.channel-kicker{color:#60a5fa;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+#ch-title{margin-top:7px;color:#f8fafc;font-size:clamp(25px,6vw,34px);font-weight:700;letter-spacing:-.035em;line-height:1.1}
+.channel-copy{margin-top:9px;color:#8992a2;font-size:14px;line-height:1.5}
+#ch-count{flex:0 0 auto;color:#b9c1cf;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.channel-search{display:flex;align-items:center;gap:10px;width:100%;padding:0 14px;height:46px;margin-bottom:16px;background:rgba(9,12,18,.78);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#7f8999;transition:border-color .18s,box-shadow .18s}
+.channel-search:focus-within{border-color:#38bdf8;box-shadow:0 0 0 3px rgba(56,189,248,.14)}
+.channel-search svg{width:17px;height:17px;flex:0 0 auto}
+.channel-search input{width:100%;border:0;outline:0;background:transparent;color:#f8fafc;font:500 14px/1 'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.channel-search input::placeholder{color:#687386}
+#ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.ch-card{display:flex;align-items:center;gap:12px;min-height:58px;padding:12px 14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;color:#e5e7eb;cursor:pointer;text-decoration:none;transition:background .16s,border-color .16s,transform .16s;-webkit-tap-highlight-color:transparent}
+.ch-card:hover{background:rgba(56,189,248,.09);border-color:rgba(56,189,248,.55)}
+.ch-card:active{transform:scale(.985)}
+.ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:3px}
+.ch-num{display:grid;place-items:center;width:26px;height:26px;flex:0 0 auto;background:rgba(255,255,255,.06);border-radius:8px;color:#9ba5b5;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}
+.ch-name{overflow:hidden;color:#edf1f7;font-size:14px;font-weight:600;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+#ch-empty{padding:26px 0;color:#8992a2;font-size:14px;text-align:center}
 #pc{
   position:fixed;inset:0;background:#000;display:none;
   align-items:center;justify-content:center;touch-action:manipulation
@@ -159,6 +141,11 @@ video.mode-cover{object-fit:cover}
 .sp-fit-btn.mode-cover .fit-pill{border-color:#a78bfa;color:#a78bfa}
 .shaka-controls-container button{color:#fff!important}
 .shaka-video-container{background-color:#000!important}
+@media(max-width:520px){
+  .channel-shell{padding-left:16px;padding-right:16px}
+  .channel-header{align-items:flex-start;flex-direction:column;gap:14px}
+  #ch-grid{grid-template-columns:1fr}
+}
 @media(max-width:380px){
   .fit-pill{font-size:9px;padding:2px 5px}
   .sp-btn{padding:0 5px!important}
@@ -177,22 +164,27 @@ video.mode-cover{object-fit:cover}
 
 <div id="status"></div>
 
-<div id="channel-list">
-  <div id="ch-header">
-    <span id="ch-title">Live Channels</span>
-    <span id="ch-count"></span>
-  </div>
-  <div id="ch-grid"></div>
+<div id="channel-list" aria-label="Channel selection">
+  <main class="channel-shell">
+    <header class="channel-header">
+      <div>
+        <p class="channel-kicker">Live TV</p>
+        <h1 id="ch-title">Select a channel</h1>
+        <p class="channel-copy">Choose a stream to start watching.</p>
+      </div>
+      <span id="ch-count" aria-live="polite"></span>
+    </header>
+    <label class="channel-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
+      <input id="channel-search" type="search" placeholder="Search channels" autocomplete="off" spellcheck="false" aria-label="Search channels">
+    </label>
+    <div id="ch-grid" role="list" aria-label="Available channels"></div>
+    <p id="ch-empty" hidden>No channels match your search.</p>
+  </main>
 </div>
 
 <div id="pc">
-  <!-- FIX 1: added `muted` — enables muted-autoplay so $vid.play() succeeds,
-       and makes unmuteOnce actually meaningful (unmutes on first user tap) -->
-  <video id="v" playsinline webkit-playsinline
-    preload="none" muted
-    x5-video-player-type="h5"
-    x5-video-player-fullscreen="true">
-  </video>
+  <video id="v" playsinline webkit-playsinline preload="none" muted x5-video-player-type="h5" x5-video-player-fullscreen="true"></video>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/shaka-player.ui.min.js"></script>
@@ -307,17 +299,43 @@ async function loadData(){
 function renderList(channels){
   hideOverlay();
   var $count = document.getElementById("ch-count");
-  if($count) $count.textContent = channels.length;
-  var f = document.createDocumentFragment();
-  channels.forEach(function(ch, i){
-    var a = document.createElement("a");
-    a.className = "ch-card";
-    a.href = "?id=" + encodeURIComponent(ch.id);
-    a.innerHTML = '<span class="ch-num">' + (i + 1) + '</span><span class="ch-name">' + ch.name + '</span>';
-    f.appendChild(a);
-  });
-  $grid.appendChild(f);
-  $list.style.display = "flex";
+  var $search = document.getElementById("channel-search");
+  var $empty = document.getElementById("ch-empty");
+
+  function draw(items){
+    var f = document.createDocumentFragment();
+    $grid.replaceChildren();
+    items.forEach(function(ch, i){
+      var a = document.createElement("a");
+      var num = document.createElement("span");
+      var name = document.createElement("span");
+      a.className = "ch-card";
+      a.href = "?id=" + encodeURIComponent(ch.id);
+      a.setAttribute("role", "listitem");
+      num.className = "ch-num";
+      num.textContent = i + 1;
+      name.className = "ch-name";
+      name.textContent = ch.name || "Untitled channel";
+      a.appendChild(num);
+      a.appendChild(name);
+      f.appendChild(a);
+    });
+    $grid.appendChild(f);
+    if($empty) $empty.hidden = items.length !== 0;
+  }
+
+  function filter(){
+    var query = ($search && $search.value ? $search.value : "").trim().toLowerCase();
+    var items = query ? channels.filter(function(ch){
+      return String(ch.name || "").toLowerCase().indexOf(query) !== -1;
+    }) : channels;
+    if($count) $count.textContent = items.length + (items.length === 1 ? " channel" : " channels");
+    draw(items);
+  }
+
+  if($search) $search.addEventListener("input", filter);
+  filter();
+  $list.style.display = "block";
 }
 
 function errMsg(msg){
@@ -530,158 +548,254 @@ async function startPlayer(ch){
   });
 
   var refreshing = false;
-  var retries    = 0;
-  var edgeTried  = false;
-  var lastTry    = 0;
-  var started    = false;
-  var stallTmr   = null;
-  var _bufState  = false;
-  var _lastCurr  = 0;
+  var retries = 0;
+  var lastTry = 0;
+  var started = false;
+  var stallTmr = null;
+  var _bufState = false;
+  var _lastCurr = 0;
+  var seekState = {active:false,wantsDvr:false,target:null,timer:null};
 
-  function clearBuf(){
-    _bufState = false;
+  function clearStallTimer(){
     if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
   }
 
+  function clearBuf(){
+    _bufState = false;
+    clearStallTimer();
+  }
+
+  function getSeekRange(){
+    try{
+      var range = player.seekRange();
+      if(range && isFinite(range.start) && isFinite(range.end) && range.end > range.start) return range;
+    }catch(_){}
+    return null;
+  }
+
+  function isDvrPosition(time){
+    var range = getSeekRange();
+    return !!range && isFinite(time) && time < range.end - 7;
+  }
+
+  function rememberPosition(){
+    var time = $vid.currentTime;
+    if(isDvrPosition(time)){
+      seekState.wantsDvr = true;
+      seekState.target = time;
+      return;
+    }
+    seekState.wantsDvr = false;
+    seekState.target = null;
+  }
+
+  function restoreDvrPosition(time){
+    var range = getSeekRange();
+    if(!range || !isFinite(time)) return false;
+    var lower = Math.min(range.end - .25, range.start + .25);
+    var upper = Math.max(lower, range.end - .75);
+    var target = Math.min(Math.max(time, lower), upper);
+    try{
+      $vid.currentTime = target;
+      seekState.wantsDvr = true;
+      seekState.target = target;
+      return Math.abs(target - time) < 1;
+    }catch(_){
+      return false;
+    }
+  }
+
+  function bufferingMessage(){
+    return seekState.wantsDvr || seekState.active ? "Loading Replay · Please Wait" : "Buffering · Fetching Segments";
+  }
+
   function onBufResume(){
+    if(!_bufState) return;
+    var wasDvr = seekState.wantsDvr;
     clearBuf();
-    if(!refreshing) toast("On Air · Stream Active","live",3000);
+    if(!refreshing) toast(wasDvr ? "Replay · Playing Behind Live" : "On Air · Stream Active", wasDvr ? "ok" : "live", 2600);
+  }
+
+  function scheduleRecovery(delay){
+    clearStallTimer();
+    stallTmr = setTimeout(function(){
+      stallTmr = null;
+      if(!refreshing && started && !$vid.paused && !seekState.active) reload();
+    }, delay);
   }
 
   function unmuteOnce(){ $vid.muted = false; }
   $pc.addEventListener("pointerdown", unmuteOnce, {capture:true,once:true});
-  $pc.addEventListener("click",       unmuteOnce, {capture:true,once:true});
-  $pc.addEventListener("keydown",     unmuteOnce, {capture:true,once:true});
+  $pc.addEventListener("click", unmuteOnce, {capture:true,once:true});
+  $pc.addEventListener("keydown", unmuteOnce, {capture:true,once:true});
+
+  function onSeeking(){
+    seekState.active = true;
+    if(seekState.timer) clearTimeout(seekState.timer);
+    rememberPosition();
+    clearStallTimer();
+    if(started && !$vid.paused){
+      _bufState = true;
+      toast(bufferingMessage(), "warn", 0);
+    }
+  }
+
+  function onSeeked(){
+    rememberPosition();
+    if(seekState.timer) clearTimeout(seekState.timer);
+    seekState.timer = setTimeout(function(){
+      seekState.active = false;
+      seekState.timer = null;
+      if(_bufState && started && !$vid.paused) scheduleRecovery(5000);
+    }, 7000);
+    if($vid.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA && !$vid.paused) onBufResume();
+  }
 
   $vid.addEventListener("timeupdate", function(){
-    if($vid.paused || $vid.ended || !_bufState || !started || refreshing) return;
-    var t = $vid.currentTime;
-    if(t > _lastCurr){
-      _lastCurr = t;
+    if($vid.paused || $vid.ended || !started || refreshing) return;
+    var time = $vid.currentTime;
+    if(time > _lastCurr + .01){
+      _lastCurr = time;
       onBufResume();
     }
   });
 
-  function goLiveEdge(){
-    if(refreshing) return;
-    try{
-      player.goToLive();
-      edgeTried = true;
-      toast("Syncing To Live Edge · Please Wait","warn",2000);
-    }catch(_){ reload(); }
-  }
-
   async function reload(){
     var now = Date.now();
     if(refreshing || now - lastTry < 1500) return;
-    if(retries >= 5){ toast("Stream Unavailable · Max Retries Reached","err",0); return; }
-    refreshing = true; lastTry = now; retries++;
-    toast("Reconnecting · Attempt " + retries + " Of 5","warn",0);
+    if(retries >= 5){ toast("Stream Unavailable · Max Retries Reached", "err", 0); return; }
+    rememberPosition();
+    var resumeAt = seekState.wantsDvr ? seekState.target : null;
+    refreshing = true;
+    lastTry = now;
+    retries++;
+    clearStallTimer();
+    toast(resumeAt !== null ? "Reconnecting Replay · Attempt " + retries + " Of 5" : "Reconnecting · Attempt " + retries + " Of 5", "warn", 0);
     try{
-      var d     = await loadData();
+      var d = await loadData();
       var fresh = d.channels.find(function(c){ return c.id === ch.id; });
       if(!fresh) throw new Error("missing");
       var freshKeys = buildClearKeys(fresh);
       if(Object.keys(freshKeys).length === 0) throw new Error("no_keys");
-      cookie     = fresh.cookie;
-      raw        = rawCookie(cookie);
-      drmKeys    = freshKeys;
-      url        = fresh.stream_url;
+      cookie = fresh.cookie;
+      raw = rawCookie(cookie);
+      drmKeys = freshKeys;
+      url = fresh.stream_url;
       audioFixed = false;
-      _bufState  = false;
-      _lastCurr  = 0;
-      if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
+      _bufState = false;
+      _lastCurr = 0;
       player.configure(buildCfg());
-      await player.load(url);
-      $vid.play().catch(function(){});
-      retries = 0; edgeTried = false;
-      toast("On Air · Stream Active","live",4000);
+      await player.load(url, resumeAt === null ? undefined : resumeAt);
+      var restored = resumeAt === null ? false : restoreDvrPosition(resumeAt);
+      await $vid.play().catch(function(){});
+      retries = 0;
+      if(resumeAt !== null && !restored) toast("Replay Position Expired · Starting At Earliest Available", "ok", 4000);
+      else toast(resumeAt !== null ? "Replay · Resuming Selected Position" : "On Air · Stream Active", resumeAt !== null ? "ok" : "live", 4000);
     }catch(_){
       setTimeout(reload, Math.min(1000 * Math.pow(2, retries - 1), 8000));
-    }finally{ refreshing = false; }
+    }finally{
+      refreshing = false;
+    }
   }
 
   var RECOVERABLE = [1001,1002,1003,4012,6006,6007,7000,7001,7002];
 
   player.addEventListener("error", function(ev){
-    var err  = ev.detail;
+    var err = ev.detail;
     var code = err && err.code;
     if(code === 4014 && !restrictionsRelaxed){
+      rememberPosition();
+      var recoveryPoint = seekState.wantsDvr ? seekState.target : null;
       restrictionsRelaxed = true;
       refreshing = true;
       player.configure(buildCfg());
-      toast("Adjusting Stream Quality","warn",2000);
-      player.load(url)
-        .then(function(){ $vid.play().catch(function(){}); toast("On Air · Stream Active","live",4000); })
-        .catch(function(){ reload(); })
+      toast("Adjusting Stream Quality", "warn", 2000);
+      player.load(url, recoveryPoint === null ? undefined : recoveryPoint)
+        .then(function(){
+          if(recoveryPoint !== null) restoreDvrPosition(recoveryPoint);
+          return $vid.play();
+        })
+        .then(function(){ toast(recoveryPoint !== null ? "Replay · Playing Behind Live" : "On Air · Stream Active", recoveryPoint !== null ? "ok" : "live", 4000); })
+        .catch(function(){
+          refreshing = false;
+          reload();
+        })
         .finally(function(){ refreshing = false; });
       return;
     }
     if(RECOVERABLE.indexOf(code) !== -1){
       _bufState = true;
-      toast("Buffering · Fetching Segments","warn",0);
-      setTimeout(function(){ if(!refreshing) reload(); }, 700);
-    } else {
-      toast(shakaErrStr(err),"err",6000);
+      toast(bufferingMessage(), "warn", 0);
+      if(!seekState.active) scheduleRecovery(1500);
+    }else{
+      toast(shakaErrStr(err), "err", 6000);
     }
   });
 
   try{
     setMsg("Loading Stream");
-    toast("Loading Stream · Please Wait","warn",0);
+    toast("Loading Stream · Please Wait", "warn", 0);
     await player.load(url);
     hideOverlay();
-    toast("Ready · Tap \u25B6 To Play","ok",5000);
+    toast("Ready · Tap Play To Start", "ok", 5000);
   }catch(_){
     hideOverlay();
-    toast("Connection Error · Retrying Now","warn",0);
+    toast("Connection Error · Retrying Now", "warn", 0);
     setTimeout(reload, 1500);
     return;
   }
 
   function onStall(){
-    if(stallTmr) return;
+    if(refreshing || $vid.paused) return;
     _bufState = true;
-    toast("Buffering · Fetching Segments","warn",0);
-    if(!started || refreshing) return;
-    stallTmr = setTimeout(function(){
-      stallTmr = null;
-      if(!edgeTried) goLiveEdge(); else reload();
-    }, 5000);
+    toast(bufferingMessage(), "warn", 0);
+    if(!started || seekState.active) return;
+    scheduleRecovery(9000);
   }
 
-  // FIX 2: onBufResume() was called unconditionally, causing a double toast on
-  // every reconnect (reload() already shows "On Air" before this fires).
-  // Now it only runs if we were actually in a buffering state (_bufState).
   function onPlaying(){
     started = true;
-    edgeTried = false;
     if(!audioFixed){
       var langs = player.getAudioLanguages();
       if(langs && langs.length){
         try{ player.selectAudioLanguage(langs[0]); audioFixed = true; }catch(_){}
       }
     }
-    if(_bufState) onBufResume();
+    onBufResume();
   }
 
+  function onCanPlay(){
+    if(started && !_bufState) return;
+    if(started && !$vid.paused) onBufResume();
+  }
+
+  $vid.addEventListener("seeking", onSeeking);
+  $vid.addEventListener("seeked", onSeeked);
   $vid.addEventListener("waiting", onStall);
   $vid.addEventListener("stalled", onStall);
   $vid.addEventListener("playing", onPlaying);
+  $vid.addEventListener("canplay", onCanPlay);
+  $vid.addEventListener("pause", function(){
+    if(!seekState.active) clearBuf();
+  });
   $vid.addEventListener("error", function(){
     if(!refreshing){
       _bufState = true;
-      toast("Buffering · Fetching Segments","warn",0);
-      setTimeout(function(){ if(!refreshing) reload(); }, 700);
+      toast(bufferingMessage(), "warn", 0);
+      if(!seekState.active) scheduleRecovery(1500);
     }
   });
 
+  var resumeAfterVisibilityChange = false;
   document.addEventListener("visibilitychange", function(){
-    if(!document.hidden){
-      setTimeout(function(){
-        if(started && $vid.paused && !refreshing) $vid.play().catch(function(){});
-      }, 400);
+    if(document.hidden){
+      resumeAfterVisibilityChange = started && !$vid.paused;
+      return;
     }
+    setTimeout(function(){
+      if(resumeAfterVisibilityChange && started && $vid.paused && !refreshing) $vid.play().catch(function(){});
+      resumeAfterVisibilityChange = false;
+    }, 400);
   });
 
   var netConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -715,6 +829,5 @@ async function main(){
 document.addEventListener("DOMContentLoaded", main);
 })();
 </script>
-<script data-cfasync="false" src="https://capitalhospitals.org/1/ee66a8d4d10b40d2ecdb4a0f9abb24e4"></script>
 </body>
 </html>
