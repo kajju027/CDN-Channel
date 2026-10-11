@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="author" content="Sayan">
 <meta name="referrer" content="no-referrer">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,29 +15,23 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/controls.min.css">
 
 <style>
-/* ─────────── Spinner CSS Variables ─────────── */
 :root{
   --ks-size:32px;
   --ks-speed:0.8s;
   --ks-color:#53FC18;
   --ks-stroke:3
 }
-
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{
   width:100%;height:100%;background:#0a0a0a;overflow:hidden;
   font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none
 }
-
-/* ─────────── Loading Overlay ─────────── */
 #overlay{
   position:fixed;inset:0;background:#0a0a0a;z-index:9999;
   display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:16px
+  flex-direction:column;gap:14px
 }
-
-/* ── Neon arc spinner (pure SVG + CSS, no libraries) ── */
 #overlay svg{
   width:var(--ks-size);height:var(--ks-size);
   animation:ks-spin var(--ks-speed) linear infinite;
@@ -47,52 +42,55 @@ html,body{
 @media(prefers-reduced-motion:reduce){
   #overlay svg{animation:ks-fade calc(var(--ks-speed) * 2) ease-in-out infinite}
 }
-
 #overlay p{
-  color:#505050;font-size:12px;letter-spacing:.5px;
-  text-align:center;padding:0 24px;font-weight:500
+  color:#686868;font-size:11px;letter-spacing:.8px;
+  text-align:center;padding:0 24px;font-weight:400;
+  text-transform:uppercase
 }
-
-/* ─────────── Channel List ─────────── */
 #channel-list{
   position:fixed;inset:0;background:#0a0a0a;z-index:9998;
-  display:none;flex-direction:column;overflow-y:auto;
-  padding:max(20px,env(safe-area-inset-top)) 16px
-           max(20px,env(safe-area-inset-bottom)) 16px
+  display:none;flex-direction:column;overflow-y:auto
 }
 #ch-header{
-  display:flex;align-items:center;justify-content:center;
-  gap:10px;margin-bottom:20px;padding-bottom:14px;
-  border-bottom:1px solid #181818
+  position:sticky;top:0;background:#0a0a0a;z-index:1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:max(20px,env(safe-area-inset-top,0px)) 20px 14px;
+  border-bottom:1px solid #111
 }
-.brand-dot{
-  width:8px;height:8px;border-radius:50%;background:#38bdf8;
-  flex-shrink:0;box-shadow:0 0 8px rgba(56,189,248,.55);
-  animation:brand-pulse 2.2s ease-in-out infinite
+#ch-title{
+  color:#b8b8b8;font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase
 }
-@keyframes brand-pulse{
-  0%,100%{opacity:1;box-shadow:0 0 8px rgba(56,189,248,.55)}
-  50%{opacity:.65;box-shadow:0 0 16px rgba(56,189,248,.85)}
+#ch-count{
+  color:#2e2e2e;font-size:10px;font-weight:600;
+  letter-spacing:.5px;font-variant-numeric:tabular-nums
 }
-#ch-header h1{color:#e0e0e0;font-size:15px;font-weight:600;letter-spacing:.8px}
 #ch-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:10px
+  gap:8px;
+  padding:16px 16px max(16px,env(safe-area-inset-bottom,0px))
 }
 .ch-card{
-  background:#111;border:1px solid #1c1c1c;border-radius:10px;
-  padding:16px 12px;cursor:pointer;text-decoration:none;
-  display:flex;align-items:center;justify-content:center;text-align:center;
-  transition:background .18s,border-color .18s,transform .12s;
-  -webkit-tap-highlight-color:transparent
+  background:#0d0d0d;border:1px solid #181818;border-radius:8px;
+  padding:14px 12px;cursor:pointer;text-decoration:none;
+  display:flex;align-items:center;gap:9px;
+  transition:background .15s,border-color .15s,transform .1s;
+  -webkit-tap-highlight-color:transparent;
+  border-left:2px solid transparent
 }
-.ch-card:hover{background:#161616;border-color:#282828}
-.ch-card:active{transform:scale(.95);background:#1c1c1c}
-.ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
-.ch-card span{color:#d8d8d8;font-size:13px;font-weight:500;line-height:1.4}
-
-/* ─────────── Player Container ─────────── */
+.ch-card:hover{background:#131313;border-color:#202020;border-left-color:#38bdf8}
+.ch-card:active{transform:scale(.96);background:#171717}
+.ch-card:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;border-radius:8px}
+.ch-num{
+  color:#282828;font-size:9px;font-weight:700;
+  letter-spacing:.4px;min-width:18px;flex-shrink:0;
+  font-variant-numeric:tabular-nums
+}
+.ch-name{
+  color:#b8b8b8;font-size:12px;font-weight:500;
+  line-height:1.35;flex:1
+}
 #pc{
   position:fixed;inset:0;background:#000;display:none;
   align-items:center;justify-content:center;touch-action:manipulation
@@ -100,81 +98,41 @@ html,body{
 video{width:100%;height:100%;object-fit:contain;background:#000}
 video.mode-fill{object-fit:fill}
 video.mode-cover{object-fit:cover}
-
-/* ─────────────────────────────────────────────────────────────
-   STATUS BAR — Bottom-left, wide flat rectangle, ALL CAPS,
-   professional. Pure CSS, no third-party fonts.
-──────────────────────────────────────────────────────────────── */
 #status{
   position:fixed;
-  /* just above the Shaka controls (~60px tall) */
   bottom:calc(66px + env(safe-area-inset-bottom,0px));
-  left:12px;
-  right:auto;
-  top:auto;
+  left:12px;right:auto;top:auto;
   transform:translateY(6px);
   z-index:9997;
-
-  display:flex;
-  align-items:center;
-  gap:7px;
-
-  /* Wide rectangle: long on x-axis, short on y-axis */
-  height:26px;
-  min-width:156px;
-  max-width:272px;
+  display:flex;align-items:center;gap:7px;
   padding:0 14px 0 10px;
-  overflow:hidden;
-  white-space:nowrap;
-
-  /* Professional dark glass box */
+  height:26px;min-width:156px;max-width:272px;
+  overflow:hidden;white-space:nowrap;
   background:linear-gradient(160deg,rgba(9,9,11,.94) 0%,rgba(15,15,18,.90) 100%);
   border:1px solid rgba(255,255,255,.09);
   border-top:1px solid rgba(255,255,255,.13);
   border-radius:4px;
-  box-shadow:0 2px 16px rgba(0,0,0,.65),
-             inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-
-  /* Typography: small, all-caps, tight tracking */
-  font-size:9px;
-  font-weight:700;
-  letter-spacing:1.1px;
-  text-transform:uppercase;
-  font-variant-numeric:tabular-nums;
-
-  pointer-events:none;
-  opacity:0;
+  box-shadow:0 2px 16px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  font-size:9px;font-weight:700;letter-spacing:1.1px;
+  text-transform:uppercase;font-variant-numeric:tabular-nums;
+  pointer-events:none;opacity:0;
   transition:opacity .22s ease,transform .22s ease
 }
 #status.show{opacity:1;transform:translateY(0)}
-
-/* Status dot — 5 px, matches state color */
-.st-dot{
-  width:5px;height:5px;border-radius:50%;
-  flex-shrink:0;display:inline-block
-}
-
-/* State colour tokens */
+.st-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:inline-block}
 #status.ok   {color:#9ca0a8}
 #status.ok   .st-dot{background:#60a5fa}
-
 #status.live {color:#c4c8ce}
 #status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
-
 #status.warn {color:#f2c94c}
 #status.warn .st-dot{background:#fb923c;animation:dot-pulse 1s ease-in-out infinite}
-
 #status.err  {color:#fca5a5}
 #status.err  .st-dot{background:#f87171}
-
 @keyframes dot-pulse{
   0%,100%{opacity:1;transform:scale(1)}
   50%{opacity:.28;transform:scale(.52)}
 }
-
-/* ─────────── Custom control buttons ─────────── */
 .sp-btn{
   background:transparent!important;border:none!important;
   cursor:pointer!important;padding:0 8px!important;
@@ -210,33 +168,28 @@ video.mode-cover{object-fit:cover}
 <body>
 
 <div id="overlay">
-  <!--
-    Neon-lime spinner — pure SVG + CSS.
-    - 26% arc of circumference at r=13 → dasharray≈21.24 / gap≈60.44
-    - Color, size, speed, stroke controlled by CSS variables on :root
-    - pointer-events:none (never blocks clicks)
-    - Respects prefers-reduced-motion (opacity pulse instead of spin)
-  -->
   <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <circle cx="16" cy="16" r="13" fill="none"
       style="stroke:var(--ks-color);stroke-width:var(--ks-stroke);stroke-linecap:round;stroke-dasharray:21.24 60.44"/>
   </svg>
-  <p id="loadMsg">Loading.....</p>
+  <p id="loadMsg">Loading</p>
 </div>
 
 <div id="status"></div>
 
 <div id="channel-list">
   <div id="ch-header">
-    <span class="brand-dot"></span>
-    <h1>CnpTV</h1>
+    <span id="ch-title">Live Channels</span>
+    <span id="ch-count"></span>
   </div>
   <div id="ch-grid"></div>
 </div>
 
 <div id="pc">
+  <!-- FIX 1: added `muted` — enables muted-autoplay so $vid.play() succeeds,
+       and makes unmuteOnce actually meaningful (unmutes on first user tap) -->
   <video id="v" playsinline webkit-playsinline
-    preload="none"
+    preload="none" muted
     x5-video-player-type="h5"
     x5-video-player-fullscreen="true">
   </video>
@@ -280,7 +233,6 @@ var PROF = {
 var FITS       = ["contain","fill","cover"];
 var FIT_LABELS = {contain:"Fit", fill:"Fill", cover:"Zoom"};
 
-/* ── toast: text-transform:uppercase applied via CSS ── */
 function toast(msg, type, dur){
   $status.innerHTML = '<span class="st-dot"></span><span>' + msg + '</span>';
   $status.className = "show " + (type || "ok");
@@ -320,7 +272,6 @@ function normalizeKidKey(kid, key){
 
 function buildClearKeys(ch){
   var out = {};
-
   if(Array.isArray(ch.sonuxs) && ch.sonuxs.length > 0){
     ch.sonuxs.forEach(function(entry){
       if(typeof entry !== "string") return;
@@ -331,10 +282,8 @@ function buildClearKeys(ch){
     });
     if(Object.keys(out).length > 0) return out;
   }
-
   var single = normalizeKidKey(ch.key_id, ch.key);
   if(single) out[single.kid] = single.key;
-
   return out;
 }
 
@@ -357,12 +306,14 @@ async function loadData(){
 
 function renderList(channels){
   hideOverlay();
+  var $count = document.getElementById("ch-count");
+  if($count) $count.textContent = channels.length;
   var f = document.createDocumentFragment();
-  channels.forEach(function(ch){
+  channels.forEach(function(ch, i){
     var a = document.createElement("a");
     a.className = "ch-card";
     a.href = "?id=" + encodeURIComponent(ch.id);
-    a.innerHTML = "<span>" + ch.name + "</span>";
+    a.innerHTML = '<span class="ch-num">' + (i + 1) + '</span><span class="ch-name">' + ch.name + '</span>';
     f.appendChild(a);
   });
   $grid.appendChild(f);
@@ -498,7 +449,6 @@ async function startPlayer(ch){
   var raw     = rawCookie(cookie);
   var url     = ch.stream_url;
   var drmKeys = buildClearKeys(ch);
-  var keyMode = keyModeOf(ch);
 
   var restrictionsRelaxed = false;
   var thermalApplied      = false;
@@ -531,20 +481,8 @@ async function startPlayer(ch){
       if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
     }
     return {
-      /*
-       * ── AUDIO FIX FOR SHAKA 4.x / 5.x ──────────────────────────
-       * Shaka 4.0+ changed audio-language selection to strict RFC 4647
-       * matching. Streams with unlabelled / 'und' audio tracks were
-       * silently skipped, leaving only the video track active.
-       *
-       * Fix 1: preferredAudioLanguage:'' → no-preference mode,
-       *        picks the first available track regardless of language.
-       * Fix 2: preferredAudioCodecs → whitelist all common codecs so
-       *        MediaCapabilities filtering doesn't discard audio.
-       * ─────────────────────────────────────────────────────────── */
       preferredAudioLanguage: '',
       preferredAudioCodecs: ['mp4a.40.2','mp4a.40.5','ac-3','ec-3','opus','flac'],
-
       drm:{ clearKeys: drmKeys },
       manifest:{
         defaultPresentationDelay:4,
@@ -574,27 +512,12 @@ async function startPlayer(ch){
 
   player.configure(buildCfg());
 
-  /*
-   * ── AUDIO FIX 3: Explicit track selection ────────────────────────
-   * Even with preferredAudioLanguage:'', certain streams (especially
-   * those with ROLE=main audio in DASH or unlabelled HLS audio groups)
-   * may not auto-select audio in Shaka 4.x+.
-   *
-   * 'trackschanged' fires whenever the manifest's track list updates.
-   * We explicitly call selectAudioLanguage(langs[0]) once to force
-   * Shaka to commit to the first available audio language.
-   *
-   * 'onPlaying' below is a second safety net for the same purpose.
-   * ─────────────────────────────────────────────────────────────── */
   var audioFixed = false;
   player.addEventListener('trackschanged', function(){
     if(audioFixed) return;
     var langs = player.getAudioLanguages();
     if(!langs || !langs.length) return;
-    try{
-      player.selectAudioLanguage(langs[0]);
-      audioFixed = true;
-    }catch(_){}
+    try{ player.selectAudioLanguage(langs[0]); audioFixed = true; }catch(_){}
   });
 
   var T = shaka.net.NetworkingEngine.RequestType;
@@ -612,11 +535,32 @@ async function startPlayer(ch){
   var lastTry    = 0;
   var started    = false;
   var stallTmr   = null;
+  var _bufState  = false;
+  var _lastCurr  = 0;
+
+  function clearBuf(){
+    _bufState = false;
+    if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
+  }
+
+  function onBufResume(){
+    clearBuf();
+    if(!refreshing) toast("On Air · Stream Active","live",3000);
+  }
 
   function unmuteOnce(){ $vid.muted = false; }
   $pc.addEventListener("pointerdown", unmuteOnce, {capture:true,once:true});
   $pc.addEventListener("click",       unmuteOnce, {capture:true,once:true});
   $pc.addEventListener("keydown",     unmuteOnce, {capture:true,once:true});
+
+  $vid.addEventListener("timeupdate", function(){
+    if($vid.paused || $vid.ended || !_bufState || !started || refreshing) return;
+    var t = $vid.currentTime;
+    if(t > _lastCurr){
+      _lastCurr = t;
+      onBufResume();
+    }
+  });
 
   function goLiveEdge(){
     if(refreshing) return;
@@ -639,12 +583,14 @@ async function startPlayer(ch){
       if(!fresh) throw new Error("missing");
       var freshKeys = buildClearKeys(fresh);
       if(Object.keys(freshKeys).length === 0) throw new Error("no_keys");
-      cookie  = fresh.cookie;
-      raw     = rawCookie(cookie);
-      drmKeys = freshKeys;
-      keyMode = keyModeOf(fresh);
-      url     = fresh.stream_url;
-      audioFixed = false; /* reset so audio fix re-runs after reload */
+      cookie     = fresh.cookie;
+      raw        = rawCookie(cookie);
+      drmKeys    = freshKeys;
+      url        = fresh.stream_url;
+      audioFixed = false;
+      _bufState  = false;
+      _lastCurr  = 0;
+      if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
       player.configure(buildCfg());
       await player.load(url);
       $vid.play().catch(function(){});
@@ -672,6 +618,7 @@ async function startPlayer(ch){
       return;
     }
     if(RECOVERABLE.indexOf(code) !== -1){
+      _bufState = true;
       toast("Buffering · Fetching Segments","warn",0);
       setTimeout(function(){ if(!refreshing) reload(); }, 700);
     } else {
@@ -680,7 +627,7 @@ async function startPlayer(ch){
   });
 
   try{
-    setMsg("Loading Stream · Please Wait");
+    setMsg("Loading Stream");
     toast("Loading Stream · Please Wait","warn",0);
     await player.load(url);
     hideOverlay();
@@ -694,6 +641,7 @@ async function startPlayer(ch){
 
   function onStall(){
     if(stallTmr) return;
+    _bufState = true;
     toast("Buffering · Fetching Segments","warn",0);
     if(!started || refreshing) return;
     stallTmr = setTimeout(function(){
@@ -702,25 +650,27 @@ async function startPlayer(ch){
     }, 5000);
   }
 
+  // FIX 2: onBufResume() was called unconditionally, causing a double toast on
+  // every reconnect (reload() already shows "On Air" before this fires).
+  // Now it only runs if we were actually in a buffering state (_bufState).
   function onPlaying(){
     started = true;
-    if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
     edgeTried = false;
-    /* Safety net: force audio language on first play event */
     if(!audioFixed){
       var langs = player.getAudioLanguages();
       if(langs && langs.length){
         try{ player.selectAudioLanguage(langs[0]); audioFixed = true; }catch(_){}
       }
     }
-    if(!refreshing) toast("On Air · Stream Active","live",3000);
+    if(_bufState) onBufResume();
   }
 
   $vid.addEventListener("waiting", onStall);
   $vid.addEventListener("stalled", onStall);
   $vid.addEventListener("playing", onPlaying);
-  $vid.addEventListener("error",   function(){
+  $vid.addEventListener("error", function(){
     if(!refreshing){
+      _bufState = true;
       toast("Buffering · Fetching Segments","warn",0);
       setTimeout(function(){ if(!refreshing) reload(); }, 700);
     }
@@ -749,7 +699,7 @@ async function startPlayer(ch){
 async function main(){
   var id = getChId(), data;
   try{
-    setMsg("Fetching Channels…");
+    setMsg("Fetching Channels");
     data = await loadData();
   }catch(_){
     errMsg("Connection Error. Please Check Your Internet.");
