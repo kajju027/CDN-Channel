@@ -25,10 +25,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/controls.min.css">
 <style>
 :root{
-  --ks-size:32px;
-  --ks-speed:0.8s;
-  --ks-color:#53FC18;
-  --ks-stroke:3
+  --ks-size:78px;
+  --ks-speed:1.15s;
+  --ks-color:#147cf5;
+  --ks-stroke:8
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{
@@ -39,12 +39,12 @@ html,body{
 #overlay{
   position:fixed;inset:0;background:#0a0a0a;z-index:9999;
   display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:14px
+  flex-direction:column;gap:0
 }
 #overlay svg{
   width:var(--ks-size);height:var(--ks-size);
   animation:ks-spin var(--ks-speed) linear infinite;
-  pointer-events:none;display:block
+  pointer-events:none;display:block;overflow:visible
 }
 @keyframes ks-spin{to{transform:rotate(360deg)}}
 @keyframes ks-fade{0%,100%{opacity:1}50%{opacity:.18}}
@@ -204,11 +204,19 @@ video.mode-cover{object-fit:cover}
 <body>
 
 <div id="overlay">
-  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <circle cx="16" cy="16" r="13" fill="none"
-      style="stroke:var(--ks-color);stroke-width:var(--ks-stroke);stroke-linecap:round;stroke-dasharray:21.24 60.44"/>
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Loading">
+    <defs>
+      <linearGradient id="loadingGradient" x1="18" y1="78" x2="82" y2="20" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#d21cff" stop-opacity="0.25"/>
+        <stop offset="0.18" stop-color="#b624ff" stop-opacity="0.68"/>
+        <stop offset="0.43" stop-color="#7045ff"/>
+        <stop offset="0.72" stop-color="#287bff"/>
+        <stop offset="1" stop-color="#087cff"/>
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="34" stroke="url(#loadingGradient)" stroke-width="8" stroke-linecap="round" stroke-dasharray="178 36" transform="rotate(-40 50 50)"/>
   </svg>
-  <p id="loadMsg">Loading</p>
+  <p id="loadMsg" hidden>Loading</p>
 </div>
 
 <div id="status"></div>
