@@ -9,10 +9,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Live Player</title>
 <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/controls.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.5/controls.min.css">
 <style>
 :root{
   --ks-size:78px;
@@ -138,13 +137,13 @@ video.mode-cover{object-fit:cover}
   <video id="v" playsinline webkit-playsinline preload="none" muted x5-video-player-type="h5" x5-video-player-fullscreen="true"></video>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/shaka-player.ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.5/shaka-player.ui.min.js"></script>
 
 <script>
 var CONFIG = {
-  streamUrl: "PASTE_YOUR_MPD_LINK_HERE",
+  streamUrl: "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/dev1hjwzh9/out/v1/a5f0ee7ad7b24906b14f43bebbbe4678/cenc.mpd",
   rawKey: "cc91508324ce9dcaf425a43d58f1d9d4:643e5474d9edd87c7d9091c8c97994ca",
-  referer: "https://www.jiotv.com/",
+  referer: "https://otte.cache.aiv-cdn.net/",
   userAgent: "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 };
 </script>
