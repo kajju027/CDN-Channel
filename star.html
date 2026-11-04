@@ -269,25 +269,7 @@ var $pc      = document.getElementById("pc");
 var $vid     = document.getElementById("v");
 var _stTmr   = null;
 
-function getTier(){
-  var mem   = navigator.deviceMemory || 4;
-  var cores = navigator.hardwareConcurrency || 4;
-  var mob   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var conn  = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  var net   = conn ? (conn.effectiveType || "4g") : "4g";
-  if(!mob) return "high";
-  if(mem <= 1.5 || cores <= 2 || net === "slow-2g" || net === "2g" || (conn && conn.saveData)) return "low";
-  if(mem <= 3   || cores <= 4) return "mid";
-  return "high";
-}
-
-var TIER = getTier();
-var IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-var PROF = {
-  low:  {buf:20, reBuf:3,   behind:8,  maxH:480,  maxBw:1000000, bwEst:500000,  delay:16},
-  mid:  {buf:16, reBuf:2.5, behind:12, maxH:720,  maxBw:2500000, bwEst:1000000, delay:12},
-  high: {buf:14, reBuf:2,   behind:20, maxH:IS_MOBILE ? 720 : 1080, maxBw:0, bwEst:1500000, delay:10}
-}[TIER];
+var CFG = {buf:15, reBuf:2, behind:20, delay:6, bwEst:1500000};
 
 var FITS       = ["contain","fill","cover"];
 var FIT_LABELS = {contain:"Fit", fill:"Fill", cover:"Zoom"};
@@ -363,14 +345,7 @@ function keyModeOf(ch){
 }
 
 async function loadData(){
-  var ctl = typeof AbortController === "function" ? new AbortController() : null;
-  var tm = ctl ? setTimeout(function(){ ctl.abort(); }, 12000) : null;
-  var r;
-  try{
-    r = await fetch(API, {cache:"no-cache", headers:{Accept:"application/json"}, signal: ctl ? ctl.signal : undefined});
-  }finally{
-    if(tm) clearTimeout(tm);
-  }
+  var r = await fetch(API, {cache:"no-store", headers:{Accept:"application/json"}});
   if(!r.ok) throw new Error("HTTP " + r.status);
   var d = await r.json();
   if(!d || !Array.isArray(d.channels) || !d.channels.length) throw new Error("empty");
@@ -549,50 +524,26 @@ async function startPlayer(ch){
   var url     = ch.stream_url;
   var drmKeys = buildClearKeys(ch);
 
-  var restrictionsRelaxed = false;
-  var thermalApplied      = false;
-  var sessionStart        = Date.now();
-
   if(Object.keys(drmKeys).length === 0){
     toast("No DRM Keys · Stream Blocked","err",0);
     return;
   }
 
-  var thermalTimer = setInterval(function(){
-    if(Date.now() - sessionStart < 60*60*1000) return;
-    clearInterval(thermalTimer);
-    if(thermalApplied) return;
-    thermalApplied = true;
-    try{
-      player.configure("streaming.bufferBehind", 8);
-      if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
-        player.configure("abr.restrictions.maxHeight", Math.min(PROF.maxH, 720));
-      }
-    }catch(_){}
-  }, 60000);
-
   function buildCfg(){
-    var effMaxH = (thermalApplied && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-      ? Math.min(PROF.maxH, 720) : PROF.maxH;
-    var restr = {};
-    if(!restrictionsRelaxed){
-      if(effMaxH < 1080) restr.maxHeight    = effMaxH;
-      if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
-    }
     return {
       preferredAudioLanguage: '',
       preferredAudioCodecs: ['mp4a.40.2','mp4a.40.5','ac-3','ec-3','opus','flac'],
       drm:{ clearKeys: drmKeys },
       manifest:{
-        defaultPresentationDelay:PROF.delay,
+        defaultPresentationDelay:CFG.delay,
         ignoreTextStreamFailures:true,
         retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:15000,connectionTimeout:8000,stallTimeout:8000}
       },
       streaming:{
         lowLatencyMode:false,
-        bufferingGoal:PROF.buf,
-        rebufferingGoal:PROF.reBuf,
-        bufferBehind:PROF.behind,
+        bufferingGoal:CFG.buf,
+        rebufferingGoal:CFG.reBuf,
+        bufferBehind:CFG.behind,
         safeSeekOffset:4,
         stallEnabled:true,
         stallThreshold:2,
@@ -602,11 +553,10 @@ async function startPlayer(ch){
       },
       abr:{
         enabled:true,
-        defaultBandwidthEstimate:PROF.bwEst,
+        defaultBandwidthEstimate:CFG.bwEst,
         switchInterval:6,
         bandwidthUpgradeTarget:.75,
-        bandwidthDowngradeTarget:.95,
-        restrictions:restr
+        bandwidthDowngradeTarget:.95
       }
     };
   }
@@ -638,24 +588,6 @@ async function startPlayer(ch){
   var _bufState = false;
   var _lastCurr = 0;
   var seekState = {active:false,wantsDvr:false,target:null,timer:null};
-  var needFresh = false;
-  var dataStamp = Date.now();
-  var recoveryStep = 0;
-  var liveSynced = false;
-  var coolTimer = null;
-  var TOKEN_TTL = 10 * 60 * 1000;
-
-  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
-
-  function syncLive(){
-    try{
-      if(!player.isLive()) return;
-      var r = getSeekRange();
-      if(!r || r.end - r.start < PROF.delay + 8) return;
-      var gap = r.end - $vid.currentTime;
-      if(gap < PROF.delay - 2 || gap > PROF.delay + 12) $vid.currentTime = r.end - PROF.delay;
-    }catch(_){}
-  }
 
   function clearStallTimer(){
     if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
@@ -663,7 +595,6 @@ async function startPlayer(ch){
 
   function clearBuf(){
     _bufState = false;
-    recoveryStep = 0;
     clearStallTimer();
   }
 
@@ -677,7 +608,7 @@ async function startPlayer(ch){
 
   function isDvrPosition(time){
     var range = getSeekRange();
-    return !!range && isFinite(time) && time < range.end - (PROF.delay + 12);
+    return !!range && isFinite(time) && time < range.end - 12;
   }
 
   function rememberPosition(){
@@ -722,17 +653,7 @@ async function startPlayer(ch){
     clearStallTimer();
     stallTmr = setTimeout(function(){
       stallTmr = null;
-      if(refreshing || !started || $vid.paused || seekState.active) return;
-      recoveryStep++;
-      if(recoveryStep === 1){
-        try{ player.retryStreaming(); }catch(_){}
-        scheduleRecovery(7000);
-      }else if(recoveryStep === 2){
-        if(!seekState.wantsDvr) syncLive();
-        scheduleRecovery(7000);
-      }else{
-        reload();
-      }
+      if(!refreshing && started && !$vid.paused && !seekState.active) reload();
     }, delay);
   }
 
@@ -775,11 +696,7 @@ async function startPlayer(ch){
   async function reload(){
     var now = Date.now();
     if(refreshing || now - lastTry < 1500) return;
-    if(retries >= 5){
-      toast("Stream Unavailable · Max Retries Reached", "err", 0);
-      if(!coolTimer) coolTimer = setTimeout(function(){ coolTimer = null; retries = 0; needFresh = true; lastTry = 0; reload(); }, 30000);
-      return;
-    }
+    if(retries >= 5){ toast("Stream Unavailable · Max Retries Reached", "err", 0); return; }
     rememberPosition();
     var resumeAt = seekState.wantsDvr ? seekState.target : null;
     refreshing = true;
@@ -788,34 +705,26 @@ async function startPlayer(ch){
     clearStallTimer();
     toast(resumeAt !== null ? "Reconnecting Replay · Attempt " + retries + " Of 5" : "Reconnecting · Attempt " + retries + " Of 5", "warn", 0);
     try{
-      if(needFresh || Date.now() - dataStamp > TOKEN_TTL){
-        await sleep(Math.random() * 1200);
-        var d = await loadData();
-        var fresh = d.channels.find(function(c){ return c.id === ch.id; });
-        if(!fresh) throw new Error("missing");
-        var freshKeys = buildClearKeys(fresh);
-        if(Object.keys(freshKeys).length === 0) throw new Error("no_keys");
-        cookie = fresh.cookie;
-        raw = rawCookie(cookie);
-        drmKeys = freshKeys;
-        url = fresh.stream_url;
-        dataStamp = Date.now();
-        needFresh = false;
-      }
+      var d = await loadData();
+      var fresh = d.channels.find(function(c){ return c.id === ch.id; });
+      if(!fresh) throw new Error("missing");
+      var freshKeys = buildClearKeys(fresh);
+      if(Object.keys(freshKeys).length === 0) throw new Error("no_keys");
+      cookie = fresh.cookie;
+      raw = rawCookie(cookie);
+      drmKeys = freshKeys;
+      url = fresh.stream_url;
       audioFixed = false;
       _bufState = false;
       _lastCurr = 0;
       player.configure(buildCfg());
       await player.load(url, resumeAt === null ? undefined : resumeAt);
-      if(resumeAt === null) syncLive();
       var restored = resumeAt === null ? false : restoreDvrPosition(resumeAt);
       await $vid.play().catch(function(){});
       retries = 0;
-      recoveryStep = 0;
       if(resumeAt !== null && !restored) toast("Replay Position Expired · Starting At Earliest Available", "ok", 4000);
       else toast(resumeAt !== null ? "Replay · Resuming Selected Position" : "On Air · Stream Active", resumeAt !== null ? "ok" : "live", 4000);
     }catch(_){
-      needFresh = true;
       setTimeout(reload, Math.max(1700, Math.min(1000 * Math.pow(2, retries - 1), 8000)));
     }finally{
       refreshing = false;
@@ -827,37 +736,10 @@ async function startPlayer(ch){
   player.addEventListener("error", function(ev){
     var err = ev.detail;
     var code = err && err.code;
-    if(code === 4014 && !restrictionsRelaxed){
-      rememberPosition();
-      var recoveryPoint = seekState.wantsDvr ? seekState.target : null;
-      restrictionsRelaxed = true;
-      refreshing = true;
-      player.configure(buildCfg());
-      toast("Adjusting Stream Quality", "warn", 2000);
-      player.load(url, recoveryPoint === null ? undefined : recoveryPoint)
-        .then(function(){
-          if(recoveryPoint !== null) restoreDvrPosition(recoveryPoint);
-          return $vid.play();
-        })
-        .then(function(){ toast(recoveryPoint !== null ? "Replay · Playing Behind Live" : "On Air · Stream Active", recoveryPoint !== null ? "ok" : "live", 4000); })
-        .catch(function(){
-          refreshing = false;
-          reload();
-        })
-        .finally(function(){ refreshing = false; });
-      return;
-    }
-    if(code === 1001 && err.data && (err.data[1] === 401 || err.data[1] === 403 || err.data[1] === 410)){
-      needFresh = true;
-      _bufState = true;
-      toast(bufferingMessage(), "warn", 0);
-      if(!seekState.active && !refreshing && !stallTmr){ recoveryStep = 2; scheduleRecovery(1500); }
-      return;
-    }
     if(RECOVERABLE.indexOf(code) !== -1){
       _bufState = true;
       toast(bufferingMessage(), "warn", 0);
-      if(!seekState.active && !stallTmr) scheduleRecovery(10000);
+      if(!seekState.active && !stallTmr) scheduleRecovery(12000);
     }else{
       toast(shakaErrStr(err), "err", 6000);
     }
@@ -867,7 +749,6 @@ async function startPlayer(ch){
     setMsg("Loading Stream");
     toast("Loading Stream · Please Wait", "warn", 0);
     await player.load(url);
-    syncLive();
     hideOverlay();
     toast("Ready · Tap Play To Start", "ok", 5000);
   }catch(_){
@@ -882,15 +763,11 @@ async function startPlayer(ch){
     _bufState = true;
     toast(bufferingMessage(), "warn", 0);
     if(!started || seekState.active) return;
-    scheduleRecovery(9000);
+    scheduleRecovery(12000);
   }
 
   function onPlaying(){
     started = true;
-    if(!liveSynced){
-      liveSynced = true;
-      if(!seekState.wantsDvr) syncLive();
-    }
     if(!audioFixed){
       var langs = player.getAudioLanguages();
       if(langs && langs.length){
@@ -918,7 +795,7 @@ async function startPlayer(ch){
     if(!refreshing){
       _bufState = true;
       toast(bufferingMessage(), "warn", 0);
-      if(!seekState.active){ recoveryStep = 2; scheduleRecovery(1500); }
+      if(!seekState.active) scheduleRecovery(1500);
     }
   });
 
@@ -929,22 +806,10 @@ async function startPlayer(ch){
       return;
     }
     setTimeout(function(){
-      if(resumeAfterVisibilityChange && started && !seekState.wantsDvr && !refreshing) syncLive();
       if(resumeAfterVisibilityChange && started && $vid.paused && !refreshing) $vid.play().catch(function(){});
       resumeAfterVisibilityChange = false;
     }, 400);
   });
-
-  var netConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if(netConn){
-    netConn.addEventListener("change", function(){
-      if(!player || restrictionsRelaxed) return;
-      var t = netConn.effectiveType || "4g";
-      var h = t === "slow-2g" || t === "2g" ? 240 : t === "3g" ? Math.min(PROF.maxH, 480) : PROF.maxH;
-      try{ player.configure("abr.restrictions.maxHeight", h); }catch(_){}
-      if(h < PROF.maxH) toast("Slow Network · Reducing Quality","warn",3000);
-    });
-  }
 }
 
 async function main(){
