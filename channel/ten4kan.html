@@ -1,717 +1,946 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="author" content="Sayan">
+<meta charset="utf-8">
+<title>Video Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
-<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Live Player</title>
-<link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="dns-prefetch" href="//www.jiotv.com">
-<link rel="preconnect" href="https://www.jiotv.com" crossorigin>
-<link rel="dns-prefetch" href="//jiotvpllive.cdn.jio.com">
-<link rel="preconnect" href="https://jiotvpllive.cdn.jio.com" crossorigin>
-
-<link rel="dns-prefetch" href="//jiotvmblive.cdn.jio.com">
-<link rel="preconnect" href="https://jiotvmblive.cdn.jio.com" crossorigin>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/controls.min.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.css">
+<!-- hls.js must load before the player script. Plyr (polyfilled build) adds support for older browsers / smart TVs. -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.polyfilled.js"></script>
 <style>
 :root{
-  --ks-size:78px;
-  --ks-speed:1.15s
+  --plyr-color-main:#00b8ff;
+  --plyr-video-background:#000;
+  --plyr-menu-background:rgba(12,14,20,.97);
+  --plyr-menu-color:#fff;
+  --plyr-tooltip-background:rgba(12,14,20,.97);
+  --plyr-tooltip-color:#fff;
+  --plyr-font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{
-  width:100%;height:100%;background:#0a0a0a;overflow:hidden;
-  font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none
-}
-#overlay{
-  position:fixed;top:0;right:0;bottom:0;left:0;background:#0a0a0a;z-index:9999;
-  display:flex;align-items:center;justify-content:center;flex-direction:column
-}
-#overlay svg{
-  width:var(--ks-size);height:var(--ks-size);
-  animation:ks-spin var(--ks-speed) linear infinite;
-  pointer-events:none;display:block;overflow:visible
-}
-@keyframes ks-spin{to{transform:rotate(360deg)}}
-@keyframes ks-fade{0%,100%{opacity:1}50%{opacity:.18}}
-@media(prefers-reduced-motion:reduce){
-  #overlay svg{animation:ks-fade calc(var(--ks-speed) * 2) ease-in-out infinite}
-}
-#overlay p{
-  color:#686868;font-size:11px;letter-spacing:.8px;
-  text-align:center;padding:0 24px;font-weight:400;
-  text-transform:uppercase
-}
-#pc{
-  position:fixed;top:0;right:0;bottom:0;left:0;background:#000;display:flex;
-  align-items:center;justify-content:center;touch-action:manipulation
-}
-video{width:100%;height:100%;object-fit:contain;background:#000}
-video.mode-fill{object-fit:fill}
-video.mode-cover{object-fit:cover}
-#status{
-  position:fixed;
-  bottom:calc(66px + env(safe-area-inset-bottom,0px));
-  left:12px;right:auto;top:auto;
-  transform:translateY(6px);
-  z-index:9997;
-  display:flex;align-items:center;
-  padding:0 14px 0 10px;
-  height:26px;min-width:156px;max-width:272px;
-  overflow:hidden;white-space:nowrap;
-  background:linear-gradient(160deg,rgba(9,9,11,.94) 0%,rgba(15,15,18,.90) 100%);
-  border:1px solid rgba(255,255,255,.09);
-  border-top:1px solid rgba(255,255,255,.13);
-  border-radius:4px;
-  box-shadow:0 2px 16px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  font-size:9px;font-weight:700;letter-spacing:1.1px;
-  text-transform:uppercase;font-variant-numeric:tabular-nums;
-  pointer-events:none;opacity:0;
-  transition:opacity .22s ease,transform .22s ease
-}
-#status.show{opacity:1;transform:translateY(0)}
-.st-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:7px}
-#status.ok   {color:#9ca0a8}
-#status.ok   .st-dot{background:#60a5fa}
-#status.live {color:#c4c8ce}
-#status.live .st-dot{background:#22d3a0;animation:dot-pulse 2s ease-in-out infinite}
-#status.warn {color:#f2c94c}
-#status.warn .st-dot{background:#fb923c;animation:dot-pulse 1s ease-in-out infinite}
-#status.err  {color:#fca5a5}
-#status.err  .st-dot{background:#f87171}
-@keyframes dot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.28;transform:scale(.52)}}
-.sp-btn{
-  background:transparent!important;border:none!important;
-  cursor:pointer!important;padding:0 8px!important;
-  opacity:.75;display:flex;align-items:center;justify-content:center;
-  height:100%;min-width:36px;
-  transition:opacity .15s,color .15s;
-  color:#fff!important;-webkit-tap-highlight-color:transparent
-}
-.sp-btn:hover{opacity:1}
-.sp-btn:active{opacity:1;transform:scale(.9)}
-.sp-btn:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;border-radius:6px}
-.sp-btn.active{opacity:1;color:#38bdf8!important}
-.sp-fit-btn{padding:0 7px!important;min-width:auto!important}
-.fit-pill{
-  font-size:10px;font-weight:700;letter-spacing:.4px;
-  padding:3px 7px;border-radius:4px;line-height:1;
-  border:1.5px solid rgba(255,255,255,.28);
-  color:rgba(255,255,255,.8);
-  pointer-events:none;white-space:nowrap;
-  transition:border-color .2s,color .2s
-}
-.sp-fit-btn:hover      .fit-pill{border-color:rgba(255,255,255,.55);color:#fff}
-.sp-fit-btn.mode-fill  .fit-pill{border-color:#38bdf8;color:#38bdf8}
-.sp-fit-btn.mode-cover .fit-pill{border-color:#a78bfa;color:#a78bfa}
-.shaka-controls-container button{color:#fff!important}
-.shaka-video-container{background-color:#000!important}
-@media(max-width:380px){
-  .fit-pill{font-size:9px;padding:2px 5px}
-  .sp-btn{padding:0 5px!important}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:#000;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+/* Full-screen container. top/right/bottom/left is used instead of "inset" and
+   fixed positioning instead of "dvh" so older mobile browsers and TV browsers work. */
+.video-container{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:#000;overflow:hidden;isolation:isolate;touch-action:manipulation}
+#player{display:block;width:100%;height:100%;background:#000;object-fit:contain}
+.plyr,.plyr__video-wrapper,.plyr video{width:100%;height:100%;background:#000}
+.plyr video{object-fit:contain}
+.plyr{--plyr-control-spacing:10px;--plyr-control-radius:6px;--plyr-font-size-base:14px;--plyr-font-size-small:12px}
+.plyr__control{transition:background-color .15s ease,opacity .15s ease}
+.plyr__control:hover,.plyr__control[aria-expanded="true"]{background:rgba(255,255,255,.08)}
+.plyr__control:focus{outline:2px solid #00b8ff;outline-offset:-2px}
+.plyr__menu__container{border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
+.sonu-aspect-control{width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}
+.sonu-aspect-control svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sonu-aspect-control:active{transform:scale(.94)}
+.buffering-overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:transparent;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .15s ease,visibility .15s ease}
+.buffering-overlay.is-visible{opacity:1;visibility:visible}
+.buffering-spinner{width:24px;height:24px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-right-color:rgba(255,255,255,.65);border-radius:50%;-webkit-animation:sonu-spin .72s linear infinite;animation:sonu-spin .72s linear infinite;will-change:transform}
+@-webkit-keyframes sonu-spin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}
+@keyframes sonu-spin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}
+.video-mode-fit .plyr video,.video-mode-fit #player{object-fit:contain}
+.video-mode-stretch .plyr video,.video-mode-stretch #player{object-fit:fill}
+.video-mode-crop .plyr video,.video-mode-crop #player{object-fit:cover}
+/* width + max-width instead of min() for older browsers */
+.plain-error{position:fixed;top:16px;right:12px;left:auto;width:88vw;max-width:720px;z-index:99999;margin:0;padding:0;color:#d5d5d5;background:transparent;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:11px;line-height:1.5;font-weight:400;text-align:right;white-space:normal;pointer-events:none;-webkit-user-select:none;user-select:none}
+@media (max-width:600px){
+  .plyr{--plyr-control-spacing:8px}
+  .plain-error{top:12px;right:10px;width:92vw;max-width:620px;font-size:10.5px}
+  .sonu-aspect-control{width:34px!important;min-width:34px!important;height:34px!important}
+  .sonu-aspect-control svg{width:17px;height:17px}
+  .buffering-spinner{width:22px;height:22px}
 }
 </style>
-<script data-cfasync="false" src="https://aarems.org/1/20a5388c5a01eec53d5b3c070715e5e9"></script>
 </head>
 <body>
-
-<div id="overlay">
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Loading">
-    <defs>
-      <linearGradient id="loadingGradient" x1="18" y1="78" x2="82" y2="20" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#d21cff" stop-opacity="0.25"/>
-        <stop offset="0.18" stop-color="#b624ff" stop-opacity="0.68"/>
-        <stop offset="0.43" stop-color="#7045ff"/>
-        <stop offset="0.72" stop-color="#287bff"/>
-        <stop offset="1" stop-color="#087cff"/>
-      </linearGradient>
-    </defs>
-    <circle cx="50" cy="50" r="34" stroke="url(#loadingGradient)" stroke-width="8" stroke-linecap="round" stroke-dasharray="178 36" transform="rotate(-40 50 50)"/>
-  </svg>
-  <p id="loadMsg" hidden>Loading</p>
-</div>
-
-<div id="status"></div>
-
-<div id="pc">
-  <video id="v" playsinline webkit-playsinline preload="none" muted x5-video-player-type="h5" x5-video-player-fullscreen="true"></video>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.2.0/shaka-player.ui.min.js"></script>
-
+<main class="video-container" id="container">
+  <video id="player" controls playsinline webkit-playsinline preload="metadata"></video>
+  <div class="buffering-overlay" id="buffering" aria-hidden="true">
+    <span class="buffering-spinner"></span>
+  </div>
+</main>
 <script>
-var CONFIG = {
-  streamUrl: "https://jiotvpllive.cdn.jio.com/bpk-tv/SonyTen4Kan_BTS/WDVLive/index.mpd",
-  cookie: "__hdnea__=st=1792611328~exp=1792632928~acl=/bpk-tv/SonyTen4Kan_BTS/WDVLive/*~hmac=191f89f54422383f1f25226754984471739c04a608ba730a74c383ded0e561a3",
-  keys: [
-    "2a6f882e5a6950a290b3f4abecda9b99:f611a2f1ab3b2f9ba20d5b28e2f307c7",
-        "89f718cf6798592ba7959774a180083d:5a9df03a9d5d265bb84c5dbe209379de",
-        "dc27e6d7d5165fb09916a0abfc9f0fd5:eb615521eb94823b9660063e5d1a32a1",
-        "29fbce3c6dcb5b2abd0b4f08a73b30e4:aef80830a031da5a4b584663bb8d3b1a",
-        "5056e88c726656f6bab25d3a9d39fcc6:45450b6cda48888d195bbe82fdcdc3de"
-  ],
-  referer: "https://www.jiotv.com/",
-  userAgent: "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+(function(){"use strict";
+
+/* =====================================================================
+   FILE 2 - FIXED LINK MODE (no URL parameters)
+   Edit the two lines below. Nothing else needs to be changed.
+
+   VIDEO_URL  : your video link (HLS .m3u8, or mp4 / webm). Required.
+                A relative path such as "video/live.m3u8" also works.
+   POSTER_URL : poster image shown before playback starts. Optional ("" = none).
+
+   URL parameters (?url=...) are ignored in this file.
+   There is no domain lock: the page works on any domain, in any iframe, or opened directly.
+   ===================================================================== */
+const VIDEO_URL="https://sayan.info/live.m3u8";
+const POSTER_URL="";
+
+/* Tuning values. These normally do not need to be changed. */
+const CONFIG=Object.freeze({
+
+  retryBaseMs:1000,
+  retryMaxMs:16000,
+  maxRecoveryAttempts:8,
+  maxImmediateNetworkRecoveries:2,
+  mediaRecoveryLimit:2,
+  fullRestartLimit:4,
+  maxBufferLength:30,
+  backBufferLength:30,
+  maxMaxBufferLength:60,
+  maxBufferSize:62914560,
+  maxBufferHole:.5,
+  lowLatencyMode:false,
+  liveSyncDurationCount:5,
+  liveMaxLatencyDurationCount:12,
+  maxLiveSyncPlaybackRate:1,
+  startupTimeoutMs:30000,
+  visibilityRecoveryCooldownMs:3000,
+  bufferingDelayMs:450,
+  stallRecoveryDelayMs:2500,
+  stallRecoveryCooldownMs:6000,
+  remoteSeekSeconds:10
+});
+
+const state={
+  container:null,
+  video:null,
+  buffering:null,
+  plyr:null,
+  hls:null,
+  src:"",
+  logo:"",
+  destroyed:false,
+  usingNative:false,
+  initializing:false,
+  forceFullRestart:false,
+  recoveryTimer:0,
+  recoveryAttempts:0,
+  immediateNetworkRecoveries:0,
+  mediaRecoveries:0,
+  fullRestarts:0,
+  lastErrorKey:"",
+  lastNetworkErrorAt:0,
+  lastVisibilityRecoveryAt:0,
+  lastStallRecoveryAt:0,
+  sourceGeneration:0,
+  startupTimer:0,
+  bufferingTimer:0,
+  stallTimer:0,
+  aspectIndex:0,
+  wasPlayingBeforeHidden:false,
+  lastKnownTime:0
 };
-</script>
 
-<script>
-(function(){
-"use strict";
+const $=function(id){return document.getElementById(id)};
+function text(value){return String(value==null?"":value).trim()}
 
-var $overlay = document.getElementById("overlay");
-var $loadMsg = document.getElementById("loadMsg");
-var $status  = document.getElementById("status");
-var $pc      = document.getElementById("pc");
-var $vid     = document.getElementById("v");
-var _stTmr   = null;
+/* ---------- Small helpers ---------- */
 
-function getTier(){
-  var mem   = navigator.deviceMemory || 4;
-  var cores = navigator.hardwareConcurrency || 4;
-  var mob   = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var conn  = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  var net   = conn ? (conn.effectiveType || "4g") : "4g";
-  if(!mob) return "high";
-  if(mem <= 1.5 || cores <= 2 || net === "slow-2g" || net === "2g") return "low";
-  if(mem <= 3   || cores <= 4) return "mid";
-  return "high";
+/* video.play() returns a Promise on modern browsers but undefined on very old ones. */
+function safePlay(){
+  const video=state.video;
+  if(!video)return;
+  try{
+    const result=video.play();
+    if(result&&typeof result.catch==="function")result.catch(function(){});
+  }catch(_){}
 }
 
-var TIER = getTier();
-var PROF = {
-  low:  {buf:4,  reBuf:1.5, behind:10, maxH:480,  maxBw:1000000, bwEst:400000 },
-  mid:  {buf:7,  reBuf:1.5, behind:20, maxH:720,  maxBw:3000000, bwEst:1000000},
-  high: {buf:10, reBuf:1.5, behind:25, maxH:1080, maxBw:0,       bwEst:2000000}
-}[TIER];
+/* ---------- On-screen status / error text ---------- */
 
-var FITS       = ["contain","fill","cover"];
-var FIT_LABELS = {contain:"Fit", fill:"Fill", cover:"Zoom"};
+function setError(message){
+  const value=text(message)||"STREAM ERROR";
+  if(state.lastErrorKey===value)return;
+  state.lastErrorKey=value;
+  let node=$("plain-error");
+  if(!node){
+    node=document.createElement("div");
+    node.id="plain-error";
+    node.className="plain-error";
+    if(state.container)state.container.appendChild(node);
+  }
+  node.textContent=value;
+}
+function clearError(){
+  state.lastErrorKey="";
+  const node=$("plain-error");
+  if(node&&node.parentNode)node.parentNode.removeChild(node);
+}
 
-function toast(msg, type, dur){
-  $status.innerHTML = '<span class="st-dot"></span><span>' + msg + '</span>';
-  $status.className = "show " + (type || "ok");
-  if(_stTmr){ clearTimeout(_stTmr); _stTmr = null; }
-  if(dur !== 0){
-    _stTmr = setTimeout(function(){
-      $status.className = $status.className.replace("show","").trim();
-      _stTmr = null;
-    }, dur || 4000);
+/* ---------- Buffering spinner + stall watchdog ---------- */
+
+function showBuffering(){
+  if(!state.buffering)return;
+  state.buffering.classList.add("is-visible");
+  state.buffering.setAttribute("aria-hidden","false");
+}
+function hideBuffering(){
+  if(state.bufferingTimer){
+    clearTimeout(state.bufferingTimer);
+    state.bufferingTimer=0;
+  }
+  if(state.stallTimer){
+    clearTimeout(state.stallTimer);
+    state.stallTimer=0;
+  }
+  if(!state.buffering)return;
+  state.buffering.classList.remove("is-visible");
+  state.buffering.setAttribute("aria-hidden","true");
+}
+function scheduleBuffering(){
+  if(!state.video||!state.buffering||state.video.paused||state.video.ended)return;
+  if(state.buffering.classList.contains("is-visible"))return;
+  if(state.bufferingTimer)return;
+  state.bufferingTimer=setTimeout(function(){
+    state.bufferingTimer=0;
+    if(!state.video||state.video.paused||state.video.ended)return;
+    if(state.video.readyState<3||state.video.seeking)showBuffering();
+  },CONFIG.bufferingDelayMs);
+}
+function scheduleStallRecovery(){
+  if(state.destroyed||!state.video||state.video.paused||state.video.ended)return;
+  if(state.stallTimer)return;
+  state.stallTimer=setTimeout(function(){
+    state.stallTimer=0;
+    if(state.destroyed||!state.video||state.video.paused||state.video.ended)return;
+    if(Date.now()-state.lastStallRecoveryAt<CONFIG.stallRecoveryCooldownMs)return;
+    if(state.video.readyState>=3&&!state.video.seeking)return;
+    state.lastStallRecoveryAt=Date.now();
+    if(state.hls){
+      try{state.hls.startLoad(-1);return}catch(_){}
+    }
+    scheduleRecovery("STREAM_NETWORK_ERROR");
+  },CONFIG.stallRecoveryDelayMs);
+}
+
+/* ---------- Source URL handling ---------- */
+
+function parseHttpUrl(value,fallback){
+  const raw=text(value);
+  const safeFallback=fallback||"";
+  if(!raw)return safeFallback;
+  try{
+    const parsed=new URL(raw,window.location.href);
+    return /^https?:$/i.test(parsed.protocol)?parsed.href:safeFallback;
+  }catch(_){return safeFallback}
+}
+/* Plain video files (mp4, webm, ...) are played natively; everything else is treated as HLS. */
+function isDirectFile(src){
+  try{return /\.(mp4|m4v|webm|ogv|ogg|mov)$/i.test(new URL(src).pathname)}catch(_){return false}
+}
+
+/* The video link comes only from VIDEO_URL / POSTER_URL at the top of this script. */
+function getSource(){
+  return{src:parseHttpUrl(VIDEO_URL,""),logo:parseHttpUrl(POSTER_URL,"")};
+}
+
+/* ---------- Platform detection ---------- */
+
+function isAppleMobile(){
+  const ua=navigator.userAgent||"";
+  if(/iPad|iPhone|iPod/.test(ua))return true;
+  /* iPadOS 13+ reports itself as a Mac but has a touch screen */
+  return navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1;
+}
+function canUseNativeHls(){
+  if(!state.video||typeof state.video.canPlayType!=="function")return false;
+  return Boolean(state.video.canPlayType("application/vnd.apple.mpegurl")||state.video.canPlayType("audio/mpegurl"));
+}
+function hlsJsSupported(){
+  return typeof window.Hls==="function"&&window.Hls.isSupported();
+}
+
+/* ---------- Teardown helpers ---------- */
+
+function stopStartupTimer(){
+  if(state.startupTimer){clearTimeout(state.startupTimer);state.startupTimer=0}
+}
+function stopRecoveryTimer(){
+  if(state.recoveryTimer){clearTimeout(state.recoveryTimer);state.recoveryTimer=0}
+}
+/* Plyr.destroy() replaces the <video> with a fresh clone of the original element.
+   Re-attach to that clone, clear any stale src it inherited, and re-bind its events. */
+function destroyPlyr(){
+  if(!state.plyr)return;
+  /* the clone was taken while hls.js had a (now revoked) blob: src attached, so drop it first */
+  try{
+    const original=state.plyr.elements&&state.plyr.elements.original;
+    if(original&&original.removeAttribute)original.removeAttribute("src");
+  }catch(_){}
+  try{state.plyr.destroy()}catch(_){}
+  state.plyr=null;
+  const fresh=$("player");
+  if(fresh&&fresh!==state.video){
+    state.video=fresh;
+    try{fresh.removeAttribute("src");fresh.load()}catch(_){}
+    bindVideoEvents(fresh);
   }
 }
-
-function setMsg(m)    { if($loadMsg) $loadMsg.textContent = m; }
-function hideOverlay(){ if($overlay) $overlay.style.display = "none"; }
-
-function errMsg(msg){
-  setMsg(msg);
-  hideOverlay();
-  toast(msg, "err", 0);
+function detachHls(){
+  if(!state.hls)return;
+  const instance=state.hls;
+  state.hls=null;
+  try{instance.stopLoad()}catch(_){}
+  try{instance.detachMedia()}catch(_){}
+  try{instance.destroy()}catch(_){}
+}
+function resetMediaElement(){
+  if(!state.video)return;
+  try{
+    state.video.pause();
+    state.video.removeAttribute("src");
+    state.video.load();
+  }catch(_){}
+}
+function cleanupCurrentSource(resetElement){
+  stopStartupTimer();
+  stopRecoveryTimer();
+  hideBuffering();
+  detachHls();
+  destroyPlyr();
+  if(resetElement!==false)resetMediaElement();
+  state.usingNative=false;
+  state.initializing=false;
 }
 
-function rawCookie(c){
-  return c && c.indexOf("__hdnea__=") === 0 ? c.slice(10) : (c || "");
-}
+/* ---------- Quality menu + aspect-ratio button ---------- */
 
-function withCookie(u, r){
-  if(!u || !r) return u;
-  if(u.indexOf("__hdnea__") !== -1) return u;
-  return u + (u.indexOf("?") !== -1 ? "&" : "?") + "__hdnea__=" + r;
-}
-
-function buildClearKeys(){
-  var out = {};
-  (CONFIG.keys || []).forEach(function(entry){
-    if(typeof entry !== "string") return;
-    var i = entry.indexOf(":");
-    if(i === -1) return;
-    var kid = entry.slice(0, i).trim().toLowerCase();
-    var key = entry.slice(i + 1).trim().toLowerCase();
-    if(kid && key) out[kid] = key;
+function getQualityHeights(levels){
+  if(!Array.isArray(levels))return[];
+  const heights=[];
+  levels.forEach(function(level){
+    const height=Number(level&&level.height);
+    if(Number.isFinite(height)&&height>0&&heights.indexOf(height)<0)heights.push(height);
   });
-  return out;
+  return heights.sort(function(a,b){return b-a});
+}
+function chooseDefaultQuality(qualities){
+  if(qualities.indexOf(720)>=0)return 720;
+  if(qualities.indexOf(576)>=0)return 576;
+  if(qualities.indexOf(480)>=0)return 480;
+  return qualities[0];
+}
+function aspectIcon(mode){
+  if(mode==="fit")return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect><path d="M8 6v3M4 10h3M16 6v3M20 10h-3M8 18v-3M4 14h3M16 18v-3M20 14h-3"></path></svg>';
+  if(mode==="stretch")return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="7" width="14" height="10" rx="1.5"></rect><path d="M3 7h2M3 17h2M19 7h2M19 17h2M3 12h3M18 12h3"></path></svg>';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"></path><path d="M8 4v5M4 8h5M16 4v5M20 8h-5M8 20v-5M4 16h5M16 20v-5M20 16h-5"></path></svg>';
+}
+function plyrRoot(){
+  return state.plyr&&state.plyr.elements&&state.plyr.elements.container?state.plyr.elements.container:null;
+}
+function applyAspectMode(){
+  const root=plyrRoot()||state.container;
+  if(!root)return;
+  root.classList.remove("video-mode-fit","video-mode-stretch","video-mode-crop");
+  const modes=["fit","stretch","crop"];
+  const mode=modes[state.aspectIndex];
+  root.classList.add("video-mode-"+mode);
+  const button=root.querySelector(".sonu-aspect-control");
+  if(button){
+    button.setAttribute("aria-label",mode.toUpperCase());
+    button.setAttribute("title",mode.toUpperCase());
+    button.setAttribute("data-mode",mode);
+    button.innerHTML=aspectIcon(mode);
+  }
+}
+function addAspectControl(){
+  const root=plyrRoot();
+  if(!root||root.querySelector(".sonu-aspect-control"))return;
+  const fullscreen=root.querySelector('[data-plyr="fullscreen"]');
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="plyr__control sonu-aspect-control";
+  button.setAttribute("aria-label","FIT");
+  button.setAttribute("title","FIT");
+  button.setAttribute("data-mode","fit");
+  button.innerHTML=aspectIcon("fit");
+  button.addEventListener("click",function(){
+    state.aspectIndex=(state.aspectIndex+1)%3;
+    applyAspectMode();
+  });
+  if(fullscreen&&fullscreen.parentElement)fullscreen.parentElement.insertBefore(button,fullscreen);
+  else{
+    const controls=root.querySelector(".plyr__controls");
+    if(controls)controls.appendChild(button);
+  }
+  applyAspectMode();
+}
+function enhanceControls(){
+  addAspectControl();
 }
 
-function shakaErrStr(e){
-  if(!e) return "Playback Error";
-  var cat = {1:"Network",2:"Text",3:"Media",4:"Manifest",5:"Stream",6:"DRM",7:"Player"};
-  var s = (cat[e.category] || "Error") + " " + e.category + ":" + e.code;
-  if(e.data && e.data[0] && typeof e.data[0] === "string")
-    s += " — " + e.data[0].slice(0, 72);
-  return s;
-}
-
-function ratioLabel(w, h){
-  if(!w || !h) return "—";
-  function gcd(a, b){ return b ? gcd(b, a % b) : a; }
-  var g = gcd(w, h) || 1, rw = w/g, rh = h/g;
-  var named = {
-    "16:9":16/9, "4:3":4/3, "21:9":21/9, "1:1":1,
-    "9:16":9/16, "3:2":3/2, "5:4":5/4, "2:1":2
+/* Returns a Plyr instance, or null when Plyr is unavailable. In that case the
+   browser's own <video controls> UI stays active, so playback still works. */
+function createPlayer(qualities,hlsInstance){
+  if(!state.video)return null;
+  if(typeof window.Plyr!=="function"){
+    console.warn("Plyr is not loaded. Falling back to native video controls.");
+    return null;
+  }
+  const hasQuality=qualities.length>0&&!!hlsInstance;
+  const config={
+    controls:["play-large","play","progress","current-time","mute","volume","settings","fullscreen"],
+    seekTime:10,
+    hideControls:true,
+    resetOnEnd:false,
+    keyboard:{focused:true,global:true},
+    tooltips:{controls:true,seek:true},
+    /* icon sprite from the same CDN as the scripts (default would be cdn.plyr.io) */
+    iconUrl:"https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.svg",
+    /* iosNative: iPhone/iPad use the system full-screen player (true full screen) */
+    fullscreen:{enabled:true,fallback:true,iosNative:true},
+    settings:hasQuality?["quality"]:[],
+    i18n:{
+      restart:"Restart",
+      play:"Play",
+      pause:"Pause",
+      seek:"Seek",
+      played:"Played",
+      buffered:"Buffered",
+      currentTime:"Current time",
+      duration:"Duration",
+      volume:"Volume",
+      mute:"Mute",
+      unmute:"Unmute",
+      enterFullscreen:"Enter fullscreen",
+      exitFullscreen:"Exit fullscreen",
+      frameTitle:"Video player",
+      settings:"Settings",
+      quality:"Quality"
+    }
   };
-  var real = w/h, best = null, bestD = 0.02;
-  Object.keys(named).forEach(function(k){
-    var d = Math.abs(named[k] - real);
-    if(d < bestD){ bestD = d; best = k; }
-  });
-  if(best) return best;
-  if(rw <= 40 && rh <= 40) return rw + ":" + rh;
-  return real.toFixed(2) + ":1";
-}
-
-function injectControls(container, vid){
-  var panel = container.querySelector(".shaka-controls-button-panel");
-  if(!panel) return false;
-
-  var anchor = panel.querySelector(".shaka-fullscreen-button");
-  var fitIdx  = 0;
-  var fitBtn  = document.createElement("button");
-  fitBtn.className = "sp-btn sp-fit-btn";
-  fitBtn.title     = "Video Fit: " + FIT_LABELS.contain;
-  fitBtn.setAttribute("aria-label", "Cycle Video Fit Mode");
-  fitBtn.innerHTML = '<span class="fit-pill">—</span>';
-
-  if(anchor) panel.insertBefore(fitBtn, anchor);
-  else       panel.appendChild(fitBtn);
-
-  var currentRatio = "—";
-
-  function applyFit(i){
-    fitIdx = i;
-    var m = FITS[i];
-    vid.classList.remove("mode-fill","mode-cover");
-    if(m === "fill")  vid.classList.add("mode-fill");
-    if(m === "cover") vid.classList.add("mode-cover");
-    fitBtn.classList.remove("mode-fill","mode-cover");
-    if(m !== "contain") fitBtn.classList.add("mode-" + m);
-    fitBtn.title = "Video Fit: " + FIT_LABELS[m];
-    var pill = fitBtn.querySelector(".fit-pill");
-    if(pill) pill.textContent = (m === "contain") ? currentRatio : FIT_LABELS[m];
-  }
-
-  fitBtn.addEventListener("click", function(e){
-    e.stopPropagation();
-    applyFit((fitIdx + 1) % FITS.length);
-  });
-
-  ["fullscreenchange","webkitfullscreenchange"].forEach(function(ev){
-    document.addEventListener(ev, function(){
-      if(!(document.fullscreenElement || document.webkitFullscreenElement)) applyFit(0);
-    });
-  });
-
-  var _ratioTries = 0;
-
-  function updateRatio(){
-    var pill = fitBtn.querySelector(".fit-pill");
-    if(!pill) return;
-    if(vid.videoWidth > 0){
-      currentRatio = ratioLabel(vid.videoWidth, vid.videoHeight);
-      if(FITS[fitIdx] === "contain") pill.textContent = currentRatio;
-      _ratioTries = 0;
-    } else if(_ratioTries < 15){
-      _ratioTries++;
-      setTimeout(updateRatio, 700);
-    }
-  }
-
-  vid.addEventListener("loadedmetadata", function(){ _ratioTries = 0; updateRatio(); });
-  vid.addEventListener("resize", updateRatio);
-  vid.addEventListener("timeupdate", function onFirstFrame(){
-    vid.removeEventListener("timeupdate", onFirstFrame);
-    updateRatio();
-  });
-  updateRatio();
-
-  return true;
-}
-
-async function startPlayer(){
-  shaka.polyfill.installAll();
-  if(!shaka.Player.isBrowserSupported()){ errMsg("Browser Not Supported."); return; }
-
-  var player = new shaka.Player();
-  await player.attach($vid);
-
-  new shaka.ui.Overlay(player, $pc, $vid).configure({
-    controlPanelElements:[
-      "play_pause","mute","volume",
-      "time_and_duration","spacer",
-      "quality","picture_in_picture","fullscreen"
-    ],
-    seekBarColors:{
-      base:    "#1604BA",
-      buffered:"#BA0414",
-      played:  "#1F9403"
-    }
-  });
-
-  var _injectCount = 0;
-  (function tryInject(){
-    if(injectControls($pc, $vid)) return;
-    if(++_injectCount < 5) setTimeout(tryInject, 150);
-  })();
-
-  var cookie  = CONFIG.cookie || "";
-  var raw     = rawCookie(cookie);
-  var url     = CONFIG.streamUrl;
-  var drmKeys = buildClearKeys();
-
-  var restrictionsRelaxed = false;
-  var thermalApplied      = false;
-  var sessionStart        = Date.now();
-
-  if(Object.keys(drmKeys).length === 0){
-    errMsg("No DRM Keys Found In Config.");
-    return;
-  }
-
-  var thermalTimer = setInterval(function(){
-    if(Date.now() - sessionStart < 60*60*1000) return;
-    clearInterval(thermalTimer);
-    if(thermalApplied) return;
-    thermalApplied = true;
-    try{
-      player.configure("streaming.bufferBehind", 8);
-      if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
-        player.configure("abr.restrictions.maxHeight", Math.min(PROF.maxH, 720));
-      }
-    }catch(_){}
-  }, 60000);
-
-  function buildCfg(){
-    var effMaxH = (thermalApplied && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-      ? Math.min(PROF.maxH, 720) : PROF.maxH;
-    var restr = {};
-    if(!restrictionsRelaxed){
-      if(effMaxH < 1080) restr.maxHeight    = effMaxH;
-      if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
-    }
-    return {
-      drm:{ clearKeys: drmKeys },
-      manifest:{
-        defaultPresentationDelay:4,
-        ignoreTextStreamFailures:true,
-        retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}
-      },
-      streaming:{
-        lowLatencyMode:false,
-        bufferingGoal:PROF.buf,
-        rebufferingGoal:PROF.reBuf,
-        bufferBehind:PROF.behind,
-        safeSeekOffset:4,
-        stallEnabled:true,
-        stallThreshold:1,
-        stallSkip:.3,
-        inaccurateManifestTolerance:0,
-        retryParameters:{maxAttempts:5,baseDelay:500,backoffFactor:2,fuzzFactor:.5,timeout:30000}
-      },
-      abr:{
-        enabled:true,
-        defaultBandwidthEstimate:PROF.bwEst,
-        switchInterval:4,
-        restrictions:restr
+  if(hasQuality){
+    config.quality={
+      default:chooseDefaultQuality(qualities),
+      options:qualities,
+      forced:true,
+      onChange:function(value){
+        const instance=state.hls;
+        if(!instance||instance!==hlsInstance||!Array.isArray(instance.levels))return;
+        const target=Number(value);
+        if(!Number.isFinite(target))return;
+        let index=-1;
+        for(let i=0;i<instance.levels.length;i++){
+          const level=instance.levels[i];
+          if(level&&Number(level.height)===target){index=i;break}
+        }
+        if(index>=0)instance.currentLevel=index;
       }
     };
   }
-
-  player.configure(buildCfg());
-
-  var audioFixed = false;
-
-  function fixAudio(){
-    if(audioFixed) return;
-    var tracks;
-    try{ tracks = player.getAudioTracks(); }catch(_){ return; }
-    if(!tracks || !tracks.length) return;
-    var active = null;
-    tracks.forEach(function(t){ if(t.active) active = t; });
-    if(active){ audioFixed = true; return; }
-    try{ player.selectAudioTrack(tracks[0], true); audioFixed = true; }catch(_){}
-  }
-
-  player.addEventListener('trackschanged', fixAudio);
-
-  var T = shaka.net.NetworkingEngine.RequestType;
-  player.getNetworkingEngine().registerRequestFilter(function(type, req){
-    if(CONFIG.referer)   req.headers["Referer"]    = CONFIG.referer;
-    if(CONFIG.userAgent) req.headers["User-Agent"] = CONFIG.userAgent;
-    if(cookie)           req.headers["Cookie"]     = cookie;
-    if(type === T.MANIFEST || type === T.SEGMENT)
-      req.uris = req.uris.map(function(u){ return withCookie(u, raw); });
-  });
-
-  var refreshing = false;
-  var retries = 0;
-  var lastTry = 0;
-  var started = false;
-  var stallTmr = null;
-  var _bufState = false;
-  var _lastCurr = 0;
-  var seekState = {active:false,wantsDvr:false,target:null,timer:null};
-
-  function clearStallTimer(){
-    if(stallTmr){ clearTimeout(stallTmr); stallTmr = null; }
-  }
-
-  function clearBuf(){
-    _bufState = false;
-    clearStallTimer();
-  }
-
-  function getSeekRange(){
-    try{
-      var range = player.seekRange();
-      if(range && isFinite(range.start) && isFinite(range.end) && range.end > range.start) return range;
-    }catch(_){}
+  try{
+    const instance=new window.Plyr(state.video,config);
+    state.plyr=instance;
+    enhanceControls();
+    return instance;
+  }catch(error){
+    console.error(error);
     return null;
   }
+}
 
-  function isDvrPosition(time){
-    var range = getSeekRange();
-    return !!range && isFinite(time) && time < range.end - 7;
+/* ---------- Health tracking + error messages ---------- */
+
+function markHealthy(){
+  state.recoveryAttempts=0;
+  state.immediateNetworkRecoveries=0;
+  state.mediaRecoveries=0;
+  state.fullRestarts=0;
+  state.initializing=false;
+  state.lastNetworkErrorAt=0;
+  stopRecoveryTimer();
+  stopStartupTimer();
+  hideBuffering();
+  clearError();
+}
+function responseCode(data){
+  const code=Number(data&&data.response&&data.response.code);
+  return Number.isInteger(code)&&code>=100&&code<=599?code:0;
+}
+function hlsDetail(data){return text(data&&data.details).replace(/_/g," ")}
+function transientHttpCode(code){return code===0||code===408||code===425||code===429||code===500||code===502||code===503||code===504}
+function permanentHttpCode(code){return code===400||code===401||code===403||code===404||code===405||code===406||code===410||code===415}
+function buildHlsErrorMessage(data){
+  const code=responseCode(data);
+  const detail=hlsDetail(data)||"STREAM_LOAD_FAILED";
+  return code?"HTTP "+code+" \u2014 "+detail:"HLS \u2014 "+detail;
+}
+function buildMediaErrorMessage(){
+  const code=Number(state.video&&state.video.error&&state.video.error.code);
+  switch(code){
+    case 1:return"MEDIA_ERR_ABORTED \u2014 CODE 1";
+    case 2:return"MEDIA_ERR_NETWORK \u2014 CODE 2";
+    case 3:return"MEDIA_ERR_DECODE \u2014 CODE 3";
+    case 4:return"MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4";
+    default:return"MEDIA_ERROR";
   }
+}
 
-  function rememberPosition(){
-    var time = $vid.currentTime;
-    if(isDvrPosition(time)){
-      seekState.wantsDvr = true;
-      seekState.target = time;
-      return;
-    }
-    seekState.wantsDvr = false;
-    seekState.target = null;
+/* ---------- Automatic recovery ---------- */
+
+function scheduleRecovery(reason){
+  if(state.destroyed||!state.src)return;
+  if(!navigator.onLine){
+    setError("NETWORK OFFLINE \u2014 WAITING FOR RECONNECT");
+    return;
   }
-
-  function restoreDvrPosition(time){
-    var range = getSeekRange();
-    if(!range || !isFinite(time)) return false;
-    var lower = Math.min(range.end - .25, range.start + .25);
-    var upper = Math.max(lower, range.end - .75);
-    var target = Math.min(Math.max(time, lower), upper);
-    try{
-      $vid.currentTime = target;
-      seekState.wantsDvr = true;
-      seekState.target = target;
-      return Math.abs(target - time) < 1;
-    }catch(_){
-      return false;
-    }
+  if(state.recoveryTimer)return;
+  if(state.recoveryAttempts>=CONFIG.maxRecoveryAttempts){
+    setError(reason||"STREAM_LOAD_FAILED");
+    return;
   }
-
-  function bufferingMessage(){
-    return seekState.wantsDvr || seekState.active ? "Loading Replay · Please Wait" : "Buffering · Fetching Segments";
+  const attempt=state.recoveryAttempts++;
+  const delay=Math.min(CONFIG.retryMaxMs,CONFIG.retryBaseMs*Math.pow(2,attempt));
+  setError(reason||"STREAM RECOVERY");
+  state.recoveryTimer=setTimeout(function(){
+    state.recoveryTimer=0;
+    recoverStream();
+  },delay);
+}
+function recoverStream(){
+  if(state.destroyed||state.initializing||!state.src)return;
+  if(!navigator.onLine){
+    setError("NETWORK OFFLINE \u2014 WAITING FOR RECONNECT");
+    return;
   }
-
-  function onBufResume(){
-    if(!_bufState) return;
-    var wasDvr = seekState.wantsDvr;
-    clearBuf();
-    if(!refreshing) toast(wasDvr ? "Replay · Playing Behind Live" : "On Air · Stream Active", wasDvr ? "ok" : "live", 2600);
-  }
-
-  function scheduleRecovery(delay){
-    clearStallTimer();
-    stallTmr = setTimeout(function(){
-      stallTmr = null;
-      if(!refreshing && started && !$vid.paused && !seekState.active) reload();
-    }, delay);
-  }
-
-  function unmuteOnce(){ $vid.muted = false; }
-  $pc.addEventListener("pointerdown", unmuteOnce, {capture:true,once:true});
-  $pc.addEventListener("click", unmuteOnce, {capture:true,once:true});
-  $pc.addEventListener("keydown", unmuteOnce, {capture:true,once:true});
-
-  function onSeeking(){
-    seekState.active = true;
-    if(seekState.timer) clearTimeout(seekState.timer);
-    rememberPosition();
-    clearStallTimer();
-    if(started && !$vid.paused){
-      _bufState = true;
-      toast(bufferingMessage(), "warn", 0);
-    }
-  }
-
-  function onSeeked(){
-    rememberPosition();
-    if(seekState.timer) clearTimeout(seekState.timer);
-    seekState.timer = setTimeout(function(){
-      seekState.active = false;
-      seekState.timer = null;
-      if(_bufState && started && !$vid.paused) scheduleRecovery(5000);
-    }, 7000);
-    if($vid.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA && !$vid.paused) onBufResume();
-  }
-
-  $vid.addEventListener("timeupdate", function(){
-    if($vid.paused || $vid.ended || !started || refreshing) return;
-    var time = $vid.currentTime;
-    if(time > _lastCurr + .01){
-      _lastCurr = time;
-      onBufResume();
-    }
-  });
-
-  async function reload(){
-    var now = Date.now();
-    if(refreshing || now - lastTry < 1500) return;
-    if(retries >= 5){ toast("Stream Unavailable · Max Retries Reached", "err", 0); return; }
-    rememberPosition();
-    var resumeAt = seekState.wantsDvr ? seekState.target : null;
-    refreshing = true;
-    lastTry = now;
-    retries++;
-    clearStallTimer();
-    toast(resumeAt !== null ? "Reconnecting Replay · Attempt " + retries + " Of 5" : "Reconnecting · Attempt " + retries + " Of 5", "warn", 0);
-    try{
-      audioFixed = false;
-      _bufState = false;
-      _lastCurr = 0;
-      player.configure(buildCfg());
-      await player.load(url, resumeAt === null ? undefined : resumeAt);
-      var restored = resumeAt === null ? false : restoreDvrPosition(resumeAt);
-      await $vid.play().catch(function(){});
-      retries = 0;
-      if(resumeAt !== null && !restored) toast("Replay Position Expired · Starting At Earliest Available", "ok", 4000);
-      else toast(resumeAt !== null ? "Replay · Resuming Selected Position" : "On Air · Stream Active", resumeAt !== null ? "ok" : "live", 4000);
-    }catch(_){
-      setTimeout(reload, Math.min(1000 * Math.pow(2, retries - 1), 8000));
-    }finally{
-      refreshing = false;
-    }
-  }
-
-  var RECOVERABLE = [1001,1002,1003,4012,6006,6007,7000,7001,7002];
-
-  player.addEventListener("error", function(ev){
-    var err = ev.detail;
-    var code = err && err.code;
-    if(code === 4014 && !restrictionsRelaxed){
-      rememberPosition();
-      var recoveryPoint = seekState.wantsDvr ? seekState.target : null;
-      restrictionsRelaxed = true;
-      refreshing = true;
-      player.configure(buildCfg());
-      toast("Adjusting Stream Quality", "warn", 2000);
-      player.load(url, recoveryPoint === null ? undefined : recoveryPoint)
-        .then(function(){
-          if(recoveryPoint !== null) restoreDvrPosition(recoveryPoint);
-          return $vid.play();
-        })
-        .then(function(){ toast(recoveryPoint !== null ? "Replay · Playing Behind Live" : "On Air · Stream Active", recoveryPoint !== null ? "ok" : "live", 4000); })
-        .catch(function(){
-          refreshing = false;
-          reload();
-        })
-        .finally(function(){ refreshing = false; });
-      return;
-    }
-    if(RECOVERABLE.indexOf(code) !== -1){
-      _bufState = true;
-      toast(bufferingMessage(), "warn", 0);
-      if(!seekState.active) scheduleRecovery(1500);
-    }else{
-      toast(shakaErrStr(err), "err", 6000);
-    }
-  });
-
+  const wasPlaying=!!state.video&&!state.video.paused&&!state.video.ended;
+  const restoreTime=state.video&&Number.isFinite(state.video.currentTime)?state.video.currentTime:state.lastKnownTime;
+  const generation=++state.sourceGeneration;
+  const fullRestart=state.forceFullRestart;
+  state.forceFullRestart=false;
+  state.initializing=true;
   try{
-    setMsg("Loading Stream");
-    toast("Loading Stream · Please Wait", "warn", 0);
-    await player.load(url);
-    hideOverlay();
-    toast("Ready · Tap Play To Start", "ok", 5000);
-  }catch(_){
-    hideOverlay();
-    toast("Connection Error · Retrying Now", "warn", 0);
-    setTimeout(reload, 1500);
+    /* Light recovery: just ask hls.js to resume loading */
+    if(state.hls&&!fullRestart){
+      try{
+        state.hls.startLoad(-1);
+        state.initializing=false;
+        scheduleBuffering();
+        if(wasPlaying&&state.video&&state.video.paused)safePlay();
+        return;
+      }catch(_){detachHls()}
+    }
+    /* Native playback (iOS HLS or a plain video file): reload the same source */
+    if(state.usingNative&&!fullRestart){
+      try{
+        state.video.src=state.src;
+        state.video.load();
+        const restore=function(){
+          if(restoreTime>0&&Number.isFinite(restoreTime)){
+            try{state.video.currentTime=restoreTime}catch(_){}
+          }
+        };
+        state.video.addEventListener("loadedmetadata",restore,{once:true});
+        if(wasPlaying)safePlay();
+        state.initializing=false;
+        scheduleBuffering();
+        return;
+      }catch(_){state.usingNative=false}
+    }
+    /* Full restart: rebuild hls.js + Plyr from scratch */
+    cleanupCurrentSource(true);
+    if(isDirectFile(state.src))startNativePlayback(state.src,wasPlaying,true,generation);
+    else if(hlsJsSupported())startHlsPlayback(state.src,wasPlaying,true,generation);
+    else if(canUseNativeHls())startNativePlayback(state.src,wasPlaying,true,generation);
+    else setError("HLS_NOT_SUPPORTED");
+  }finally{
+    if(state.sourceGeneration===generation)state.initializing=false;
+  }
+}
+
+/* ---------- Native playback (iOS HLS, plain files) ---------- */
+
+function startNativePlayback(src,autoplayAfterReady,recovering,generation){
+  if(!state.video)return false;
+  const gen=generation||++state.sourceGeneration;
+  state.usingNative=true;
+  state.src=src;
+  try{
+    destroyPlyr();
+    state.video.src=src;
+    state.video.load();
+    state.plyr=createPlayer([],null);
+    stopStartupTimer();
+    state.startupTimer=setTimeout(function(){
+      if(state.sourceGeneration!==gen||state.destroyed)return;
+      if(state.video.readyState<2)scheduleRecovery("STREAM_LOAD_FAILED");
+    },CONFIG.startupTimeoutMs);
+    const ready=function(){
+      if(state.sourceGeneration!==gen||state.destroyed)return;
+      markHealthy();
+      if(autoplayAfterReady)safePlay();
+    };
+    state.video.addEventListener("loadedmetadata",ready,{once:true});
+    state.video.addEventListener("canplay",ready,{once:true});
+    if(autoplayAfterReady)scheduleBuffering();
+    return true;
+  }catch(error){
+    console.error(error);
+    state.usingNative=false;
+    if(!recovering)setError("HLS_INIT_FAILED");
+    return false;
+  }
+}
+
+/* ---------- hls.js playback ---------- */
+
+function createHlsInstance(){
+  if(!hlsJsSupported())return null;
+  return new window.Hls({
+    debug:false,
+    enableWorker:true,
+    lowLatencyMode:CONFIG.lowLatencyMode,
+    backBufferLength:CONFIG.backBufferLength,
+    maxBufferLength:CONFIG.maxBufferLength,
+    maxMaxBufferLength:CONFIG.maxMaxBufferLength,
+    maxBufferSize:CONFIG.maxBufferSize,
+    maxBufferHole:CONFIG.maxBufferHole,
+    capLevelToPlayerSize:true,
+    startLevel:-1,
+    liveSyncDurationCount:CONFIG.liveSyncDurationCount,
+    liveMaxLatencyDurationCount:CONFIG.liveMaxLatencyDurationCount,
+    maxLiveSyncPlaybackRate:CONFIG.maxLiveSyncPlaybackRate,
+    manifestLoadingMaxRetry:3,
+    levelLoadingMaxRetry:3,
+    fragLoadingMaxRetry:3,
+    manifestLoadingRetryDelay:1000,
+    levelLoadingRetryDelay:1000,
+    fragLoadingRetryDelay:1000,
+    highBufferWatchdogPeriod:2,
+    nudgeMaxRetry:4,
+    nudgeOffset:.1,
+    maxFragLookUpTolerance:.25,
+    appendErrorMaxRetry:3
+  });
+}
+function fullHlsRestart(src,autoplayAfterReady,recovering){
+  cleanupCurrentSource(true);
+  if(hlsJsSupported())return startHlsPlayback(src,autoplayAfterReady,recovering,++state.sourceGeneration);
+  if(canUseNativeHls())return startNativePlayback(src,autoplayAfterReady,recovering,++state.sourceGeneration);
+  setError("HLS_NOT_SUPPORTED");
+  return false;
+}
+function startHlsPlayback(src,autoplayAfterReady,recovering,generation){
+  if(!state.video)return false;
+  const gen=generation||++state.sourceGeneration;
+  const instance=createHlsInstance();
+  if(!instance){
+    if(!recovering)setError("HLS_NOT_SUPPORTED");
+    return false;
+  }
+  const Hls=window.Hls;
+  state.hls=instance;
+  state.usingNative=false;
+  state.src=src;
+  let manifestReady=false;
+  let startupFinished=false;
+  const isCurrent=function(){
+    return !state.destroyed&&state.hls===instance&&state.sourceGeneration===gen;
+  };
+  try{
+    instance.on(Hls.Events.MEDIA_ATTACHED,function(){
+      if(!isCurrent())return;
+      try{instance.loadSource(src)}catch(_){scheduleRecovery("STREAM_LOAD_FAILED")}
+    });
+    instance.on(Hls.Events.MANIFEST_PARSED,function(_,data){
+      if(!isCurrent())return;
+      manifestReady=true;
+      startupFinished=true;
+      stopStartupTimer();
+      destroyPlyr();
+      state.plyr=createPlayer(getQualityHeights(data&&data.levels),instance);
+      state.recoveryAttempts=0;
+      state.mediaRecoveries=0;
+      state.immediateNetworkRecoveries=0;
+      state.fullRestarts=0;
+      clearError();
+      if(autoplayAfterReady){scheduleBuffering();safePlay()}
+    });
+    instance.on(Hls.Events.ERROR,function(_,data){
+      if(!isCurrent()||!data)return;
+      const type=data.type;
+      const code=responseCode(data);
+      if(!data.fatal){
+        if(data.details===Hls.ErrorDetails.BUFFER_STALLED_ERROR&&state.video&&!state.video.paused)scheduleBuffering();
+        return;
+      }
+      if(type===Hls.ErrorTypes.NETWORK_ERROR){
+        if(permanentHttpCode(code)){
+          setError("HTTP "+code+" \u2014 "+(hlsDetail(data)||"STREAM_LOAD_FAILED"));
+          return;
+        }
+        const now=Date.now();
+        if(now-state.lastNetworkErrorAt<750)return;
+        state.lastNetworkErrorAt=now;
+        if(state.immediateNetworkRecoveries<CONFIG.maxImmediateNetworkRecoveries){
+          state.immediateNetworkRecoveries++;
+          try{
+            instance.startLoad(-1);
+            setError(buildHlsErrorMessage(data));
+            return;
+          }catch(_){}
+        }
+        scheduleRecovery(code&&transientHttpCode(code)?"HTTP "+code+" \u2014 STREAM_NETWORK_ERROR":(code?"HTTP "+code+" \u2014 STREAM_LOAD_FAILED":"STREAM_NETWORK_ERROR"));
+        return;
+      }
+      if(type===Hls.ErrorTypes.MEDIA_ERROR){
+        if(state.mediaRecoveries<CONFIG.mediaRecoveryLimit){
+          state.mediaRecoveries++;
+          try{
+            instance.recoverMediaError();
+            setError("STREAM_MEDIA_ERROR \u2014 RECOVERING");
+            return;
+          }catch(_){}
+        }
+        if(state.fullRestarts<CONFIG.fullRestartLimit){
+          state.fullRestarts++;
+          state.forceFullRestart=true;
+          setError("STREAM_MEDIA_ERROR \u2014 RESTARTING");
+          scheduleRecovery("STREAM_MEDIA_ERROR");
+          return;
+        }
+        setError("STREAM_MEDIA_ERROR");
+        return;
+      }
+      if(permanentHttpCode(code)){
+        setError("HTTP "+code+" \u2014 "+(hlsDetail(data)||"STREAM_LOAD_FAILED"));
+        return;
+      }
+      state.forceFullRestart=true;
+      if(manifestReady||startupFinished)scheduleRecovery(buildHlsErrorMessage(data));
+      else scheduleRecovery("STREAM_LOAD_FAILED");
+    });
+    instance.on(Hls.Events.FRAG_BUFFERED,function(){
+      if(!isCurrent())return;
+      if(state.video&&state.video.readyState>=3&&!state.video.paused&&!state.video.seeking)hideBuffering();
+    });
+    instance.on(Hls.Events.LEVEL_SWITCHED,function(){
+      if(!isCurrent())return;
+      if(state.video&&state.video.readyState>=2)clearError();
+    });
+    instance.on(Hls.Events.BUFFER_APPENDED,function(){
+      if(isCurrent()&&state.video&&state.video.readyState>=3&&!state.video.paused&&!state.video.seeking)hideBuffering();
+    });
+    state.startupTimer=setTimeout(function(){
+      if(!isCurrent())return;
+      if(!manifestReady)scheduleRecovery("STREAM_LOAD_FAILED");
+    },CONFIG.startupTimeoutMs);
+    instance.attachMedia(state.video);
+    return true;
+  }catch(error){
+    console.error(error);
+    if(state.hls===instance)detachHls();
+    if(!recovering)setError("HLS_INIT_FAILED");
+    return false;
+  }
+}
+
+/* ---------- Start playback ---------- */
+
+function startPlayback(){
+  const values=getSource();
+  state.src=values.src;
+  state.logo=values.logo;
+  state.aspectIndex=0;
+  state.video.removeAttribute("poster");
+  if(state.logo)state.video.poster=state.logo;
+  clearError();
+  if(!state.src){
+    setError("VIDEO_URL_NOT_SET");
     return;
   }
-
-  function onStall(){
-    if(refreshing || $vid.paused) return;
-    _bufState = true;
-    toast(bufferingMessage(), "warn", 0);
-    if(!started || seekState.active) return;
-    scheduleRecovery(9000);
+  /* 1) Plain video file (mp4 / webm / ...) */
+  if(isDirectFile(state.src)){
+    if(startNativePlayback(state.src,false,false,++state.sourceGeneration))return;
+    setError("MEDIA_NOT_SUPPORTED");
+    return;
   }
-
-  function onPlaying(){
-    started = true;
-    fixAudio();
-    onBufResume();
+  const nativeOk=canUseNativeHls();
+  /* 2) iPhone / iPad: the built-in HLS player is the most reliable choice */
+  if(nativeOk&&isAppleMobile()){
+    if(startNativePlayback(state.src,false,false,++state.sourceGeneration))return;
   }
-
-  function onCanPlay(){
-    if(started && !_bufState) return;
-    if(started && !$vid.paused) onBufResume();
+  /* 3) Android, Windows, macOS, Linux, smart TVs: hls.js (gives the quality menu) */
+  if(hlsJsSupported()){
+    if(startHlsPlayback(state.src,false,false,++state.sourceGeneration))return;
   }
+  /* 4) Any other browser with built-in HLS */
+  if(nativeOk){
+    if(startNativePlayback(state.src,false,false,++state.sourceGeneration))return;
+  }
+  setError("HLS_NOT_SUPPORTED");
+}
 
-  $vid.addEventListener("seeking", onSeeking);
-  $vid.addEventListener("seeked", onSeeked);
-  $vid.addEventListener("waiting", onStall);
-  $vid.addEventListener("stalled", onStall);
-  $vid.addEventListener("playing", onPlaying);
-  $vid.addEventListener("canplay", onCanPlay);
-  $vid.addEventListener("pause", function(){
-    if(!seekState.active) clearBuf();
-  });
-  $vid.addEventListener("error", function(){
-    if(!refreshing){
-      _bufState = true;
-      toast(bufferingMessage(), "warn", 0);
-      if(!seekState.active) scheduleRecovery(1500);
+/* ---------- <video> element events ---------- */
+
+function handleVideoError(){
+  if(state.destroyed||!state.video||!state.video.error)return;
+  hideBuffering();
+  const mediaCode=Number(state.video.error.code);
+  if(mediaCode===1)return; /* MEDIA_ERR_ABORTED: caused by us, ignore */
+  if(mediaCode===2){scheduleRecovery("MEDIA_ERR_NETWORK \u2014 CODE 2");return}
+  if(mediaCode===3){
+    if(state.hls&&state.mediaRecoveries<CONFIG.mediaRecoveryLimit){
+      try{
+        state.mediaRecoveries++;
+        state.hls.recoverMediaError();
+        setError("MEDIA_ERR_DECODE \u2014 CODE 3 \u2014 RECOVERING");
+        return;
+      }catch(_){}
     }
-  });
-
-  var resumeAfterVisibilityChange = false;
-  document.addEventListener("visibilitychange", function(){
-    if(document.hidden){
-      resumeAfterVisibilityChange = started && !$vid.paused;
+    scheduleRecovery("MEDIA_ERR_DECODE \u2014 CODE 3");
+    return;
+  }
+  if(mediaCode===4){
+    if(isDirectFile(state.src)){setError("MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4");return}
+    if(state.hls){scheduleRecovery("MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4");return}
+    if(hlsJsSupported()){
+      fullHlsRestart(state.src,!state.video.paused,true);
       return;
     }
-    setTimeout(function(){
-      if(resumeAfterVisibilityChange && started && $vid.paused && !refreshing) $vid.play().catch(function(){});
-      resumeAfterVisibilityChange = false;
-    }, 400);
-  });
-
-  var netConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if(netConn){
-    netConn.addEventListener("change", function(){
-      if(!player || restrictionsRelaxed) return;
-      var t = netConn.effectiveType || "4g";
-      var h = t === "slow-2g" || t === "2g" ? 240 : t === "3g" ? 480 : PROF.maxH;
-      try{ player.configure("abr.restrictions.maxHeight", h); }catch(_){}
-      if(h < PROF.maxH) toast("Slow Network · Reducing Quality","warn",3000);
+    if(canUseNativeHls()&&!state.usingNative){
+      startNativePlayback(state.src,!state.video.paused,true,++state.sourceGeneration);
+      return;
+    }
+    setError("MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4");
+    return;
+  }
+  setError(buildMediaErrorMessage());
+}
+/* Listens only to events that come from the current <video> element. */
+function bindVideoEvents(video){
+  const on=function(type,handler){
+    video.addEventListener(type,function(event){
+      if(event.target!==state.video)return;
+      handler(event);
     });
+  };
+  on("playing",function(){hideBuffering();markHealthy()});
+  on("play",function(){clearError();if(state.video.paused)hideBuffering();else scheduleBuffering()});
+  on("pause",hideBuffering);
+  on("ended",hideBuffering);
+  on("canplay",function(){hideBuffering();if(state.video.readyState>=3)clearError()});
+  on("loadeddata",hideBuffering);
+  on("timeupdate",function(){if(Number.isFinite(state.video.currentTime))state.lastKnownTime=state.video.currentTime});
+  on("error",handleVideoError);
+  on("waiting",function(){if(!state.video.paused){scheduleBuffering();scheduleStallRecovery()}});
+  on("stalled",function(){if(state.video.paused)return;scheduleBuffering();scheduleStallRecovery()});
+}
+
+/* ---------- TV remote / media keys ---------- */
+
+function togglePlayback(){
+  if(!state.video)return;
+  if(state.video.paused)safePlay();else state.video.pause();
+}
+function seekBy(seconds){
+  const video=state.video;
+  if(!video)return;
+  try{
+    let target=video.currentTime+seconds;
+    if(video.seekable&&video.seekable.length){
+      const end=video.seekable.end(video.seekable.length-1);
+      const start=video.seekable.start(0);
+      target=Math.min(Math.max(target,start),end);
+    }else{
+      target=Math.max(0,target);
+    }
+    video.currentTime=target;
+  }catch(_){}
+}
+function showControls(){
+  if(state.plyr&&typeof state.plyr.toggleControls==="function"){
+    try{state.plyr.toggleControls(true)}catch(_){}
+  }
+}
+/* Handles the keys that Plyr does not: hardware media keys and OK/Enter on TV remotes.
+   Arrow keys, Space, K, F and M are already handled by Plyr (global keyboard mode). */
+function handleRemoteKey(event){
+  if(state.destroyed||!state.video)return;
+  const target=event.target;
+  const onControl=!!(target&&target.tagName&&/^(BUTTON|INPUT|A|SELECT|TEXTAREA)$/i.test(target.tagName));
+  const key=event.key;
+  const code=event.keyCode;
+  let handled=true;
+  if(key==="MediaPlay"||code===415)safePlay();
+  else if(key==="MediaPause"||code===19)state.video.pause();
+  else if(key==="MediaStop"||code===413)state.video.pause();
+  else if(key==="MediaPlayPause"||code===179)togglePlayback();
+  else if(key==="MediaFastForward"||code===417)seekBy(CONFIG.remoteSeekSeconds);
+  else if(key==="MediaRewind"||code===412)seekBy(-CONFIG.remoteSeekSeconds);
+  else if((key==="Enter"||code===13)&&!onControl)togglePlayback();
+  else handled=false;
+  if(handled){
+    event.preventDefault();
+    showControls();
   }
 }
 
-function main(){
-  if(typeof shaka === "undefined"){
-    errMsg("Player Library Failed To Load · Check Your Internet Connection");
-    return;
-  }
-  if(!CONFIG.streamUrl || CONFIG.streamUrl.indexOf("http") !== 0){
-    errMsg("Setup Needed · Stream URL Missing In Config");
-    return;
-  }
-  startPlayer();
-}
+/* ---------- Window / document events ---------- */
 
-document.addEventListener("DOMContentLoaded", main);
+function bindGlobalEvents(){
+  window.addEventListener("online",function(){
+    if(state.destroyed)return;
+    state.recoveryAttempts=0;
+    state.immediateNetworkRecoveries=0;
+    setError("NETWORK RESTORED \u2014 RECOVERING");
+    stopRecoveryTimer();
+    recoverStream();
+  },{passive:true});
+  window.addEventListener("offline",function(){
+    if(state.destroyed)return;
+    hideBuffering();
+    stopRecoveryTimer();
+    setError("NETWORK OFFLINE \u2014 WAITING FOR RECONNECT");
+  },{passive:true});
+  document.addEventListener("visibilitychange",function(){
+    if(state.destroyed)return;
+    if(document.visibilityState==="hidden"){
+      state.wasPlayingBeforeHidden=!!state.video&&!state.video.paused&&!state.video.ended;
+      return;
+    }
+    if(!state.video||!state.wasPlayingBeforeHidden)return;
+    const now=Date.now();
+    if(now-state.lastVisibilityRecoveryAt<CONFIG.visibilityRecoveryCooldownMs)return;
+    state.lastVisibilityRecoveryAt=now;
+    if(state.hls&&state.video.readyState<3){
+      try{state.hls.startLoad(-1)}catch(_){}
+    }
+    if(state.video.paused)safePlay();
+  },{passive:true});
+  document.addEventListener("keydown",handleRemoteKey);
+  window.addEventListener("pagehide",destroy);
+  /* Safari restores pages from its back/forward cache: rebuild the player in that case */
+  window.addEventListener("pageshow",function(event){
+    if(event.persisted&&state.destroyed)window.location.reload();
+  });
+}
+function destroy(){
+  if(state.destroyed)return;
+  state.destroyed=true;
+  stopStartupTimer();
+  stopRecoveryTimer();
+  hideBuffering();
+  detachHls();
+  destroyPlyr();
+}
+function init(){
+  state.container=$("container");
+  state.video=$("player");
+  state.buffering=$("buffering");
+  if(!state.container||!state.video||!state.buffering){document.body.textContent="PLAYER_INIT_FAILED";return}
+  bindGlobalEvents();
+  bindVideoEvents(state.video);
+  startPlayback();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
 </script>
 </body>
