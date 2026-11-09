@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.css">
+<!-- hls.js must load before the player script. Plyr (polyfilled build) adds support for older browsers / smart TVs. -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.polyfilled.js"></script>
+<style>
+:root{
+  --plyr-color-main:#00b8ff;
+  --plyr-video-background:#000;
+  --plyr-menu-background:rgba(12,14,20,.97);
+  --plyr-menu-color:#fff;
+  --plyr-tooltip-background:rgba(12,14,20,.97);
+  --plyr-tooltip-color:#fff;
+  --plyr-font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:#000;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+/* Full-screen container. top/right/bottom/left is used instead of "inset" and
+   fixed positioning instead of "dvh" so older mobile browsers and TV browsers work. */
+.video-container{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:#000;overflow:hidden;isolation:isolate;touch-action:manipulation}
+#player{display:block;width:100%;height:100%;background:#000;object-fit:contain}
+.plyr,.plyr__video-wrapper,.plyr video{width:100%;height:100%;background:#000}
+.plyr video{object-fit:contain}
+.plyr{--plyr-control-spacing:10px;--plyr-control-radius:6px;--plyr-font-size-base:14px;--plyr-font-size-small:12px}
+.plyr__control{transition:background-color .15s ease,opacity .15s ease}
+.plyr__control:hover,.plyr__control[aria-expanded="true"]{background:rgba(255,255,255,.08)}
+.plyr__control:focus{outline:2px solid #00b8ff;outline-offset:-2px}
+.plyr__menu__container{border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
+.sonu-aspect-control{width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}
+.sonu-aspect-control svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sonu-aspect-control:active{transform:scale(.94)}
+.buffering-overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:transparent;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .15s ease,visibility .15s ease}
+.buffering-overlay.is-visible{opacity:1;visibility:visible}
+.buffering-spinner{width:24px;height:24px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-right-color:rgba(255,255,255,.65);border-radius:50%;-webkit-animation:sonu-spin .72s linear infinite;animation:sonu-spin .72s linear infinite;will-change:transform}
+@-webkit-keyframes sonu-spin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}
+@keyframes sonu-spin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}
+.video-mode-fit .plyr video,.video-mode-fit #player{object-fit:contain}
+.video-mode-stretch .plyr video,.video-mode-stretch #player{object-fit:fill}
+.video-mode-crop .plyr video,.video-mode-crop #player{object-fit:cover}
+/* width + max-width instead of min() for older browsers */
+.plain-error{position:fixed;top:16px;right:12px;left:auto;width:88vw;max-width:720px;z-index:99999;margin:0;padding:0;color:#d5d5d5;background:transparent;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:11px;line-height:1.5;font-weight:400;text-align:right;white-space:normal;pointer-events:none;-webkit-user-select:none;user-select:none}
+@media (max-width:600px){
+  .plyr{--plyr-control-spacing:8px}
+  .plain-error{top:12px;right:10px;width:92vw;max-width:620px;font-size:10.5px}
+  .sonu-aspect-control{width:34px!important;min-width:34px!important;height:34px!important}
+  .sonu-aspect-control svg{width:17px;height:17px}
+  .buffering-spinner{width:22px;height:22px}
+}
+</style>
+</head>
+<body>
+<main class="video-container" id="container">
+  <video id="player" controls playsinline webkit-playsinline preload="metadata"></video>
+  <div class="buffering-overlay" id="buffering" aria-hidden="true">
+    <span class="buffering-spinner"></span>
+  </div>
+</main>
+<script>
+(function(){"use strict";
+
+/* =====================================================================
+   FILE 1 - URL PARAMETER MODE
+   The video link is given in the page address:
+
+     player.html?url=VIDEO_URL
+     player.html?url=VIDEO_URL&logo=POSTER_IMAGE_URL
+
+   - "url"  : the video link (HLS .m3u8, or mp4 / webm). Required.
+   - "logo" : poster image shown before playback starts. Optional.
+   - If "url" is missing, CONFIG.defaultStream below is played.
+   There is no domain lock: the page works on any domain, in any iframe, or opened directly.
+   ===================================================================== */
+
+/* Tuning values. These normally do not need to be changed. */
+const CONFIG=Object.freeze({
+  defaultStream:"https://sayan.info/live.m3u8", /* played when no ?url= is given */
+  retryBaseMs:1000,
+  retryMaxMs:16000,
+  maxRecoveryAttempts:8,
+  maxImmediateNetworkRecoveries:2,
+  mediaRecoveryLimit:2,
+  fullRestartLimit:4,
+  maxBufferLength:30,
+  backBufferLength:30,
+  maxMaxBufferLength:60,
+  maxBufferSize:62914560,
+  maxBufferHole:.5,
+  lowLatencyMode:false,
+  liveSyncDurationCount:5,
+  liveMaxLatencyDurationCount:12,
+  maxLiveSyncPlaybackRate:1,
+  startupTimeoutMs:30000,
+  visibilityRecoveryCooldownMs:3000,
+  bufferingDelayMs:450,
+  stallRecoveryDelayMs:2500,
+  stallRecoveryCooldownMs:6000,
+  remoteSeekSeconds:10
+});
+
+const state={
+  container:null,
+  video:null,
+  buffering:null,
+  plyr:null,
+  hls:null,
+  src:"",
+  logo:"",
+  destroyed:false,
+  usingNative:false,
+  initializing:false,
+  forceFullRestart:false,
+  recoveryTimer:0,
+  recoveryAttempts:0,
+  immediateNetworkRecoveries:0,
+  mediaRecoveries:0,
+  fullRestarts:0,
+  lastErrorKey:"",
+  lastNetworkErrorAt:0,
+  lastVisibilityRecoveryAt:0,
+  lastStallRecoveryAt:0,
+  sourceGeneration:0,
+  startupTimer:0,
+  bufferingTimer:0,
+  stallTimer:0,
+  aspectIndex:0,
+  wasPlayingBeforeHidden:false,
+  lastKnownTime:0
+};
+
+const $=function(id){return document.getElementById(id)};
+function text(value){return String(value==null?"":value).trim()}
+
+/* ---------- Small helpers ---------- */
+
+/* video.play() returns a Promise on modern browsers but undefined on very old ones. */
+function safePlay(){
+  const video=state.video;
+  if(!video)return;
+  try{
+    const result=video.play();
+    if(result&&typeof result.catch==="function")result.catch(function(){});
+  }catch(_){}
+}
+
+/* ---------- On-screen status / error text ---------- */
+
+function setError(message){
+  const value=text(message)||"STREAM ERROR";
+  if(state.lastErrorKey===value)return;
+  state.lastErrorKey=value;
+  let node=$("plain-error");
+  if(!node){
+    node=document.createElement("div");
+    node.id="plain-error";
+    node.className="plain-error";
+    if(state.container)state.container.appendChild(node);
+  }
+  node.textContent=value;
+}
+function clearError(){
+  state.lastErrorKey="";
+  const node=$("plain-error");
+  if(node&&node.parentNode)node.parentNode.removeChild(node);
+}
+
+/* ---------- Buffering spinner + stall watchdog ---------- */
+
+function showBuffering(){
+  if(!state.buffering)return;
+  state.buffering.classList.add("is-visible");
+  state.buffering.setAttribute("aria-hidden","false");
+}
+function hideBuffering(){
+  if(state.bufferingTimer){
+    clearTimeout(state.bufferingTimer);
+    state.bufferingTimer=0;
+  }
+  if(state.stallTimer){
+    clearTimeout(state.stallTimer);
+    state.stallTimer=0;
+  }
+  if(!state.buffering)return;
+  state.buffering.classList.remove("is-visible");
+  state.buffering.setAttribute("aria-hidden","true");
+}
+function scheduleBuffering(){
+  if(!state.video||!state.buffering||state.video.paused||state.video.ended)return;
+  if(state.buffering.classList.contains("is-visible"))return;
+  if(state.bufferingTimer)return;
+  state.bufferingTimer=setTimeout(function(){
+    state.bufferingTimer=0;
+    if(!state.video||state.video.paused||state.video.ended)return;
+    if(state.video.readyState<3||state.video.seeking)showBuffering();
+  },CONFIG.bufferingDelayMs);
+}
+function scheduleStallRecovery(){
+  if(state.destroyed||!state.video||state.video.paused||state.video.ended)return;
+  if(state.stallTimer)return;
+  state.stallTimer=setTimeout(function(){
+    state.stallTimer=0;
+    if(state.destroyed||!state.video||state.video.paused||state.video.ended)return;
+    if(Date.now()-state.lastStallRecoveryAt<CONFIG.stallRecoveryCooldownMs)return;
+    if(state.video.readyState>=3&&!state.video.seeking)return;
+    state.lastStallRecoveryAt=Date.now();
+    if(state.hls){
+      try{state.hls.startLoad(-1);return}catch(_){}
+    }
+    scheduleRecovery("STREAM_NETWORK_ERROR");
+  },CONFIG.stallRecoveryDelayMs);
+}
+
+/* ---------- Source URL handling ---------- */
+
+function parseHttpUrl(value,fallback){
+  const raw=text(value);
+  const safeFallback=fallback||"";
+  if(!raw)return safeFallback;
+  try{
+    const parsed=new URL(raw,window.location.href);
+    return /^https?:$/i.test(parsed.protocol)?parsed.href:safeFallback;
+  }catch(_){return safeFallback}
+}
+/* Plain video files (mp4, webm, ...) are played natively; everything else is treated as HLS. */
+function isDirectFile(src){
+  try{return /\.(mp4|m4v|webm|ogv|ogg|mov)$/i.test(new URL(src).pathname)}catch(_){return false}
+}
+
+/* Reads ?url= and ?logo= from the address bar.
+   The url value may be percent-encoded or raw (raw values may contain "?" and "&"),
+   so the query string is parsed by hand instead of with URLSearchParams only. */
+function decodeParam(value){
+  try{return decodeURIComponent(value)}catch(_){return value}
+}
+function getSource(){
+  const query=window.location.search.replace(/^\?/,"");
+  let source="";
+  let logo="";
+  const urlMatch=query.match(/(?:^|&)url=/i);
+  if(urlMatch){
+    const rawRest=query.slice(urlMatch.index+urlMatch[0].length);
+    const logoIndex=rawRest.search(/&logo=/i);
+    source=decodeParam(logoIndex>=0?rawRest.slice(0,logoIndex):rawRest);
+  }
+  const logoMatch=query.match(/(?:^|&)logo=([\s\S]*)$/i);
+  if(logoMatch){
+    /* if logo comes before url, stop at the "&url=" part */
+    const rawLogo=logoMatch[1];
+    const urlIndex=rawLogo.search(/&url=/i);
+    logo=decodeParam(urlIndex>=0?rawLogo.slice(0,urlIndex):rawLogo);
+  }
+  if(!source||!logo){
+    try{
+      const params=new URLSearchParams(window.location.search);
+      if(!source)source=params.get("url")||"";
+      if(!logo)logo=params.get("logo")||"";
+    }catch(_){}
+  }
+  return{src:parseHttpUrl(source,CONFIG.defaultStream),logo:parseHttpUrl(logo,"")};
+}
+
+/* ---------- Platform detection ---------- */
+
+function isAppleMobile(){
+  const ua=navigator.userAgent||"";
+  if(/iPad|iPhone|iPod/.test(ua))return true;
+  /* iPadOS 13+ reports itself as a Mac but has a touch screen */
+  return navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1;
+}
+function canUseNativeHls(){
+  if(!state.video||typeof state.video.canPlayType!=="function")return false;
+  return Boolean(state.video.canPlayType("application/vnd.apple.mpegurl")||state.video.canPlayType("audio/mpegurl"));
+}
+function hlsJsSupported(){
+  return typeof window.Hls==="function"&&window.Hls.isSupported();
+}
+
+/* ---------- Teardown helpers ---------- */
+
+function stopStartupTimer(){
+  if(state.startupTimer){clearTimeout(state.startupTimer);state.startupTimer=0}
+}
+function stopRecoveryTimer(){
+  if(state.recoveryTimer){clearTimeout(state.recoveryTimer);state.recoveryTimer=0}
+}
+/* Plyr.destroy() replaces the <video> with a fresh clone of the original element.
+   Re-attach to that clone, clear any stale src it inherited, and re-bind its events. */
+function destroyPlyr(){
+  if(!state.plyr)return;
+  /* the clone was taken while hls.js had a (now revoked) blob: src attached, so drop it first */
+  try{
+    const original=state.plyr.elements&&state.plyr.elements.original;
+    if(original&&original.removeAttribute)original.removeAttribute("src");
+  }catch(_){}
+  try{state.plyr.destroy()}catch(_){}
+  state.plyr=null;
+  const fresh=$("player");
+  if(fresh&&fresh!==state.video){
+    state.video=fresh;
+    try{fresh.removeAttribute("src");fresh.load()}catch(_){}
+    bindVideoEvents(fresh);
+  }
+}
+function detachHls(){
+  if(!state.hls)return;
+  const instance=state.hls;
+  state.hls=null;
+  try{instance.stopLoad()}catch(_){}
+  try{instance.detachMedia()}catch(_){}
+  try{instance.destroy()}catch(_){}
+}
+function resetMediaElement(){
+  if(!state.video)return;
+  try{
+    state.video.pause();
+    state.video.removeAttribute("src");
+    state.video.load();
+  }catch(_){}
+}
+function cleanupCurrentSource(resetElement){
+  stopStartupTimer();
+  stopRecoveryTimer();
+  hideBuffering();
+  detachHls();
+  destroyPlyr();
+  if(resetElement!==false)resetMediaElement();
+  state.usingNative=false;
+  state.initializing=false;
+}
+
+/* ---------- Quality menu + aspect-ratio button ---------- */
+
+function getQualityHeights(levels){
+  if(!Array.isArray(levels))return[];
+  const heights=[];
+  levels.forEach(function(level){
+    const height=Number(level&&level.height);
+    if(Number.isFinite(height)&&height>0&&heights.indexOf(height)<0)heights.push(height);
+  });
+  return heights.sort(function(a,b){return b-a});
+}
+function chooseDefaultQuality(qualities){
+  if(qualities.indexOf(720)>=0)return 720;
+  if(qualities.indexOf(576)>=0)return 576;
+  if(qualities.indexOf(480)>=0)return 480;
+  return qualities[0];
+}
+function aspectIcon(mode){
+  if(mode==="fit")return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect><path d="M8 6v3M4 10h3M16 6v3M20 10h-3M8 18v-3M4 14h3M16 18v-3M20 14h-3"></path></svg>';
+  if(mode==="stretch")return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="7" width="14" height="10" rx="1.5"></rect><path d="M3 7h2M3 17h2M19 7h2M19 17h2M3 12h3M18 12h3"></path></svg>';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"></path><path d="M8 4v5M4 8h5M16 4v5M20 8h-5M8 20v-5M4 16h5M16 20v-5M20 16h-5"></path></svg>';
+}
+function plyrRoot(){
+  return state.plyr&&state.plyr.elements&&state.plyr.elements.container?state.plyr.elements.container:null;
+}
+function applyAspectMode(){
+  const root=plyrRoot()||state.container;
+  if(!root)return;
+  root.classList.remove("video-mode-fit","video-mode-stretch","video-mode-crop");
+  const modes=["fit","stretch","crop"];
+  const mode=modes[state.aspectIndex];
+  root.classList.add("video-mode-"+mode);
+  const button=root.querySelector(".sonu-aspect-control");
+  if(button){
+    button.setAttribute("aria-label",mode.toUpperCase());
+    button.setAttribute("title",mode.toUpperCase());
+    button.setAttribute("data-mode",mode);
+    button.innerHTML=aspectIcon(mode);
+  }
+}
+function addAspectControl(){
+  const root=plyrRoot();
+  if(!root||root.querySelector(".sonu-aspect-control"))return;
+  const fullscreen=root.querySelector('[data-plyr="fullscreen"]');
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="plyr__control sonu-aspect-control";
+  button.setAttribute("aria-label","FIT");
+  button.setAttribute("title","FIT");
+  button.setAttribute("data-mode","fit");
+  button.innerHTML=aspectIcon("fit");
+  button.addEventListener("click",function(){
+    state.aspectIndex=(state.aspectIndex+1)%3;
+    applyAspectMode();
+  });
+  if(fullscreen&&fullscreen.parentElement)fullscreen.parentElement.insertBefore(button,fullscreen);
+  else{
+    const controls=root.querySelector(".plyr__controls");
+    if(controls)controls.appendChild(button);
+  }
+  applyAspectMode();
+}
+function enhanceControls(){
+  addAspectControl();
+}
+
+/* Returns a Plyr instance, or null when Plyr is unavailable. In that case the
+   browser's own <video controls> UI stays active, so playback still works. */
+function createPlayer(qualities,hlsInstance){
+  if(!state.video)return null;
+  if(typeof window.Plyr!=="function"){
+    console.warn("Plyr is not loaded. Falling back to native video controls.");
+    return null;
+  }
+  const hasQuality=qualities.length>0&&!!hlsInstance;
+  const config={
+    controls:["play-large","play","progress","current-time","mute","volume","settings","fullscreen"],
+    seekTime:10,
+    hideControls:true,
+    resetOnEnd:false,
+    keyboard:{focused:true,global:true},
+    tooltips:{controls:true,seek:true},
+    /* icon sprite from the same CDN as the scripts (default would be cdn.plyr.io) */
+    iconUrl:"https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.svg",
+    /* iosNative: iPhone/iPad use the system full-screen player (true full screen) */
+    fullscreen:{enabled:true,fallback:true,iosNative:true},
+    settings:hasQuality?["quality"]:[],
+    i18n:{
+      restart:"Restart",
+      play:"Play",
+      pause:"Pause",
+      seek:"Seek",
+      played:"Played",
+      buffered:"Buffered",
+      currentTime:"Current time",
+      duration:"Duration",
+      volume:"Volume",
+      mute:"Mute",
+      unmute:"Unmute",
+      enterFullscreen:"Enter fullscreen",
+      exitFullscreen:"Exit fullscreen",
+      frameTitle:"Video player",
+      settings:"Settings",
+      quality:"Quality"
+    }
+  };
+  if(hasQuality){
+    config.quality={
+      default:chooseDefaultQuality(qualities),
+      options:qualities,
+      forced:true,
+      onChange:function(value){
+        const instance=state.hls;
+        if(!instance||instance!==hlsInstance||!Array.isArray(instance.levels))return;
+        const target=Number(value);
+        if(!Number.isFinite(target))return;
+        let index=-1;
+        for(let i=0;i<instance.levels.length;i++){
+          const level=instance.levels[i];
+          if(level&&Number(level.height)===target){index=i;break}
+        }
+        if(index>=0)instance.currentLevel=index;
+      }
+    };
+  }
+  try{
+    const instance=new window.Plyr(state.video,config);
+    state.plyr=instance;
+    enhanceControls();
+    return instance;
+  }catch(error){
+    console.error(error);
+    return null;
+  }
+}
+
+/* ---------- Health tracking + error messages ---------- */
+
+function markHealthy(){
+  state.recoveryAttempts=0;
+  state.immediateNetworkRecoveries=0;
+  state.mediaRecoveries=0;
+  state.fullRestarts=0;
+  state.initializing=false;
+  state.lastNetworkErrorAt=0;
+  stopRecoveryTimer();
+  stopStartupTimer();
+  hideBuffering();
+  clearError();
+}
+function responseCode(data){
+  const code=Number(data&&data.response&&data.response.code);
+  return Number.isInteger(code)&&code>=100&&code<=599?code:0;
+}
+function hlsDetail(data){return text(data&&data.details).replace(/_/g," ")}
+function transientHttpCode(code){return code===0||code===408||code===425||code===429||code===500||code===502||code===503||code===504}
+function permanentHttpCode(code){return code===400||code===401||code===403||code===404||code===405||code===406||code===410||code===415}
+function buildHlsErrorMessage(data){
+  const code=responseCode(data);
+  const detail=hlsDetail(data)||"STREAM_LOAD_FAILED";
+  return code?"HTTP "+code+" \u2014 "+detail:"HLS \u2014 "+detail;
+}
+function buildMediaErrorMessage(){
+  const code=Number(state.video&&state.video.error&&state.video.error.code);
+  switch(code){
+    case 1:return"MEDIA_ERR_ABORTED \u2014 CODE 1";
+    case 2:return"MEDIA_ERR_NETWORK \u2014 CODE 2";
+    case 3:return"MEDIA_ERR_DECODE \u2014 CODE 3";
+    case 4:return"MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4";
+    default:return"MEDIA_ERROR";
+  }
+}
+
+/* ---------- Automatic recovery ---------- */
+
+function scheduleRecovery(reason){
+  if(state.destroyed||!state.src)return;
+  if(!navigator.onLine){
+    setError("NETWORK OFFLINE \u2014 WAITING FOR RECONNECT");
+    return;
+  }
+  if(state.recoveryTimer)return;
+  if(state.recoveryAttempts>=CONFIG.maxRecoveryAttempts){
+    setError(reason||"STREAM_LOAD_FAILED");
+    return;
+  }
+  const attempt=state.recoveryAttempts++;
+  const delay=Math.min(CONFIG.retryMaxMs,CONFIG.retryBaseMs*Math.pow(2,attempt));
+  setError(reason||"STREAM RECOVERY");
+  state.recoveryTimer=setTimeout(function(){
+    state.recoveryTimer=0;
+    recoverStream();
+  },delay);
+}
+function recoverStream(){
+  if(state.destroyed||state.initializing||!state.src)return;
+  if(!navigator.onLine){
+    setError("NETWORK OFFLINE \u2014 WAITING FOR RECONNECT");
+    return;
+  }
+  const wasPlaying=!!state.video&&!state.video.paused&&!state.video.ended;
+  const restoreTime=state.video&&Number.isFinite(state.video.currentTime)?state.video.currentTime:state.lastKnownTime;
+  const generation=++state.sourceGeneration;
+  const fullRestart=state.forceFullRestart;
+  state.forceFullRestart=false;
+  state.initializing=true;
+  try{
+    /* Light recovery: just ask hls.js to resume loading */
+    if(state.hls&&!fullRestart){
+      try{
+        state.hls.startLoad(-1);
+        state.initializing=false;
+        scheduleBuffering();
+        if(wasPlaying&&state.video&&state.video.paused)safePlay();
+        return;
+      }catch(_){detachHls()}
+    }
+    /* Native playback (iOS HLS or a plain video file): reload the same source */
+    if(state.usingNative&&!fullRestart){
+      try{
+        state.video.src=state.src;
+        state.video.load();
+        const restore=function(){
+          if(restoreTime>0&&Number.isFinite(restoreTime)){
+            try{state.video.currentTime=restoreTime}catch(_){}
+          }
+        };
+        state.video.addEventListener("loadedmetadata",restore,{once:true});
+        if(wasPlaying)safePlay();
+        state.initializing=false;
+        scheduleBuffering();
+        return;
+      }catch(_){state.usingNative=false}
+    }
+    /* Full restart: rebuild hls.js + Plyr from scratch */
+    cleanupCurrentSource(true);
+    if(isDirectFile(state.src))startNativePlayback(state.src,wasPlaying,true,generation);
+    else if(hlsJsSupported())startHlsPlayback(state.src,wasPlaying,true,generation);
+    else if(canUseNativeHls())startNativePlayback(state.src,wasPlaying,true,generation);
+    else setError("HLS_NOT_SUPPORTED");
+  }finally{
+    if(state.sourceGeneration===generation)state.initializing=false;
+  }
+}
+
+/* ---------- Native playback (iOS HLS, plain files) ---------- */
+
+function startNativePlayback(src,autoplayAfterReady,recovering,generation){
+  if(!state.video)return false;
+  const gen=generation||++state.sourceGeneration;
+  state.usingNative=true;
+  state.src=src;
+  try{
+    destroyPlyr();
+    state.video.src=src;
+    state.video.load();
+    state.plyr=createPlayer([],null);
+    stopStartupTimer();
+    state.startupTimer=setTimeout(function(){
+      if(state.sourceGeneration!==gen||state.destroyed)return;
+      if(state.video.readyState<2)scheduleRecovery("STREAM_LOAD_FAILED");
+    },CONFIG.startupTimeoutMs);
+    const ready=function(){
+      if(state.sourceGeneration!==gen||state.destroyed)return;
+      markHealthy();
+      if(autoplayAfterReady)safePlay();
+    };
+    state.video.addEventListener("loadedmetadata",ready,{once:true});
+    state.video.addEventListener("canplay",ready,{once:true});
+    if(autoplayAfterReady)scheduleBuffering();
+    return true;
+  }catch(error){
+    console.error(error);
+    state.usingNative=false;
+    if(!recovering)setError("HLS_INIT_FAILED");
+    return false;
+  }
+}
+
+/* ---------- hls.js playback ---------- */
+
+function createHlsInstance(){
+  if(!hlsJsSupported())return null;
+  return new window.Hls({
+    debug:false,
+    enableWorker:true,
+    lowLatencyMode:CONFIG.lowLatencyMode,
+    backBufferLength:CONFIG.backBufferLength,
+    maxBufferLength:CONFIG.maxBufferLength,
+    maxMaxBufferLength:CONFIG.maxMaxBufferLength,
+    maxBufferSize:CONFIG.maxBufferSize,
+    maxBufferHole:CONFIG.maxBufferHole,
+    capLevelToPlayerSize:true,
+    startLevel:-1,
+    liveSyncDurationCount:CONFIG.liveSyncDurationCount,
+    liveMaxLatencyDurationCount:CONFIG.liveMaxLatencyDurationCount,
+    maxLiveSyncPlaybackRate:CONFIG.maxLiveSyncPlaybackRate,
+    manifestLoadingMaxRetry:3,
+    levelLoadingMaxRetry:3,
+    fragLoadingMaxRetry:3,
+    manifestLoadingRetryDelay:1000,
+    levelLoadingRetryDelay:1000,
+    fragLoadingRetryDelay:1000,
+    highBufferWatchdogPeriod:2,
+    nudgeMaxRetry:4,
+    nudgeOffset:.1,
+    maxFragLookUpTolerance:.25,
+    appendErrorMaxRetry:3
+  });
+}
+function fullHlsRestart(src,autoplayAfterReady,recovering){
+  cleanupCurrentSource(true);
+  if(hlsJsSupported())return startHlsPlayback(src,autoplayAfterReady,recovering,++state.sourceGeneration);
+  if(canUseNativeHls())return startNativePlayback(src,autoplayAfterReady,recovering,++state.sourceGeneration);
+  setError("HLS_NOT_SUPPORTED");
+  return false;
+}
+function startHlsPlayback(src,autoplayAfterReady,recovering,generation){
+  if(!state.video)return false;
+  const gen=generation||++state.sourceGeneration;
+  const instance=createHlsInstance();
+  if(!instance){
+    if(!recovering)setError("HLS_NOT_SUPPORTED");
+    return false;
+  }
+  const Hls=window.Hls;
+  state.hls=instance;
+  state.usingNative=false;
+  state.src=src;
+  let manifestReady=false;
+  let startupFinished=false;
+  const isCurrent=function(){
+    return !state.destroyed&&state.hls===instance&&state.sourceGeneration===gen;
+  };
+  try{
+    instance.on(Hls.Events.MEDIA_ATTACHED,function(){
+      if(!isCurrent())return;
+      try{instance.loadSource(src)}catch(_){scheduleRecovery("STREAM_LOAD_FAILED")}
+    });
+    instance.on(Hls.Events.MANIFEST_PARSED,function(_,data){
+      if(!isCurrent())return;
+      manifestReady=true;
+      startupFinished=true;
+      stopStartupTimer();
+      destroyPlyr();
+      state.plyr=createPlayer(getQualityHeights(data&&data.levels),instance);
+      state.recoveryAttempts=0;
+      state.mediaRecoveries=0;
+      state.immediateNetworkRecoveries=0;
+      state.fullRestarts=0;
+      clearError();
+      if(autoplayAfterReady){scheduleBuffering();safePlay()}
+    });
+    instance.on(Hls.Events.ERROR,function(_,data){
+      if(!isCurrent()||!data)return;
+      const type=data.type;
+      const code=responseCode(data);
+      if(!data.fatal){
+        if(data.details===Hls.ErrorDetails.BUFFER_STALLED_ERROR&&state.video&&!state.video.paused)scheduleBuffering();
+        return;
+      }
+      if(type===Hls.ErrorTypes.NETWORK_ERROR){
+        if(permanentHttpCode(code)){
+          setError("HTTP "+code+" \u2014 "+(hlsDetail(data)||"STREAM_LOAD_FAILED"));
+          return;
+        }
+        const now=Date.now();
+        if(now-state.lastNetworkErrorAt<750)return;
+        state.lastNetworkErrorAt=now;
+        if(state.immediateNetworkRecoveries<CONFIG.maxImmediateNetworkRecoveries){
+          state.immediateNetworkRecoveries++;
+          try{
+            instance.startLoad(-1);
+            setError(buildHlsErrorMessage(data));
+            return;
+          }catch(_){}
+        }
+        scheduleRecovery(code&&transientHttpCode(code)?"HTTP "+code+" \u2014 STREAM_NETWORK_ERROR":(code?"HTTP "+code+" \u2014 STREAM_LOAD_FAILED":"STREAM_NETWORK_ERROR"));
+        return;
+      }
+      if(type===Hls.ErrorTypes.MEDIA_ERROR){
+        if(state.mediaRecoveries<CONFIG.mediaRecoveryLimit){
+          state.mediaRecoveries++;
+          try{
+            instance.recoverMediaError();
+            setError("STREAM_MEDIA_ERROR \u2014 RECOVERING");
+            return;
+          }catch(_){}
+        }
+        if(state.fullRestarts<CONFIG.fullRestartLimit){
+          state.fullRestarts++;
+          state.forceFullRestart=true;
+          setError("STREAM_MEDIA_ERROR \u2014 RESTARTING");
+          scheduleRecovery("STREAM_MEDIA_ERROR");
+          return;
+        }
+        setError("STREAM_MEDIA_ERROR");
+        return;
+      }
+      if(permanentHttpCode(code)){
+        setError("HTTP "+code+" \u2014 "+(hlsDetail(data)||"STREAM_LOAD_FAILED"));
+        return;
+      }
+      state.forceFullRestart=true;
+      if(manifestReady||startupFinished)scheduleRecovery(buildHlsErrorMessage(data));
+      else scheduleRecovery("STREAM_LOAD_FAILED");
+    });
+    instance.on(Hls.Events.FRAG_BUFFERED,function(){
+      if(!isCurrent())return;
+      if(state.video&&state.video.readyState>=3&&!state.video.paused&&!state.video.seeking)hideBuffering();
+    });
+    instance.on(Hls.Events.LEVEL_SWITCHED,function(){
+      if(!isCurrent())return;
+      if(state.video&&state.video.readyState>=2)clearError();
+    });
+    instance.on(Hls.Events.BUFFER_APPENDED,function(){
+      if(isCurrent()&&state.video&&state.video.readyState>=3&&!state.video.paused&&!state.video.seeking)hideBuffering();
+    });
+    state.startupTimer=setTimeout(function(){
+      if(!isCurrent())return;
+      if(!manifestReady)scheduleRecovery("STREAM_LOAD_FAILED");
+    },CONFIG.startupTimeoutMs);
+    instance.attachMedia(state.video);
+    return true;
+  }catch(error){
+    console.error(error);
+    if(state.hls===instance)detachHls();
+    if(!recovering)setError("HLS_INIT_FAILED");
+    return false;
+  }
+}
+
+/* ---------- Start playback ---------- */
+
+function startPlayback(){
+  const values=getSource();
+  state.src=values.src;
+  state.logo=values.logo;
+  state.aspectIndex=0;
+  state.video.removeAttribute("poster");
+  if(state.logo)state.video.poster=state.logo;
+  clearError();
+  if(!state.src){
+    setError("VIDEO_URL_NOT_SET");
+    return;
+  }
+  /* 1) Plain video file (mp4 / webm / ...) */
+  if(isDirectFile(state.src)){
+    if(startNativePlayback(state.src,false,false,++state.sourceGeneration))return;
+    setError("MEDIA_NOT_SUPPORTED");
+    return;
+  }
+  const nativeOk=canUseNativeHls();
+  /* 2) iPhone / iPad: the built-in HLS player is the most reliable choice */
+  if(nativeOk&&isAppleMobile()){
+    if(startNativePlayback(state.src,false,false,++state.sourceGeneration))return;
+  }
+  /* 3) Android, Windows, macOS, Linux, smart TVs: hls.js (gives the quality menu) */
+  if(hlsJsSupported()){
+    if(startHlsPlayback(state.src,false,false,++state.sourceGeneration))return;
+  }
+  /* 4) Any other browser with built-in HLS */
+  if(nativeOk){
+    if(startNativePlayback(state.src,false,false,++state.sourceGeneration))return;
+  }
+  setError("HLS_NOT_SUPPORTED");
+}
+
+/* ---------- <video> element events ---------- */
+
+function handleVideoError(){
+  if(state.destroyed||!state.video||!state.video.error)return;
+  hideBuffering();
+  const mediaCode=Number(state.video.error.code);
+  if(mediaCode===1)return; /* MEDIA_ERR_ABORTED: caused by us, ignore */
+  if(mediaCode===2){scheduleRecovery("MEDIA_ERR_NETWORK \u2014 CODE 2");return}
+  if(mediaCode===3){
+    if(state.hls&&state.mediaRecoveries<CONFIG.mediaRecoveryLimit){
+      try{
+        state.mediaRecoveries++;
+        state.hls.recoverMediaError();
+        setError("MEDIA_ERR_DECODE \u2014 CODE 3 \u2014 RECOVERING");
+        return;
+      }catch(_){}
+    }
+    scheduleRecovery("MEDIA_ERR_DECODE \u2014 CODE 3");
+    return;
+  }
+  if(mediaCode===4){
+    if(isDirectFile(state.src)){setError("MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4");return}
+    if(state.hls){scheduleRecovery("MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4");return}
+    if(hlsJsSupported()){
+      fullHlsRestart(state.src,!state.video.paused,true);
+      return;
+    }
+    if(canUseNativeHls()&&!state.usingNative){
+      startNativePlayback(state.src,!state.video.paused,true,++state.sourceGeneration);
+      return;
+    }
+    setError("MEDIA_ERR_SRC_NOT_SUPPORTED \u2014 CODE 4");
+    return;
+  }
+  setError(buildMediaErrorMessage());
+}
+/* Listens only to events that come from the current <video> element. */
+function bindVideoEvents(video){
+  const on=function(type,handler){
+    video.addEventListener(type,function(event){
+      if(event.target!==state.video)return;
+      handler(event);
+    });
+  };
+  on("playing",function(){hideBuffering();markHealthy()});
+  on("play",function(){clearError();if(state.video.paused)hideBuffering();else scheduleBuffering()});
+  on("pause",hideBuffering);
+  on("ended",hideBuffering);
+  on("canplay",function(){hideBuffering();if(state.video.readyState>=3)clearError()});
+  on("loadeddata",hideBuffering);
+  on("timeupdate",function(){if(Number.isFinite(state.video.currentTime))state.lastKnownTime=state.video.currentTime});
+  on("error",handleVideoError);
+  on("waiting",function(){if(!state.video.paused){scheduleBuffering();scheduleStallRecovery()}});
+  on("stalled",function(){if(state.video.paused)return;scheduleBuffering();scheduleStallRecovery()});
+}
+
+/* ---------- TV remote / media keys ---------- */
+
+function togglePlayback(){
+  if(!state.video)return;
+  if(state.video.paused)safePlay();else state.video.pause();
+}
+function seekBy(seconds){
+  const video=state.video;
+  if(!video)return;
+  try{
+    let target=video.currentTime+seconds;
+    if(video.seekable&&video.seekable.length){
+      const end=video.seekable.end(video.seekable.length-1);
+      const start=video.seekable.start(0);
+      target=Math.min(Math.max(target,start),end);
+    }else{
+      target=Math.max(0,target);
+    }
+    video.currentTime=target;
+  }catch(_){}
+}
+function showControls(){
+  if(state.plyr&&typeof state.plyr.toggleControls==="function"){
+    try{state.plyr.toggleControls(true)}catch(_){}
+  }
+}
+/* Handles the keys that Plyr does not: hardware media keys and OK/Enter on TV remotes.
+   Arrow keys, Space, K, F and M are already handled by Plyr (global keyboard mode). */
+function handleRemoteKey(event){
+  if(state.destroyed||!state.video)return;
+  const target=event.target;
+  const onControl=!!(target&&target.tagName&&/^(BUTTON|INPUT|A|SELECT|TEXTAREA)$/i.test(target.tagName));
+  const key=event.key;
+  const code=event.keyCode;
+  let handled=true;
+  if(key==="MediaPlay"||code===415)safePlay();
+  else if(key==="MediaPause"||code===19)state.video.pause();
+  else if(key==="MediaStop"||code===413)state.video.pause();
+  else if(key==="MediaPlayPause"||code===179)togglePlayback();
+  else if(key==="MediaFastForward"||code===417)seekBy(CONFIG.remoteSeekSeconds);
+  else if(key==="MediaRewind"||code===412)seekBy(-CONFIG.remoteSeekSeconds);
+  else if((key==="Enter"||code===13)&&!onControl)togglePlayback();
+  else handled=false;
+  if(handled){
+    event.preventDefault();
+    showControls();
+  }
+}
+
+/* ---------- Window / document events ---------- */
+
+function bindGlobalEvents(){
+  window.addEventListener("online",function(){
+    if(state.destroyed)return;
+    state.recoveryAttempts=0;
+    state.immediateNetworkRecoveries=0;
+    setError("NETWORK RESTORED \u2014 RECOVERING");
+    stopRecoveryTimer();
+    recoverStream();
+  },{passive:true});
+  window.addEventListener("offline",function(){
+    if(state.destroyed)return;
+    hideBuffering();
+    stopRecoveryTimer();
+    setError("NETWORK OFFLINE \u2014 WAITING FOR RECONNECT");
+  },{passive:true});
+  document.addEventListener("visibilitychange",function(){
+    if(state.destroyed)return;
+    if(document.visibilityState==="hidden"){
+      state.wasPlayingBeforeHidden=!!state.video&&!state.video.paused&&!state.video.ended;
+      return;
+    }
+    if(!state.video||!state.wasPlayingBeforeHidden)return;
+    const now=Date.now();
+    if(now-state.lastVisibilityRecoveryAt<CONFIG.visibilityRecoveryCooldownMs)return;
+    state.lastVisibilityRecoveryAt=now;
+    if(state.hls&&state.video.readyState<3){
+      try{state.hls.startLoad(-1)}catch(_){}
+    }
+    if(state.video.paused)safePlay();
+  },{passive:true});
+  document.addEventListener("keydown",handleRemoteKey);
+  window.addEventListener("pagehide",destroy);
+  /* Safari restores pages from its back/forward cache: rebuild the player in that case */
+  window.addEventListener("pageshow",function(event){
+    if(event.persisted&&state.destroyed)window.location.reload();
+  });
+}
+function destroy(){
+  if(state.destroyed)return;
+  state.destroyed=true;
+  stopStartupTimer();
+  stopRecoveryTimer();
+  hideBuffering();
+  detachHls();
+  destroyPlyr();
+}
+function init(){
+  state.container=$("container");
+  state.video=$("player");
+  state.buffering=$("buffering");
+  if(!state.container||!state.video||!state.buffering){document.body.textContent="PLAYER_INIT_FAILED";return}
+  bindGlobalEvents();
+  bindVideoEvents(state.video);
+  startPlayback();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+})();
+</script>
+</body>
+</html>
