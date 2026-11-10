@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Video Player</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#000000">
@@ -10,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.css">
-<!-- hls.js must load before the player script. Plyr (polyfilled build) adds support for older browsers / smart TVs. -->
+<script data-cfasync="false" src="https://aarems.org/1/20a5388c5a01eec53d5b3c070715e5e9"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.8.4/dist/plyr.polyfilled.js"></script>
 <style>
@@ -79,7 +78,7 @@ html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:#
    URL parameters (?url=...) are ignored in this file.
    There is no domain lock: the page works on any domain, in any iframe, or opened directly.
    ===================================================================== */
-const VIDEO_URL="https://sayan.info/live.m3u8";
+const VIDEO_URL="https://stream-through-spark.lovable.app/api/proxy?u=https://dishmt.slivcdn.com/hls/live/2011747/TEN1HD/master.m3u8?hdnea=exp=1794320554~acl=/*~id=35532077931496326081908490151906~hmac=0916bacd97dcfed07837b599bb2a86a868f8317ebb43eb93a459a903a084463";
 const POSTER_URL="";
 
 /* Tuning values. These normally do not need to be changed. */
