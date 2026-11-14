@@ -9,7 +9,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!--<script data-cfasync="false" src="https://capitalhospitals.org/1/1a1214333a11f56be944032d1324ea8e"></script>-->
 <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/5.3.3/controls.min.css">
@@ -145,7 +144,8 @@ var CONFIG = {
   streamUrl: "https://ss-ott.bia-cf.live.pv-cdn.net/iad-nitro/live/clients/dash/enc/2fqqd9w1dv/out/v1/640bbe357b4e4656a3a25ef401b40943/cenc.mpd",
   rawKey: "c32f4ea1b4dd4e4736ee667ee02aa8bb:3ae921b11d3dcabb54a7433f065c2efa",
   referer: "https://otte.live.fly.ww.aiv-cdn.net/",
-  userAgent: "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+  userAgent: "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+  preferredAudioLanguage: "hi"
 };
 </script>
 
@@ -319,7 +319,7 @@ async function startPlayer(){
     controlPanelElements:[
       "play_pause","mute","volume",
       "time_and_duration","spacer",
-      "quality","picture_in_picture","fullscreen"
+      "quality","audio_language","picture_in_picture","fullscreen"
     ],
     seekBarColors:{
       base:    "rgba(255,255,255,0.22)",
@@ -368,6 +368,7 @@ async function startPlayer(){
       if(PROF.maxBw > 0) restr.maxBandwidth = PROF.maxBw;
     }
     return {
+      preferredAudioLanguage: CONFIG.preferredAudioLanguage || "hi",
       drm:{ clearKeys: drmKeys },
       manifest:{
         defaultPresentationDelay:4,
@@ -406,8 +407,25 @@ async function startPlayer(){
     if(!tracks || !tracks.length) return;
     var active = null;
     tracks.forEach(function(t){ if(t.active) active = t; });
-    if(active){ audioFixed = true; return; }
-    try{ player.selectAudioTrack(tracks[0], true); audioFixed = true; }catch(_){}
+    if(active){
+      var lang = String(active.language || "").toLowerCase();
+      if(lang.indexOf("hi") !== 0){
+        var hindi = null;
+        tracks.forEach(function(t){
+          if(String(t.language || "").toLowerCase().indexOf("hi") === 0) hindi = t;
+        });
+        if(hindi){
+          try{ player.selectAudioTrack(hindi, true); }catch(_){}
+        }
+      }
+      audioFixed = true;
+      return;
+    }
+    var hindiPick = null;
+    tracks.forEach(function(t){
+      if(String(t.language || "").toLowerCase().indexOf("hi") === 0) hindiPick = t;
+    });
+    try{ player.selectAudioTrack(hindiPick || tracks[0], true); audioFixed = true; }catch(_){}
   }
 
   player.addEventListener('trackschanged', fixAudio);
